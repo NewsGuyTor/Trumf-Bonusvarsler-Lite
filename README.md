@@ -62,7 +62,7 @@ Avhengig av hvilken plattform du bruker, velg en av følgende userscript-manager
 3. **Bekreft installasjonen:**
    Du vil se en bekreftelsesmelding om at Trumf Bonusvarsler Lite er installert.
 
-#### For iOS:
+#### For iOS (iPhone og iPad):
 
 1. **Åpne Userscripts-appen:**
    Last ned og åpne **Userscripts**-appen fra App Store via [denne lenken](https://apps.apple.com/no/app/userscripts/id1463298887).
