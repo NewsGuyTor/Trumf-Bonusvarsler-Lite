@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Trumf Bonusvarsler Lite
-// @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
+// @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varsler når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      1.0.0
+// @version      1.0.1
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @connect      wlp.tcb-cdn.com
+// @connect      raw.githubusercontent.com
 // @homepageURL  https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
 // @supportURL   https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/issues
 // @icon         https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/icon.png
@@ -19,6 +20,7 @@
 
     // Configuration Constants
     const FEED_URL           = `https://wlp.tcb-cdn.com/trumf/notifierfeed.json?v=${Date.now()}`;
+    const FEED_FALLBACK_URL  = "https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json"; // Updated to use main branch
     const LOCAL_KEY_DATA     = "TrumpBonusvarslerLiteFeedData";
     const LOCAL_KEY_TIME     = "TrumpBonusvarslerLiteFeedTimestamp";
     const CACHE_DURATION     = 1000 * 60 * 60 * 6; // 6 hours in milliseconds
@@ -38,9 +40,10 @@
     }
 
     /**
-     * Fetches the JSON feed, either from localStorage or via a network request.
+     * Fetches the JSON feed, either from localStorage (if fresh) or via a network request (with retries).
+     * @param {number} attemptsLeft - Number of attempts left for fetching the primary feed.
      */
-    function fetchFeed() {
+    function fetchFeed(attemptsLeft = 5) {
         let feedData = null;
         const storedTime = localStorage.getItem(LOCAL_KEY_TIME);
 
@@ -59,7 +62,7 @@
         if (feedData) {
             processFeed(feedData);
         } else {
-            // Fetch fresh data from the remote source
+            // Fetch fresh data from the primary remote source
             GM.xmlHttpRequest({
                 method: "GET",
                 url: FEED_URL,
@@ -73,16 +76,62 @@
                             processFeed(json);
                         } catch(e) {
                             console.error("Failed to parse fetched JSON data:", e);
+                            retryOrFallback(attemptsLeft);
                         }
                     } else {
                         console.error(`Failed to fetch JSON data. Status: ${response.status}`);
+                        retryOrFallback(attemptsLeft);
                     }
                 },
                 onerror: (error) => {
                     console.error("Error fetching JSON data:", error);
+                    retryOrFallback(attemptsLeft);
                 }
             });
         }
+    }
+
+    /**
+     * If there are attempts left, tries fetching again.
+     * Otherwise, falls back to the backup JSON.
+     * @param {number} attemptsLeft - Number of attempts left for the primary feed.
+     */
+    function retryOrFallback(attemptsLeft) {
+        if (attemptsLeft > 1) {
+            console.warn(`Retrying primary feed... Attempts left: ${attemptsLeft - 1}`);
+            fetchFeed(attemptsLeft - 1);
+        } else {
+            console.warn("Primary feed failed after 5 tries. Using backup...");
+            fetchBackupFeed();
+        }
+    }
+
+    /**
+     * Fetches the backup JSON feed from GitHub.
+     */
+    function fetchBackupFeed() {
+        GM.xmlHttpRequest({
+            method: "GET",
+            url: FEED_FALLBACK_URL,
+            headers: { "Accept": "application/json", "Cache-Control": "no-cache" },
+            onload: (response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    try {
+                        const json = JSON.parse(response.responseText);
+                        // We'll store the data locally, but won't update timestamp to force a fresh check next time
+                        localStorage.setItem(LOCAL_KEY_DATA, response.responseText);
+                        processFeed(json);
+                    } catch(e) {
+                        console.error("Failed to parse backup JSON data:", e);
+                    }
+                } else {
+                    console.error(`Failed to fetch backup JSON data. Status: ${response.status}`);
+                }
+            },
+            onerror: (error) => {
+                console.error("Error fetching backup JSON data:", error);
+            }
+        });
     }
 
     /**
