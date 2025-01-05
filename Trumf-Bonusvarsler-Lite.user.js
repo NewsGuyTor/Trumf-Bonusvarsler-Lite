@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      1.2.0
+// @version      1.2.1
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @connect      wlp.tcb-cdn.com
@@ -127,9 +127,26 @@
         });
     }
 
+    // ---------------------------
+    // Match the host, ignoring "www."
+    // ---------------------------
     function processFeed(json) {
         if (!json || !json.merchants) return;
-        const merchant = json.merchants[currentHost];
+
+        // 1) Exact match
+        let merchant = json.merchants[currentHost];
+
+        // 2) Try removing "www." if not found
+        if (!merchant) {
+            const noWww = currentHost.replace(/^www\./, '');
+            merchant = json.merchants[noWww];
+        }
+
+        // 3) If still not found, try adding "www." if original didn’t have it
+        if (!merchant && !/^www\./.test(currentHost)) {
+            merchant = json.merchants["www." + currentHost];
+        }
+
         if (merchant) {
             injectShadowNotifier(merchant);
         }
