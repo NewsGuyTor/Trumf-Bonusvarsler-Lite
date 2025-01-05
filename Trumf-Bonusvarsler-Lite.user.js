@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Trumf Bonusvarsler Lite
-// @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varsler når du er inne på en nettbutikk som gir Trumf-bonus.
+// @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      1.0.1
+// @version      1.2.0
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @connect      wlp.tcb-cdn.com
@@ -18,20 +18,24 @@
 (function() {
     'use strict';
 
-    // Configuration Constants
+    // ---------------------------
+    // Configuration
+    // ---------------------------
     const FEED_URL           = `https://wlp.tcb-cdn.com/trumf/notifierfeed.json?v=${Date.now()}`;
-    const FEED_FALLBACK_URL  = "https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json"; // Updated to use main branch
+    const FEED_FALLBACK_URL  = "https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json";
     const LOCAL_KEY_DATA     = "TrumpBonusvarslerLiteFeedData";
     const LOCAL_KEY_TIME     = "TrumpBonusvarslerLiteFeedTimestamp";
-    const CACHE_DURATION     = 1000 * 60 * 60 * 6; // 6 hours in milliseconds
-    const WIDTH_THRESHOLD    = 700; // Window width threshold for responsive design (in pixels)
-    const MESSAGE_DURATION   = 1000 * 60 * 10; // 10 minutes in milliseconds
+    const CACHE_DURATION     = 1000 * 60 * 60 * 6; // 6 hours
+    const WIDTH_THRESHOLD    = 700;               // px
+    const MESSAGE_DURATION   = 1000 * 60 * 10;    // 10 minutes
 
     const currentHost        = window.location.hostname;
     const sessionClosedKey   = `TRUMPBONUSVARSLERLITE_CLOSED_${currentHost}`;
     const messageShownKey    = `TRUMPBONUSVARSLERLITE_MESSAGE_SHOWN_${currentHost}`;
 
-    // Exit if the notifier has been closed in this tab or message was recently shown
+    // ---------------------------
+    // Early Exit Conditions
+    // ---------------------------
     if (sessionStorage.getItem(sessionClosedKey) === "true") return;
 
     const messageShownTimestamp = localStorage.getItem(messageShownKey);
@@ -39,15 +43,14 @@
         return;
     }
 
-    /**
-     * Fetches the JSON feed, either from localStorage (if fresh) or via a network request (with retries).
-     * @param {number} attemptsLeft - Number of attempts left for fetching the primary feed.
-     */
+    // ---------------------------
+    // Main Entry: Fetch the Feed
+    // ---------------------------
     function fetchFeed(attemptsLeft = 5) {
         let feedData = null;
         const storedTime = localStorage.getItem(LOCAL_KEY_TIME);
 
-        // Check if cached data exists and is still valid
+        // Use cached data if it’s fresh
         if (storedTime && (Date.now() - parseInt(storedTime, 10)) < CACHE_DURATION) {
             const rawData = localStorage.getItem(LOCAL_KEY_DATA);
             if (rawData) {
@@ -62,7 +65,6 @@
         if (feedData) {
             processFeed(feedData);
         } else {
-            // Fetch fresh data from the primary remote source
             GM.xmlHttpRequest({
                 method: "GET",
                 url: FEED_URL,
@@ -91,11 +93,6 @@
         }
     }
 
-    /**
-     * If there are attempts left, tries fetching again.
-     * Otherwise, falls back to the backup JSON.
-     * @param {number} attemptsLeft - Number of attempts left for the primary feed.
-     */
     function retryOrFallback(attemptsLeft) {
         if (attemptsLeft > 1) {
             console.warn(`Retrying primary feed... Attempts left: ${attemptsLeft - 1}`);
@@ -106,9 +103,6 @@
         }
     }
 
-    /**
-     * Fetches the backup JSON feed from GitHub.
-     */
     function fetchBackupFeed() {
         GM.xmlHttpRequest({
             method: "GET",
@@ -118,7 +112,6 @@
                 if (response.status >= 200 && response.status < 300) {
                     try {
                         const json = JSON.parse(response.responseText);
-                        // We'll store the data locally, but won't update timestamp to force a fresh check next time
                         localStorage.setItem(LOCAL_KEY_DATA, response.responseText);
                         processFeed(json);
                     } catch(e) {
@@ -134,42 +127,61 @@
         });
     }
 
-    /**
-     * Processes the JSON feed and injects the notifier if the current host matches.
-     * @param {Object} json - The parsed JSON data.
-     */
     function processFeed(json) {
         if (!json || !json.merchants) return;
-
         const merchant = json.merchants[currentHost];
         if (merchant) {
-            injectCSS();
-            injectNotifier(merchant);
+            injectShadowNotifier(merchant);
         }
     }
 
-    /**
-     * Injects the necessary CSS styles for the notifier.
-     */
-    function injectCSS() {
+    // ---------------------------
+    // Adblock references
+    // ---------------------------
+    let adblockButtonRef = null; // store reference for the original button
+    let shadowRootRef = null;    // might help if we need the parent of button
+
+    // ---------------------------
+    // Shadow DOM Notifier
+    // ---------------------------
+    function injectShadowNotifier(merchant) {
+        const shadowHost = document.createElement('div');
+        document.body.appendChild(shadowHost);
+        const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+        shadowRootRef = shadowRoot;
+
         const styles = `
+/* Reset + Bolder Design + link cursor */
+:host, :host * {
+    all: unset;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+:host {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+:host a {
+    cursor: pointer; /* link cursor on anchors */
+}
+
 /* Container for the entire notification */
 .notification-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 999999;
-    width: 350px;
+    width: 360px;
     background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     overflow: hidden;
     animation: slideIn 0.5s ease-out;
     transition: width 0.3s ease;
 }
-
-/* Slide-in animation for the notifier */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -185,96 +197,98 @@
 .notification-wrapper {
     display: flex;
     flex-direction: column;
-    position: relative; /* Needed for absolutely-positioned elements inside */
+    position: relative;
+    background-color: #fff;
 }
 
-/* Header section of the notifier */
+/* Header section */
 .notification-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    background-color: #f0f0f0;
-    color: #333333;
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #ececec;
 }
-
-/* Logo in the header */
 .notification-logo img {
-    max-height: 30px;
+    max-height: 28px;
 }
-
-/* Close button in the header */
 .notification-close-button img {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
     transition: transform 0.2s;
 }
-
 .notification-close-button img:hover {
-    transform: scale(1.2);
+    transform: scale(1.15);
 }
 
-/* Body section of the notifier */
+/* Body section */
 .notification-body {
     padding: 16px;
-    background-color: #f9f9f9;
+    background-color: #ffffff;
 }
 
-/* Text content in the notifier */
+/* Text content */
 .notification-text {
-    font-size: 1em;
-    color: #333333;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
-
-/* Cashback description styling */
+.notification-subtitle {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
 .notification-cashback {
-    font-size: 1.8em;
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 20px;
     color: #4D4DFF;
     display: block;
+    margin-bottom: 6px;
 }
 
-/* Action button styling */
+/* "Husk å" + list */
+.husk-line {
+    margin: 0 0 6px 0;
+    font-weight: 500;
+}
+.notification-list {
+    list-style-type: decimal;
+    margin: 8px 0 0 20px;
+    padding: 0;
+    font-size: 13px;
+    display: block;
+}
+.notification-list li {
+    margin: 6px 0;
+    display: list-item;
+}
+
+/* Action button */
 .notification-button {
     display: block;
-    margin: 0 auto;
-    padding: 14px 28px;
+    margin: 16px auto 0 auto;
+    padding: 12px 24px;
     background: #4D4DFF;
-    color: white;
+    color: #ffffff;
     text-decoration: none;
-    border-radius: 15px;
-    font-weight: bold;
-    transition: background 0.3s;
+    border-radius: 6px;
+    font-weight: 600;
     text-align: center;
-    width: 80%;
+    transition: background 0.3s;
+    cursor: pointer;
 }
-
 .notification-button:hover {
-    background: #3A3AFF;
+    background: #3232ff;
 }
 
-/* Styling for the "Husk å..." list */
-.notification-list {
-    list-style-type: disc;
-    padding-left: 20px;
-    margin-top: 8px;
-    font-size: 0.9em;
-    color: #555555;
-}
-
-.notification-list li {
-    margin-bottom: 2px;
-}
-
-/* Info button styling (inside the box) */
+/* Info button styling */
 .notification-info-button {
     position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 14px;
-    height: 14px;
+    bottom: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
     font-size: 9px;
     font-weight: bold;
     font-family: sans-serif;
@@ -289,162 +303,273 @@
     transition: opacity 0.2s, background-color 0.2s;
     cursor: pointer;
 }
-
 .notification-info-button:hover {
-    opacity: 0.4;
-    background-color: #aaa;
+    opacity: 0.45;
+    background-color: #bbb;
 }
 
-/* Responsive adjustments for smaller screens */
+/* Hide the list on narrow screens */
 @media (max-width: 700px) {
-    .notification-container {
-        width: 90%;
-        right: 5%;
-    }
-
-    .notification-text,
     .notification-list {
         display: none;
     }
+}
 
-    .notification-button {
-        width: 100%;
+/* Adblock-detected styles: blood-red color & "annoying" animation */
+.adblock-detected {
+    background: #ff0000 !important;
+    animation: adblockPulse 0.7s infinite alternate ease-in-out;
+}
+
+@keyframes adblockPulse {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.05);
     }
 }
-        `;
-        const styleElement = document.createElement("style");
-        styleElement.textContent = styles;
-        document.head.appendChild(styleElement);
-    }
+`;
 
-    /**
-     * Injects the notifier HTML into the page along with the info button.
-     * @param {Object} merchant - The merchant data from the JSON feed.
-     */
-    function injectNotifier(merchant) {
-        const desc = merchant.cashbackDescription;
-        const basicRate = merchant.basicRate;
+        const styleEl = document.createElement('style');
+        styleEl.textContent = styles;
+        shadowRoot.appendChild(styleEl);
 
-        // Create the notification container
-        const container = document.createElement("div");
-        container.classList.add("notification-container");
+        const container = document.createElement('div');
+        container.classList.add('notification-container');
         container.innerHTML = `
-            <div class="notification-wrapper">
-                <div class="notification-header">
-                    <div class="notification-logo">
-                        <img src="https://trumfnetthandel.no/dest/img/Trumf/notifier/nett-handel-wrapper-logo.svg" alt="Trumf Nettbutikk Logo">
-                    </div>
-                    <div class="notification-close-button">
-                        <img src="https://trumfnetthandel.no/dest/img/Trumf/notifier/close-button-wrapper.png" alt="Close">
-                    </div>
-                </div>
-                <div class="notification-body">
-                    <div class="notification-content">
-                        <div class="notification-text">
-                            <span class="notification-cashback">${desc}</span>
-                            Trumf-bonus hos ${merchant.name}.<br/><br/>
-                            Husk å:
-                            <ul class="notification-list">
-                                <li>Deaktivere uBlock Origin</li>
-                                <li>Deaktivere AdGuard Home/Pi-Hole</li>
-                                <li>Tømme handlevognen</li>
-                            </ul>
-                        </div>
-                        <a class="notification-button"
-                           href="https://trumfnetthandel.no/cashback/${merchant.urlName}"
-                           target="_blank" rel="noopener noreferrer">
-                            Få Trumf-bonus
-                        </a>
-                    </div>
-                </div>
-            </div>
+          <div class="notification-wrapper">
+              <div class="notification-header">
+                  <div class="notification-logo">
+                      <img src="https://trumfnetthandel.no/dest/img/Trumf/notifier/nett-handel-wrapper-logo.svg" alt="Trumf Nettbutikk Logo">
+                  </div>
+                  <div class="notification-close-button">
+                      <img src="https://trumfnetthandel.no/dest/img/Trumf/notifier/close-button-wrapper.png" alt="Close">
+                  </div>
+              </div>
+              <div class="notification-body">
+                  <div class="notification-content">
+                      <div class="notification-text">
+                          <span class="notification-cashback">${merchant.cashbackDescription}</span>
+                          <span class="notification-subtitle">Trumf-bonus hos ${merchant.name}</span>
+                          <p class="husk-line">Husk å:</p>
+                          <ol class="notification-list">
+                              <li>Deaktivere uBlock Origin</li>
+                              <li>Deaktivere AdGuard Home/Pi-Hole</li>
+                              <li>Tømme handlevognen</li>
+                          </ol>
+                      </div>
+                      <a class="notification-button"
+                         href="https://trumfnetthandel.no/cashback/${merchant.urlName}"
+                         target="_blank" rel="noopener noreferrer">
+                         Få Trumf-bonus
+                      </a>
+                  </div>
+              </div>
+          </div>
         `;
+        shadowRoot.appendChild(container);
 
-        // Create the small, dim info button and append it inside the container
-        const infoButton = document.createElement("a");
+        // Info button
+        const infoButton = document.createElement('a');
         infoButton.href = "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite";
         infoButton.target = "_blank";
         infoButton.rel = "noopener noreferrer";
         infoButton.textContent = "i";
         infoButton.classList.add("notification-info-button");
+        container.querySelector(".notification-wrapper").appendChild(infoButton);
 
-        const wrapper = container.querySelector(".notification-wrapper");
-        if (wrapper) {
-            wrapper.appendChild(infoButton);
-        }
-
-        document.body.appendChild(container);
-
-        // Initial UI Adjustment based on window size
-        adjustNotifierUI(container, basicRate);
-
-        // Attach a debounced resize event listener for responsive adjustments
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                adjustNotifierUI(container, basicRate);
-            }, 150);
-        });
-
-        // Close button functionality
+        // Close button
         const closeBtn = container.querySelector(".notification-close-button img");
         closeBtn?.addEventListener("click", () => {
             sessionStorage.setItem(sessionClosedKey, "true");
-            container.remove();
+            document.body.removeChild(shadowHost);
         });
 
-        // Action button click functionality
+        // Action button
         const button = container.querySelector(".notification-button");
+        adblockButtonRef = button; // store reference for adblock changes
         button?.addEventListener("click", () => {
-            // Replace the notifier content with the confirmation message
             const bodyContent = container.querySelector(".notification-content");
             if (bodyContent) {
-                bodyContent.innerHTML = `<div class="notification-text">Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert.</div>`;
+                bodyContent.innerHTML = `
+                  <div class="notification-text">
+                      Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert.
+                  </div>
+                `;
             }
-
-            // Set the message shown flag in localStorage with current timestamp
             localStorage.setItem(messageShownKey, Date.now().toString());
         });
+
+        // Button text adapt on small screens
+        const basicRate = merchant.basicRate;
+        function adjustNotifierUI() {
+            const windowWidth = window.innerWidth;
+            if (!button) return;
+
+            if (windowWidth <= WIDTH_THRESHOLD) {
+                if (!button.dataset.originalText) {
+                    button.dataset.originalText = button.textContent.trim();
+                    button.textContent = `Få ${basicRate} Trumf-bonus`;
+                }
+            } else {
+                if (button.dataset.originalText) {
+                    button.textContent = button.dataset.originalText;
+                    delete button.dataset.originalText;
+                }
+            }
+        }
+        adjustNotifierUI();
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(adjustNotifierUI, 150);
+        });
+
+        // Finally, check Adblock & transform button if detected
+        runAdblockDetection();
     }
 
-    /**
-     * Adjusts the notifier UI based on the current window width.
-     * @param {HTMLElement} container - The notification container element.
-     * @param {string} basicRate - The basic rate from the JSON data.
-     */
-    function adjustNotifierUI(container, basicRate) {
-        const windowWidth = window.innerWidth;
+    // ---------------------------
+    // Adblock detection code
+    // ---------------------------
+    const outbrainErrorCheck = async () => {
+        try {
+            const resp = await fetch("https://widgets.outbrain.com/outbrain.js");
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
 
-        const bodyText = container.querySelector(".notification-text");
-        const button = container.querySelector(".notification-button");
+    const adligatureErrorCheck = async () => {
+        try {
+            const resp = await fetch("https://adligature.com/", { mode: "no-cors" });
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
 
-        if (windowWidth <= WIDTH_THRESHOLD) {
-            // Hide the "Husk å..." section
-            if (bodyText) {
-                bodyText.style.display = 'none';
-            }
+    const quantserveErrorCheck = async () => {
+        try {
+            const resp = await fetch("https://secure.quantserve.com/quant.js", { mode: "no-cors" });
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
 
-            // Update button text to include basicRate
-            if (!button.dataset.originalText) {
-                button.dataset.originalText = button.textContent.trim();
-                button.textContent = `Få ${basicRate} Trumf-bonus`;
-            }
-        } else {
-            // Show the "Husk å..." section
-            if (bodyText) {
-                bodyText.style.display = 'block';
-            }
+    const adligatureCssErrorCheck = async () => {
+        try {
+            const resp = await fetch("https://cdn.adligature.com/work.ink/prod/rules.css", { mode: "no-cors" });
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
 
-            // Revert button text to original
-            if (button.dataset.originalText) {
-                button.textContent = button.dataset.originalText;
-                delete button.dataset.originalText;
+    const srvtrackErrorCheck = async () => {
+        try {
+            const resp = await fetch("https://srvtrck.com/assets/css/LineIcons.css", { mode: "no-cors" });
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
+
+    const yieldkitCheck = async () => {
+        try {
+            const resp = await fetch("https://js.srvtrck.com/v1/js?api_key=40710abb89ad9e06874a667b2bc7dee7&site_id=1f10f78243674fcdba586e526cb8ef08", { mode: "no-cors" });
+            await resp.text();
+            return false;
+        } catch (e) {
+            return true;
+        }
+    };
+
+    const setIntervalCheck = () => {
+        return new Promise((resolve) => {
+            const timeout = setTimeout(() => {
+                resolve(true);
+            }, 2000);
+
+            const interval = setInterval(() => {
+                const a0b = "a0b";
+                if (a0b === "a0b") {
+                    clearInterval(interval);
+                    clearTimeout(timeout);
+                    resolve(false);
+                }
+            }, 100);
+        });
+    };
+
+    // Hidden banners check
+    const idCheck = async () => {
+        const bannerIds = ["AdHeader", "AdContainer", "AD_Top", "homead", "ad-lead"];
+        const bannerString = bannerIds.map((bannerId) => `<div id="${bannerId}">&nbsp;</div>`).join('');
+        const dataContainer = document.createElement("div");
+        dataContainer.innerHTML = bannerString;
+        document.body.append(dataContainer);
+
+        let adblocker = false;
+        bannerIds.forEach(id => {
+            const elem = document.getElementById(id);
+            if (!elem || elem.offsetHeight === 0) {
+                adblocker = true;
             }
+            elem?.remove();
+        });
+        return adblocker;
+    };
+
+    const detectedAdblock = async () => {
+        const resp = await Promise.all([
+            outbrainErrorCheck(),
+            adligatureErrorCheck(),
+            quantserveErrorCheck(),
+            adligatureCssErrorCheck(),
+            srvtrackErrorCheck(),
+            setIntervalCheck(),
+            yieldkitCheck()
+        ]);
+        const isNotUsingAdblocker = resp.every(r => r === false);
+        const bannerBlocked = await idCheck(); // additional check
+
+        return !isNotUsingAdblocker || bannerBlocked;
+    };
+
+    async function runAdblockDetection() {
+        const isAdblock = await detectedAdblock();
+        if (isAdblock && adblockButtonRef) {
+            // Create a fresh button to replace original (removing old click handler)
+            const newButton = adblockButtonRef.cloneNode(true);
+            adblockButtonRef.parentNode.replaceChild(newButton, adblockButtonRef);
+
+            newButton.classList.add("adblock-detected");
+            newButton.textContent = "Adblocker funnet!";
+            // remove link/href
+            newButton.removeAttribute("href");
+            newButton.removeAttribute("target");
+
+            // On click -> reload the site
+            newButton.addEventListener("click", (evt) => {
+                evt.preventDefault();
+                location.reload();
+            });
         }
     }
 
-    // Initialize the script by fetching the feed
+    // ---------------------------
+    // Initialize
+    // ---------------------------
     fetchFeed();
 
 })();
