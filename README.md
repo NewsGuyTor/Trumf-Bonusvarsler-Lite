@@ -1,10 +1,10 @@
 # Trumf Bonusvarsler Lite
 
-![Versjon](https://img.shields.io/badge/Versjon-1.0.0-blue)
+![Versjon](https://img.shields.io/badge/Versjon-2.2.0-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-MIT-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Safari-yellow)
 
-**Trumf Bonusvarsler Lite** er et minimalistisk userscript som varsler deg når du besøker nettbutikker som tilbyr Trumf-bonus. 
+**Trumf Bonusvarsler Lite** er et minimalistisk userscript som varsler deg når du besøker nettbutikker som tilbyr Trumf-bonus.
 
 Med dette scriptet får du raskt og enkelt oversikt over hvilke butikker som gir deg ekstra bonus, slik at du kan dra nytte av de beste tilbudene.
 
@@ -25,6 +25,10 @@ Kompatibelt med nesten alle nettlesere.
 
 - **Enkel varsling**: Få beskjed når du er inne på en nettbutikk som gir Trumf-bonus.
 - **Minimalistisk design**: Lite og ryddig grensesnitt som ikke forstyrrer din nettleseropplevelse.
+- **Mørk modus**: Støtter lys, mørk og system-tema (følger OS-innstillingen).
+- **Innstillinger**: Tannhjulikon gir tilgang til innstillinger for tema og skjulte sider.
+- **Skjul per side**: Velg å permanent skjule varselet på bestemte nettsteder.
+- **Adblocker-varsling**: Varsler deg hvis adblocker er aktivert (Trumf-tracking krever at adblocker er deaktivert).
 - **Automatisk oppdatering**: Hold scriptet oppdatert uten manuell inngripen.
 - **Privatliv**: Sender ikke dine nettleserdata på avveie.
 - **Kryssplattform**: Støtter Firefox, Safari og Chrome, samt iOS via Userscripts-appen.
@@ -87,6 +91,15 @@ Etter installasjon trenger du ikke gjøre noe ekstra. Når du besøker en nettbu
 
 3. **Handle og få bonus:**
    Klikk på `Få Trumf-bonus`-knappen i varselet for å aktivere bonusen. Husk å deaktivere uBlock Origin/Adguard Home og andre adblockere for optimal funksjonalitet.
+
+### Innstillinger
+
+Klikk på tannhjulikonet øverst til høyre i varselet for å åpne innstillinger:
+
+- **Utseende**: Velg mellom Lys, Mørk eller System-tema.
+- **Skjulte sider**: Se antall skjulte sider og nullstill om ønskelig.
+
+For å skjule varselet permanent på en bestemt side, klikk på "Ikke vis på denne siden" nederst i varselet.
 
 ## 📄 Lisens
 
