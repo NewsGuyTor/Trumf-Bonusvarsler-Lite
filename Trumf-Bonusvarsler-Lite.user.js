@@ -888,10 +888,8 @@
                 actionBtn.textContent = 'Adblocker funnet!';
                 actionBtn.removeAttribute('href');
                 actionBtn.removeAttribute('target');
-                actionBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    location.reload();
-                }, { once: true });
+                actionBtn.style.pointerEvents = 'none';
+                actionBtn.style.cursor = 'default';
             }
         });
 
