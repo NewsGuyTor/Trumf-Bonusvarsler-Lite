@@ -8,7 +8,7 @@ Trumf Bonusvarsler Lite is a userscript that displays notifications when users v
 
 ## Architecture
 
-**Single-file userscript**: `Trumf-Bonusvarsler-Lite.user.js` (v2.2.0) contains all logic, organized in sections:
+**Single-file userscript**: `Trumf-Bonusvarsler-Lite.user.js` (v2.2.1) contains all logic, organized in sections:
 
 1. **Configuration** - URLs, cache durations, storage keys
 2. **Utility Functions** - `sleep()`, `gmFetch()` (Promise wrapper for GM.xmlHttpRequest), `withTimeout()`
