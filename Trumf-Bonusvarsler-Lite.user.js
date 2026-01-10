@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.2.1
+// @version      2.3.0
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @connect      wlp.tcb-cdn.com
@@ -38,6 +38,7 @@
     const messageShownKey = `TrumfBonusvarslerLite_MessageShown_${currentHost}`;
     const hiddenSitesKey = 'TrumfBonusvarslerLite_HiddenSites';
     const themeKey = 'TrumfBonusvarslerLite_Theme';
+    const startMinimizedKey = 'TrumfBonusvarslerLite_StartMinimized';
 
     // ===================
     // Utility Functions
@@ -113,6 +114,18 @@
 
     function setTheme(theme) {
         localStorage.setItem(themeKey, theme);
+    }
+
+    // ===================
+    // Start Minimized Management
+    // ===================
+
+    function getStartMinimized() {
+        return localStorage.getItem(startMinimizedKey) === 'true';
+    }
+
+    function setStartMinimized(value) {
+        localStorage.setItem(startMinimizedKey, value ? 'true' : 'false');
     }
 
     // ===================
@@ -664,6 +677,124 @@
                 text-decoration: underline;
             }
 
+            /* Toggle switch */
+            .toggle-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .toggle-switch {
+                position: relative;
+                width: 44px;
+                height: 24px;
+                background: var(--btn-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background 0.2s, border-color 0.2s;
+            }
+            .toggle-switch::after {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 18px;
+                height: 18px;
+                background: var(--text-muted);
+                border-radius: 50%;
+                transition: transform 0.2s, background 0.2s;
+            }
+            .toggle-switch.active {
+                background: var(--btn-bg-active);
+                border-color: var(--btn-bg-active);
+            }
+            .toggle-switch.active::after {
+                transform: translateX(20px);
+                background: #fff;
+            }
+
+            /* Minimize button */
+            .minimize-btn {
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+                opacity: 0.6;
+                transition: opacity 0.2s;
+                margin-right: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .minimize-btn:hover {
+                opacity: 1;
+            }
+            .minimize-btn::before {
+                content: '';
+                width: 12px;
+                height: 2px;
+                background: var(--text-muted);
+                border-radius: 1px;
+            }
+            .minimize-btn:hover::before {
+                background: var(--text);
+            }
+
+            /* Minimized state */
+            .container {
+                transition: width 0.3s ease, min-width 0.3s ease;
+            }
+            .body {
+                max-height: 500px;
+                opacity: 1;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+            }
+            .container.minimized {
+                width: auto;
+                min-width: 180px;
+                cursor: pointer;
+            }
+            .container.minimized .body {
+                max-height: 0;
+                opacity: 0;
+                padding: 0 16px;
+            }
+            .container.minimized .info-link {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+            .info-link {
+                transition: opacity 0.2s ease;
+            }
+            .cashback-mini {
+                font-weight: 700;
+                font-size: 15px;
+                color: var(--accent);
+                margin-left: auto;
+                padding: 0 16px;
+                opacity: 0;
+                max-width: 0;
+                overflow: hidden;
+                transition: opacity 0.2s ease, max-width 0.3s ease;
+            }
+            .container.minimized .cashback-mini {
+                opacity: 1;
+                max-width: 100px;
+            }
+            .settings-btn,
+            .minimize-btn {
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            .container.minimized .settings-btn,
+            .container.minimized .minimize-btn {
+                opacity: 0;
+                pointer-events: none;
+                width: 0;
+                margin: 0;
+                overflow: hidden;
+            }
+
             @media (max-width: 700px) {
                 .checklist { display: none; }
                 .reminder { display: none; }
@@ -697,16 +828,27 @@
         const headerRight = document.createElement('div');
         headerRight.className = 'header-right';
 
+        // Cashback badge for minimized state
+        const cashbackMini = document.createElement('span');
+        cashbackMini.className = 'cashback-mini';
+        cashbackMini.textContent = merchant.cashbackDescription || '';
+
         const settingsBtn = document.createElement('img');
         settingsBtn.className = 'settings-btn';
         settingsBtn.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>');
         settingsBtn.alt = 'Innstillinger';
 
+        const minimizeBtn = document.createElement('button');
+        minimizeBtn.className = 'minimize-btn';
+        minimizeBtn.setAttribute('aria-label', 'Minimer');
+
         const closeBtn = document.createElement('button');
         closeBtn.className = 'close-btn';
         closeBtn.setAttribute('aria-label', 'Lukk');
 
+        headerRight.appendChild(cashbackMini);
         headerRight.appendChild(settingsBtn);
+        headerRight.appendChild(minimizeBtn);
         headerRight.appendChild(closeBtn);
 
         header.appendChild(logo);
@@ -793,6 +935,21 @@
         themeRow.appendChild(themeLabel);
         themeRow.appendChild(themeButtons);
 
+        // Start minimized toggle
+        const minimizeRow = document.createElement('div');
+        minimizeRow.className = 'setting-row toggle-row';
+
+        const minimizeLabel = document.createElement('span');
+        minimizeLabel.className = 'setting-label';
+        minimizeLabel.style.marginBottom = '0';
+        minimizeLabel.textContent = 'Start minimert';
+
+        const minimizeToggle = document.createElement('span');
+        minimizeToggle.className = 'toggle-switch' + (getStartMinimized() ? ' active' : '');
+
+        minimizeRow.appendChild(minimizeLabel);
+        minimizeRow.appendChild(minimizeToggle);
+
         const hiddenRow = document.createElement('div');
         hiddenRow.className = 'setting-row';
 
@@ -825,6 +982,7 @@
 
         settings.appendChild(settingsTitle);
         settings.appendChild(themeRow);
+        settings.appendChild(minimizeRow);
         settings.appendChild(hiddenRow);
         settings.appendChild(backLink);
         body.appendChild(settings);
@@ -842,6 +1000,11 @@
         container.appendChild(body);
         container.appendChild(infoLink);
         shadowRoot.appendChild(container);
+
+        // Apply initial minimized state
+        if (getStartMinimized()) {
+            container.classList.add('minimized');
+        }
 
         // Event handlers
         function closeNotification() {
@@ -883,6 +1046,12 @@
             btn.classList.add('active');
         });
 
+        // Start minimized toggle
+        minimizeToggle.addEventListener('click', () => {
+            const isActive = minimizeToggle.classList.toggle('active');
+            setStartMinimized(isActive);
+        });
+
         // Reset hidden sites
         resetHidden.addEventListener('click', () => {
             localStorage.removeItem(hiddenSitesKey);
@@ -903,6 +1072,21 @@
             confirmation.className = 'confirmation';
             confirmation.textContent = 'Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert.';
             content.appendChild(confirmation);
+        });
+
+        // Minimize/expand toggle
+        minimizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            container.classList.add('minimized');
+        });
+
+        container.addEventListener('click', (e) => {
+            if (container.classList.contains('minimized')) {
+                // Only expand if clicking on the container itself or header, not buttons
+                if (!e.target.closest('.close-btn')) {
+                    container.classList.remove('minimized');
+                }
+            }
         });
 
         // Adblock detection
