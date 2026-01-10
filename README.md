@@ -10,7 +10,9 @@
 - Stilrent design med lys/mørk modus
 - Respekterer personvernet ditt — ingen sporing
 
-![Demo](https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif)
+<p align="center">
+  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="80%">
+</p>
 
 ---
 
