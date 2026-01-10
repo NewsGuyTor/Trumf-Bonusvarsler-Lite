@@ -2,14 +2,18 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.7.6
+// @version      3.0.1
 // @match        *://*/*
+// @noframes
+// @run-at       document-idle
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM.registerMenuCommand
+// @grant        GM_registerMenuCommand
 // @connect      wlp.tcb-cdn.com
 // @connect      raw.githubusercontent.com
 // @homepageURL  https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
@@ -24,14 +28,32 @@
     'use strict';
 
     // ===================
+    // Ultra-early bailouts (before any async work)
+    // ===================
+
+    // Skip iframes entirely (backup for @noframes)
+    if (window.top !== window.self) return;
+
+    const currentHost = window.location.hostname;
+    const messageShownKey = `TrumfBonusvarslerLite_MessageShown_${currentHost}`;
+
+    // Check cheap sync storage before any GM calls
+    const messageShownTime = localStorage.getItem(messageShownKey);
+    if (messageShownTime) {
+        const elapsed = Date.now() - parseInt(messageShownTime, 10);
+        if (elapsed < 10 * 60 * 1000) return; // 10 minute cooldown
+    }
+
+    // ===================
     // Configuration
     // ===================
     const CONFIG = {
         feedUrl: 'https://wlp.tcb-cdn.com/trumf/notifierfeed.json',
         fallbackUrl: 'https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json',
-        cacheKey: 'TrumfBonusvarslerLite_FeedData_v2',
-        cacheTimeKey: 'TrumfBonusvarslerLite_FeedTime_v2',
-        cacheDuration: 6 * 60 * 60 * 1000, // 6 hours
+        cacheKey: 'TrumfBonusvarslerLite_FeedData_v3',
+        cacheTimeKey: 'TrumfBonusvarslerLite_FeedTime_v3',
+        hostIndexKey: 'TrumfBonusvarslerLite_HostIndex_v3',
+        cacheDuration: 48 * 60 * 60 * 1000, // 48 hours
         messageDuration: 10 * 60 * 1000,   // 10 minutes
         maxRetries: 5,
         retryDelays: [100, 500, 1000, 2000, 4000], // Exponential backoff
@@ -65,13 +87,170 @@
         'no.trip.com': 'www.trip.com',
     };
 
-    const currentHost = window.location.hostname;
-    const sessionClosedKey = `TrumfBonusvarslerLite_Closed_${currentHost}`;
-    const messageShownKey = `TrumfBonusvarslerLite_MessageShown_${currentHost}`;
     const hiddenSitesKey = 'TrumfBonusvarslerLite_HiddenSites';
     const themeKey = 'TrumfBonusvarslerLite_Theme';
     const startMinimizedKey = 'TrumfBonusvarslerLite_StartMinimized';
     const reminderShownKey = 'TrumfBonusvarslerLite_ReminderShown';
+
+    // Shared CSS for notification UI
+    const BASE_CSS = `
+        :host {
+            all: initial;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            --bg: #fff;
+            --bg-header: #f3f3f3;
+            --border: #ececec;
+            --text: #333;
+            --text-muted: #666;
+            --accent: #4D4DFF;
+            --accent-hover: #3232ff;
+            --shadow: rgba(0,0,0,0.3);
+            --info-bg: #ccc;
+            --btn-bg: #e8e8e8;
+            --btn-bg-active: #4D4DFF;
+            color: var(--text);
+        }
+        :host(.tbvl-dark) {
+            --bg: #1e1e1e;
+            --bg-header: #2d2d2d;
+            --border: #404040;
+            --text: #e0e0e0;
+            --text-muted: #999;
+            --accent: #6b6bff;
+            --accent-hover: #5252ff;
+            --shadow: rgba(0,0,0,0.5);
+            --info-bg: #555;
+            --btn-bg: #404040;
+            --btn-bg-active: #6b6bff;
+        }
+        @media (prefers-color-scheme: dark) {
+            :host(.tbvl-system) {
+                --bg: #1e1e1e;
+                --bg-header: #2d2d2d;
+                --border: #404040;
+                --text: #e0e0e0;
+                --text-muted: #999;
+                --accent: #6b6bff;
+                --accent-hover: #5252ff;
+                --shadow: rgba(0,0,0,0.5);
+                --info-bg: #555;
+                --btn-bg: #404040;
+                --btn-bg-active: #6b6bff;
+            }
+        }
+        :host *,
+        :host *::before,
+        :host *::after {
+            all: revert;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif !important;
+            font-size: inherit;
+            line-height: inherit;
+            letter-spacing: normal;
+            word-spacing: normal;
+            text-transform: none;
+            text-indent: 0;
+            text-shadow: none;
+            text-decoration: none;
+            text-align: left;
+            white-space: normal;
+            font-style: normal;
+            font-weight: normal;
+            font-variant: normal;
+            color: inherit;
+            background: transparent;
+            border: none;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            vertical-align: baseline;
+            float: none;
+            clear: none;
+            direction: ltr;
+            visibility: visible;
+            opacity: 1;
+            filter: none;
+            transform: none;
+            pointer-events: auto;
+        }
+        .container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2147483647;
+            width: 360px;
+            max-width: calc(100vw - 40px);
+            background: var(--bg);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px var(--shadow);
+            overflow: hidden;
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border);
+        }
+        .logo img {
+            all: unset;
+            display: block;
+            max-height: 28px;
+        }
+        :host(.tbvl-dark) .logo img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        @media (prefers-color-scheme: dark) {
+            :host(.tbvl-system) .logo img {
+                filter: invert(1) hue-rotate(180deg);
+            }
+        }
+        .close-btn {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            border: none;
+            background: transparent;
+            padding: 0;
+        }
+        .close-btn::before,
+        .close-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 2px;
+            background: var(--text-muted);
+            border-radius: 1px;
+        }
+        .close-btn::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        .close-btn::after {
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        .close-btn:hover {
+            transform: scale(1.15);
+        }
+        .close-btn:hover::before,
+        .close-btn:hover::after {
+            background: var(--text);
+        }
+        .body {
+            padding: 16px;
+        }
+    `;
 
     // ===================
     // Utility Functions
@@ -127,37 +306,46 @@
     // ===================
 
     async function gmGetValue(key, defaultValue) {
-        // Use GM.getValue (GM4+) or fall back to GM_getValue (GM3/iOS)
-        if (typeof GM !== 'undefined' && GM.getValue) {
-            return await GM.getValue(key, defaultValue);
-        } else if (typeof GM_getValue !== 'undefined') {
-            return GM_getValue(key, defaultValue);
+        try {
+            // Use GM.getValue (GM4+) or fall back to GM_getValue (GM3/iOS)
+            if (typeof GM !== 'undefined' && GM.getValue) {
+                return await GM.getValue(key, defaultValue);
+            } else if (typeof GM_getValue !== 'undefined') {
+                return GM_getValue(key, defaultValue);
+            }
+            // Fallback to localStorage if no GM storage available
+            const stored = localStorage.getItem(key);
+            return stored !== null ? JSON.parse(stored) : defaultValue;
+        } catch {
+            return defaultValue;
         }
-        // Fallback to localStorage if no GM storage available
-        const stored = localStorage.getItem(key);
-        return stored !== null ? JSON.parse(stored) : defaultValue;
     }
 
     async function gmSetValue(key, value) {
-        // Use GM.setValue (GM4+) or fall back to GM_setValue (GM3/iOS)
-        if (typeof GM !== 'undefined' && GM.setValue) {
-            return await GM.setValue(key, value);
-        } else if (typeof GM_setValue !== 'undefined') {
-            return GM_setValue(key, value);
+        try {
+            // Use GM.setValue (GM4+) or fall back to GM_setValue (GM3/iOS)
+            if (typeof GM !== 'undefined' && GM.setValue) {
+                return await GM.setValue(key, value);
+            } else if (typeof GM_setValue !== 'undefined') {
+                return GM_setValue(key, value);
+            }
+            // Fallback to localStorage if no GM storage available
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch {
+            // Storage unavailable or full, fail silently
         }
-        // Fallback to localStorage if no GM storage available
-        localStorage.setItem(key, JSON.stringify(value));
     }
 
     // Settings cache (loaded at init, used synchronously)
     let settingsCache = {
-        hiddenSites: [],
+        hiddenSites: new Set(),
         theme: 'system',
         startMinimized: false
     };
 
     async function loadSettings() {
-        settingsCache.hiddenSites = await gmGetValue(hiddenSitesKey, []);
+        const hiddenSitesArray = await gmGetValue(hiddenSitesKey, []);
+        settingsCache.hiddenSites = new Set(hiddenSitesArray);
         settingsCache.theme = await gmGetValue(themeKey, 'system');
         settingsCache.startMinimized = await gmGetValue(startMinimizedKey, false);
     }
@@ -171,19 +359,19 @@
     }
 
     async function hideSite(host) {
-        if (!settingsCache.hiddenSites.includes(host)) {
-            settingsCache.hiddenSites.push(host);
-            await gmSetValue(hiddenSitesKey, settingsCache.hiddenSites);
+        if (!settingsCache.hiddenSites.has(host)) {
+            settingsCache.hiddenSites.add(host);
+            await gmSetValue(hiddenSitesKey, [...settingsCache.hiddenSites]);
         }
     }
 
     async function resetHiddenSites() {
-        settingsCache.hiddenSites = [];
+        settingsCache.hiddenSites = new Set();
         await gmSetValue(hiddenSitesKey, []);
     }
 
     function isSiteHidden(host) {
-        return settingsCache.hiddenSites.includes(host);
+        return settingsCache.hiddenSites.has(host);
     }
 
     // ===================
@@ -216,58 +404,44 @@
     // Early Exit Checks
     // ===================
 
+    // Note: Session closed and message cooldown checks are done at the very top
+    // of the IIFE (before any async work) for maximum performance.
     function shouldSkipNotification() {
-        // Check if site is permanently hidden
-        if (isSiteHidden(currentHost)) {
-            return true;
-        }
-
-        // Check if user closed notification this session
-        if (sessionStorage.getItem(sessionClosedKey) === 'true') {
-            return true;
-        }
-
-        // Check if message was shown recently (within 10 minutes)
-        const messageShownTime = localStorage.getItem(messageShownKey);
-        if (messageShownTime) {
-            const elapsed = Date.now() - parseInt(messageShownTime, 10);
-            if (elapsed < CONFIG.messageDuration) {
-                return true;
-            }
-        }
-
-        return false;
+        // Check if site is permanently hidden (requires settings cache)
+        return isSiteHidden(currentHost);
     }
 
     // ===================
-    // Feed Management
+    // Feed Management (GM storage - shared across all sites)
     // ===================
 
-    function getCachedFeed() {
-        const storedTime = localStorage.getItem(CONFIG.cacheTimeKey);
-        const storedData = localStorage.getItem(CONFIG.cacheKey);
-
-        // Both must exist and be valid
-        if (!storedTime || !storedData) {
+    async function getCachedFeed() {
+        const storedTime = await gmGetValue(CONFIG.cacheTimeKey, null);
+        if (!storedTime) {
             return null;
         }
 
-        const elapsed = Date.now() - parseInt(storedTime, 10);
+        const elapsed = Date.now() - storedTime;
         if (elapsed >= CONFIG.cacheDuration) {
             return null;
         }
 
-        try {
-            return JSON.parse(storedData);
-        } catch {
-            return null;
-        }
+        const storedData = await gmGetValue(CONFIG.cacheKey, null);
+        return isValidFeed(storedData) ? storedData : null;
     }
 
-    function cacheFeed(data) {
+    function isValidFeed(feed) {
+        return feed && typeof feed.merchants === 'object' && feed.merchants !== null;
+    }
+
+    async function cacheFeed(data) {
         try {
-            localStorage.setItem(CONFIG.cacheKey, JSON.stringify(data));
-            localStorage.setItem(CONFIG.cacheTimeKey, Date.now().toString());
+            await gmSetValue(CONFIG.cacheKey, data);
+            await gmSetValue(CONFIG.cacheTimeKey, Date.now());
+            // Cache host index for fast lookups
+            if (data?.merchants) {
+                await gmSetValue(CONFIG.hostIndexKey, Object.keys(data.merchants));
+            }
         } catch {
             // Storage full or unavailable, continue without caching
         }
@@ -277,11 +451,15 @@
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 const response = await gmFetch(url);
-                return JSON.parse(response.responseText);
-            } catch (error) {
-                if (attempt < retries - 1) {
-                    await sleep(CONFIG.retryDelays[attempt] || 4000);
+                const feed = JSON.parse(response.responseText);
+                if (isValidFeed(feed)) {
+                    return feed;
                 }
+            } catch {
+                // JSON parse error or network error
+            }
+            if (attempt < retries - 1) {
+                await sleep(CONFIG.retryDelays[attempt] || 4000);
             }
         }
         return null;
@@ -289,26 +467,64 @@
 
     async function getFeed() {
         // Try cache first
-        const cached = getCachedFeed();
+        const cached = await getCachedFeed();
         if (cached) {
             return cached;
+        }
+
+        // Skip network requests if offline
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            return null;
         }
 
         // Try primary feed
         let feed = await fetchFeedWithRetry(CONFIG.feedUrl);
         if (feed) {
-            cacheFeed(feed);
+            await cacheFeed(feed);
             return feed;
         }
 
         // Try fallback
         feed = await fetchFeedWithRetry(CONFIG.fallbackUrl, 2);
         if (feed) {
-            cacheFeed(feed);
+            await cacheFeed(feed);
             return feed;
         }
 
         return null;
+    }
+
+    // ===================
+    // Quick Host Check (avoids full feed parse for non-merchants)
+    // ===================
+
+    async function isKnownMerchantHost() {
+        const hostIndex = await gmGetValue(CONFIG.hostIndexKey, null);
+        if (!hostIndex) {
+            // No index yet, need full check
+            return null;
+        }
+
+        const hostSet = new Set(hostIndex);
+        const noWww = currentHost.replace(/^www\./, '');
+
+        // Check direct matches
+        if (hostSet.has(currentHost) || hostSet.has(noWww) || hostSet.has('www.' + noWww)) {
+            return true;
+        }
+
+        // Check domain aliases
+        const aliasedHost = DOMAIN_ALIASES[currentHost];
+        if (aliasedHost && hostSet.has(aliasedHost)) {
+            return true;
+        }
+
+        const aliasedNoWww = DOMAIN_ALIASES[noWww];
+        if (aliasedNoWww && hostSet.has(aliasedNoWww)) {
+            return true;
+        }
+
+        return false;
     }
 
     // ===================
@@ -472,161 +688,7 @@
         document.body.appendChild(shadowHost);
         const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
 
-        const styles = `
-            :host {
-                all: initial;
-                font-family: 'Segoe UI', system-ui, sans-serif;
-                font-size: 15px;
-                line-height: 1.6;
-                --bg: #fff;
-                --bg-header: #f3f3f3;
-                --border: #ececec;
-                --text: #333;
-                --text-muted: #666;
-                --accent: #4D4DFF;
-                --accent-hover: #3232ff;
-                --shadow: rgba(0,0,0,0.3);
-                color: var(--text);
-            }
-            :host(.tbvl-dark) {
-                --bg: #1e1e1e;
-                --bg-header: #2d2d2d;
-                --border: #404040;
-                --text: #e0e0e0;
-                --text-muted: #999;
-                --accent: #6b6bff;
-                --accent-hover: #5252ff;
-                --shadow: rgba(0,0,0,0.5);
-            }
-            @media (prefers-color-scheme: dark) {
-                :host(.tbvl-system) {
-                    --bg: #1e1e1e;
-                    --bg-header: #2d2d2d;
-                    --border: #404040;
-                    --text: #e0e0e0;
-                    --text-muted: #999;
-                    --accent: #6b6bff;
-                    --accent-hover: #5252ff;
-                    --shadow: rgba(0,0,0,0.5);
-                }
-            }
-            :host *,
-            :host *::before,
-            :host *::after {
-                all: revert;
-                box-sizing: border-box;
-                font-family: 'Segoe UI', system-ui, sans-serif !important;
-                font-size: inherit;
-                line-height: inherit;
-                letter-spacing: normal;
-                word-spacing: normal;
-                text-transform: none;
-                text-indent: 0;
-                text-shadow: none;
-                text-decoration: none;
-                text-align: left;
-                white-space: normal;
-                font-style: normal;
-                font-weight: normal;
-                font-variant: normal;
-                color: inherit;
-                background: transparent;
-                border: none;
-                margin: 0;
-                padding: 0;
-                outline: none;
-                vertical-align: baseline;
-                float: none;
-                clear: none;
-                direction: ltr;
-                visibility: visible;
-                opacity: 1;
-                filter: none;
-                transform: none;
-                pointer-events: auto;
-            }
-
-            .container {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 2147483647;
-                width: 360px;
-                max-width: calc(100vw - 40px);
-                background: var(--bg);
-                border-radius: 8px;
-                box-shadow: 0 8px 24px var(--shadow);
-                overflow: hidden;
-                animation: slideIn 0.4s ease-out;
-            }
-
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(40px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 16px;
-                background: var(--bg-header);
-                border-bottom: 1px solid var(--border);
-            }
-
-            .logo img {
-                all: unset;
-                display: block;
-                max-height: 28px;
-            }
-            :host(.tbvl-dark) .logo img {
-                filter: invert(1) hue-rotate(180deg);
-            }
-            @media (prefers-color-scheme: dark) {
-                :host(.tbvl-system) .logo img {
-                    filter: invert(1) hue-rotate(180deg);
-                }
-            }
-
-            .close-btn {
-                width: 22px;
-                height: 22px;
-                cursor: pointer;
-                transition: transform 0.2s;
-                position: relative;
-                border: none;
-                background: transparent;
-                padding: 0;
-            }
-            .close-btn::before,
-            .close-btn::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 16px;
-                height: 2px;
-                background: var(--text-muted);
-                border-radius: 1px;
-            }
-            .close-btn::before {
-                transform: translate(-50%, -50%) rotate(45deg);
-            }
-            .close-btn::after {
-                transform: translate(-50%, -50%) rotate(-45deg);
-            }
-            .close-btn:hover {
-                transform: scale(1.15);
-            }
-            .close-btn:hover::before,
-            .close-btn:hover::after {
-                background: var(--text);
-            }
-
-            .body {
-                padding: 16px;
-            }
-
+        const styles = BASE_CSS + `
             .title {
                 display: block;
                 font-size: 16px;
@@ -634,11 +696,9 @@
                 margin-bottom: 10px;
                 color: var(--accent);
             }
-
             .message {
                 margin: 0 0 12px;
             }
-
             .tip {
                 font-size: 13px;
                 color: var(--text-muted);
@@ -732,166 +792,7 @@
         document.body.appendChild(shadowHost);
         const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
 
-        const styles = `
-            :host {
-                all: initial;
-                font-family: 'Segoe UI', system-ui, sans-serif;
-                font-size: 15px;
-                line-height: 1.6;
-                --bg: #fff;
-                --bg-header: #f3f3f3;
-                --border: #ececec;
-                --text: #333;
-                --text-muted: #666;
-                --accent: #4D4DFF;
-                --accent-hover: #3232ff;
-                --shadow: rgba(0,0,0,0.3);
-                --info-bg: #ccc;
-                --btn-bg: #e8e8e8;
-                --btn-bg-active: #4D4DFF;
-                color: var(--text);
-            }
-            :host(.tbvl-dark) {
-                --bg: #1e1e1e;
-                --bg-header: #2d2d2d;
-                --border: #404040;
-                --text: #e0e0e0;
-                --text-muted: #999;
-                --accent: #6b6bff;
-                --accent-hover: #5252ff;
-                --shadow: rgba(0,0,0,0.5);
-                --info-bg: #555;
-                --btn-bg: #404040;
-                --btn-bg-active: #6b6bff;
-            }
-            @media (prefers-color-scheme: dark) {
-                :host(.tbvl-system) {
-                    --bg: #1e1e1e;
-                    --bg-header: #2d2d2d;
-                    --border: #404040;
-                    --text: #e0e0e0;
-                    --text-muted: #999;
-                    --accent: #6b6bff;
-                    --accent-hover: #5252ff;
-                    --shadow: rgba(0,0,0,0.5);
-                    --info-bg: #555;
-                    --btn-bg: #404040;
-                    --btn-bg-active: #6b6bff;
-                }
-            }
-            :host *,
-            :host *::before,
-            :host *::after {
-                all: revert;
-                box-sizing: border-box;
-                font-family: 'Segoe UI', system-ui, sans-serif !important;
-                font-size: inherit;
-                line-height: inherit;
-                letter-spacing: normal;
-                word-spacing: normal;
-                text-transform: none;
-                text-indent: 0;
-                text-shadow: none;
-                text-decoration: none;
-                text-align: left;
-                white-space: normal;
-                font-style: normal;
-                font-weight: normal;
-                font-variant: normal;
-                color: inherit;
-                background: transparent;
-                border: none;
-                margin: 0;
-                padding: 0;
-                outline: none;
-                vertical-align: baseline;
-                float: none;
-                clear: none;
-                direction: ltr;
-                visibility: visible;
-                opacity: 1;
-                filter: none;
-                transform: none;
-                pointer-events: auto;
-            }
-
-            .container {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 2147483647;
-                width: 360px;
-                max-width: calc(100vw - 40px);
-                background: var(--bg);
-                border-radius: 8px;
-                box-shadow: 0 8px 24px var(--shadow);
-                overflow: hidden;
-                animation: slideIn 0.4s ease-out;
-            }
-
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(40px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 16px;
-                background: var(--bg-header);
-                border-bottom: 1px solid var(--border);
-            }
-
-            .logo img {
-                all: unset;
-                display: block;
-                max-height: 28px;
-            }
-            :host(.tbvl-dark) .logo img {
-                filter: invert(1) hue-rotate(180deg);
-            }
-            @media (prefers-color-scheme: dark) {
-                :host(.tbvl-system) .logo img {
-                    filter: invert(1) hue-rotate(180deg);
-                }
-            }
-
-            .close-btn {
-                width: 22px;
-                height: 22px;
-                cursor: pointer;
-                transition: transform 0.2s;
-                position: relative;
-                border: none;
-                background: transparent;
-                padding: 0;
-            }
-            .close-btn::before,
-            .close-btn::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 16px;
-                height: 2px;
-                background: var(--text-muted);
-                border-radius: 1px;
-            }
-            .close-btn::before {
-                transform: translate(-50%, -50%) rotate(45deg);
-            }
-            .close-btn::after {
-                transform: translate(-50%, -50%) rotate(-45deg);
-            }
-            .close-btn:hover {
-                transform: scale(1.15);
-            }
-            .close-btn:hover::before,
-            .close-btn:hover::after {
-                background: var(--text);
-            }
-
+        const styles = BASE_CSS + `
             .settings-btn {
                 width: 20px;
                 height: 20px;
@@ -1385,20 +1286,21 @@
         hiddenLabel.textContent = 'Skjulte sider';
 
         const hiddenSites = getHiddenSites();
+        const hiddenCount = hiddenSites.size;
         const hiddenInfo = document.createElement('div');
         hiddenInfo.className = 'hidden-sites-info';
-        hiddenInfo.textContent = hiddenSites.length > 0
-            ? `${hiddenSites.length} side${hiddenSites.length > 1 ? 'r' : ''} skjult`
+        hiddenInfo.textContent = hiddenCount > 0
+            ? `${hiddenCount} side${hiddenCount > 1 ? 'r' : ''} skjult`
             : 'Ingen sider skjult';
 
         const resetHidden = document.createElement('span');
         resetHidden.className = 'reset-hidden';
         resetHidden.textContent = 'Nullstill';
-        resetHidden.style.display = hiddenSites.length > 0 ? 'inline' : 'none';
+        resetHidden.style.display = hiddenCount > 0 ? 'inline' : 'none';
 
         hiddenRow.appendChild(hiddenLabel);
         hiddenRow.appendChild(hiddenInfo);
-        if (hiddenSites.length > 0) {
+        if (hiddenCount > 0) {
             hiddenInfo.appendChild(document.createTextNode(' - '));
             hiddenInfo.appendChild(resetHidden);
         }
@@ -1435,7 +1337,6 @@
 
         // Event handlers
         function closeNotification() {
-            sessionStorage.setItem(sessionClosedKey, 'true');
             shadowHost.remove();
             document.removeEventListener('keydown', handleKeydown);
         }
@@ -1555,6 +1456,14 @@
             return;
         }
 
+        // Quick check: is this host in our merchant index?
+        // Returns true (might be merchant), false (not merchant), or null (no index yet)
+        const mightBeMerchant = await isKnownMerchantHost();
+        if (mightBeMerchant === false) {
+            // Definitely not a merchant, skip feed fetch entirely
+            return;
+        }
+
         const feed = await getFeed();
         if (!feed) {
             return;
@@ -1568,6 +1477,80 @@
         createNotification(merchant);
     }
 
+    // ===================
+    // Userscript Menu Commands
+    // ===================
+
+    function registerMenuCommand(name, callback) {
+        if (typeof GM !== 'undefined' && GM.registerMenuCommand) {
+            GM.registerMenuCommand(name, callback);
+        } else if (typeof GM_registerMenuCommand !== 'undefined') {
+            GM_registerMenuCommand(name, callback);
+        }
+    }
+
+    async function registerMenuCommands() {
+        await loadSettings();
+
+        const themeLabels = { light: 'Lys', dark: 'Mørk', system: 'System' };
+        const currentTheme = getTheme();
+
+        registerMenuCommand(`Tema: ${themeLabels[currentTheme]}`, async () => {
+            const themes = ['light', 'dark', 'system'];
+            const currentIndex = themes.indexOf(getTheme());
+            const nextTheme = themes[(currentIndex + 1) % themes.length];
+            await setTheme(nextTheme);
+            alert(`Tema endret til: ${themeLabels[nextTheme]}\n\nLast siden på nytt for å se endringen.`);
+        });
+
+        registerMenuCommand(`Start minimert: ${getStartMinimized() ? 'På' : 'Av'}`, async () => {
+            const newValue = !getStartMinimized();
+            await setStartMinimized(newValue);
+            alert(`Start minimert: ${newValue ? 'På' : 'Av'}`);
+        });
+
+        const hiddenCount = getHiddenSites().size;
+        registerMenuCommand(`Skjulte sider (${hiddenCount})`, async () => {
+            const sites = [...getHiddenSites()];
+            if (sites.length === 0) {
+                alert('Ingen sider er skjult.');
+                return;
+            }
+
+            const list = sites.map((site, i) => `${i + 1}. ${site}`).join('\n');
+            const input = prompt(
+                `Skjulte sider:\n\n${list}\n\n` +
+                `Skriv et tall for å fjerne en side, eller "alle" for å nullstille:`
+            );
+
+            if (!input) return;
+
+            if (input.toLowerCase() === 'alle') {
+                await resetHiddenSites();
+                alert('Alle skjulte sider er fjernet.');
+                return;
+            }
+
+            const index = parseInt(input, 10) - 1;
+            if (index >= 0 && index < sites.length) {
+                const siteToRemove = sites[index];
+                settingsCache.hiddenSites.delete(siteToRemove);
+                await gmSetValue(hiddenSitesKey, [...settingsCache.hiddenSites]);
+                alert(`"${siteToRemove}" er fjernet fra listen.`);
+            } else {
+                alert('Ugyldig valg.');
+            }
+        });
+
+        registerMenuCommand('Tøm feed-cache', async () => {
+            await gmSetValue(CONFIG.cacheKey, null);
+            await gmSetValue(CONFIG.cacheTimeKey, null);
+            await gmSetValue(CONFIG.hostIndexKey, null);
+            alert('Feed-cache er tømt.');
+        });
+    }
+
+    registerMenuCommands();
     init();
 
 })();
