@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Trumf Bonusvarsler Lite",
+  "version": "3.2.1",
+  "description": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig.",
+  "homepage_url": "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://wlp.tcb-cdn.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "service_worker": "background.js"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    },
+    "default_title": "Trumf Bonusvarsler Lite"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "trumf-bonusvarsler-lite@kristofferR",
+      "strict_min_version": "109.0"
+    }
+  }
+}

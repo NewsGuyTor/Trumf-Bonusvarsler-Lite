@@ -1,0 +1,106 @@
+// Trumf Bonusvarsler Lite - Background Service Worker
+// Handles cross-origin requests to bypass CORS restrictions
+
+const browser = globalThis.browser || globalThis.chrome;
+
+const CONFIG = {
+  feedUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
+  fallbackUrl:
+    "https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json",
+  maxRetries: 5,
+  retryDelays: [100, 500, 1000, 2000, 4000],
+};
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isValidFeed(feed) {
+  return feed && typeof feed.merchants === "object" && feed.merchants !== null;
+}
+
+async function fetchFeedWithRetry(url, retries = CONFIG.maxRetries) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          "Cache-Control": "no-cache",
+        },
+      });
+      if (response.ok) {
+        const feed = await response.json();
+        if (isValidFeed(feed)) {
+          return feed;
+        }
+      }
+    } catch {
+      // Network error
+    }
+    if (attempt < retries - 1) {
+      await sleep(CONFIG.retryDelays[attempt] || 4000);
+    }
+  }
+  return null;
+}
+
+async function fetchBundledFallback() {
+  try {
+    const url = browser.runtime.getURL("data/sitelist.json");
+    const response = await fetch(url);
+    if (response.ok) {
+      const feed = await response.json();
+      if (isValidFeed(feed)) {
+        return feed;
+      }
+    }
+  } catch {
+    // Bundled file not available
+  }
+  return null;
+}
+
+async function getFeed() {
+  // Try primary feed
+  let feed = await fetchFeedWithRetry(CONFIG.feedUrl);
+  if (feed) {
+    return feed;
+  }
+
+  // Try GitHub fallback
+  feed = await fetchFeedWithRetry(CONFIG.fallbackUrl, 2);
+  if (feed) {
+    return feed;
+  }
+
+  // Try bundled fallback as last resort
+  feed = await fetchBundledFallback();
+  return feed;
+}
+
+// Handle messages from content script
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "fetchFeed") {
+    getFeed().then((feed) => {
+      sendResponse({ feed });
+    });
+    return true; // Keep the message channel open for async response
+  }
+});
+
+// Handle extension icon click - open options page
+browser.action.onClicked.addListener(() => {
+  browser.runtime.openOptionsPage();
+});
+
+// Handle extension installation
+browser.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    console.log("Trumf Bonusvarsler Lite installed");
+  } else if (details.reason === "update") {
+    console.log(
+      "Trumf Bonusvarsler Lite updated to version",
+      browser.runtime.getManifest().version,
+    );
+  }
+});

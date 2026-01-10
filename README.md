@@ -2,11 +2,11 @@
 
 ![Versjon](https://img.shields.io/badge/Versjon-3.2.1-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
-![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Safari-yellow)
+![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
-**Glem aldri Trumf-bonus igjen.** Et lett og stilrent userscript som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
+**Glem aldri Trumf-bonus igjen.** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
 
-- Lynrask og ressursvennlig — du merker ikke at det kjører
+- Lynrask og ressursvennlig — du merker ikke at den kjører
 - Stilrent design med lys/mørk modus
 - Respekterer personvernet ditt — ingen sporing
 
@@ -20,13 +20,13 @@
 
 Trumf Netthandel gir deg cashback hos hundrevis av nettbutikker, men du må huske å gå via deres portal for at bonusen skal registreres. Det er lett å glemme.
 
-Dette scriptet løser problemet: Du handler som vanlig, og får et varsel når butikken gir Trumf-bonus. Ett klikk, så er du i gang.
+Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når butikken gir Trumf-bonus. Ett klikk, så er du i gang.
 
 ---
 
 ## Funksjoner
 
-- **Fungerer overalt** — Chrome, Firefox, Safari, Edge og iOS
+- **Fungerer i alle nettlesere** — Chrome, Firefox, Edge, Brave, Opera, Safari
 - **Drabar notifikasjon** — Dra varselet til hvilken som helst hjørne, så husker den posisjonen
 - **Minimerbar** — Klikk på headeren for å minimere, klikk igjen for å utvide
 - **Lys/mørk modus** — Følger systemet ditt, eller velg manuelt
@@ -38,7 +38,7 @@ Dette scriptet løser problemet: Du handler som vanlig, og får et varsel når b
 
 ## Ytelse
 
-Scriptet kjører teknisk sett på alle nettsider, men er designet for å være så lett som mulig:
+Utvidelsen kjører teknisk sett på alle nettsider, men er designet for å være så lett som mulig:
 
 | Hva | Hvordan |
 |-----|---------|
@@ -47,25 +47,41 @@ Scriptet kjører teknisk sett på alle nettsider, men er designet for å være s
 | **Minimal ressursbruk** | Hopper over iframes og venter til siden er ferdig lastet |
 | **Tidlig avbrudd** | Gjør ingenting hvis siden allerede er sjekket eller skjult |
 
-Du merker ikke at det kjører.
+Du merker ikke at den kjører.
 
 ---
 
 ## Installering
 
-### 1. Installer en userscript-manager
+### Nettleserutvidelse (anbefalt)
 
-**Desktop (Chrome, Firefox, Safari, Edge):**
-- [Violentmonkey](https://violentmonkey.github.io/) — anbefalt, fungerer i alle nettlesere
+#### Chrome / Edge / Brave / Opera
 
-**iOS (iPhone/iPad):**
-- [Userscripts](https://apps.apple.com/no/app/userscripts/id1463298887) — gratis app fra App Store
+1. Last ned eller klon dette repositoriet
+2. Gå til `chrome://extensions/` (eller tilsvarende for din nettleser)
+3. Aktiver "Utviklermodus" øverst til høyre
+4. Klikk "Last inn upakket" og velg mappen med utvidelsen
 
-### 2. Installer scriptet
+#### Firefox
 
-**[Klikk her for å installere Trumf Bonusvarsler Lite](https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/Trumf-Bonusvarsler-Lite.user.js)**
+1. Last ned eller klon dette repositoriet
+2. Gå til `about:debugging#/runtime/this-firefox`
+3. Klikk "Last midlertidig tillegg..."
+4. Velg `manifest.json` i mappen med utvidelsen
 
-Userscript-manageren din vil spørre om du vil installere. Bekreft, og du er klar.
+> **Merk:** Midlertidige tillegg i Firefox fjernes når nettleseren lukkes. For permanent installasjon, publiser utvidelsen på [addons.mozilla.org](https://addons.mozilla.org).
+
+### Userscript (alternativ)
+
+Foretrekker du en userscript-manager? Trumf Bonusvarsler Lite er også tilgjengelig som userscript.
+
+**1. Installer en userscript-manager:**
+- Desktop: [Violentmonkey](https://violentmonkey.github.io/) (anbefalt)
+- iOS: [Userscripts](https://apps.apple.com/no/app/userscripts/id1463298887) (gratis)
+
+**2. Installer scriptet:**
+
+**[Klikk her for å installere Trumf Bonusvarsler Lite (Userscript)](https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/Trumf-Bonusvarsler-Lite.user.js)**
 
 ---
 
@@ -79,19 +95,39 @@ Bare surf som vanlig. Når du besøker en nettbutikk som gir Trumf-bonus, dukker
 - **Tannhjulet** åpner innstillinger (tema, start minimert, skjulte sider)
 - **"Ikke vis på denne siden"** skjuler varselet permanent for det nettstedet
 
-### Greasemonkey-meny
+### Innstillinger
 
-Høyreklikk på userscript-ikonet for ekstra valg:
-- Bytt tema
-- Slå av/på "start minimert"
-- Se og administrer skjulte sider
-- Tøm cache
+**Utvidelse:** Høyreklikk på utvidelsesikonet og velg "Alternativer" for å åpne innstillingssiden.
+
+**Userscript:** Høyreklikk på userscript-ikonet for menyvalg.
 
 ---
 
 ## Personvern
 
-Scriptet henter kun den offisielle butikklisten fra Trumf. Ingen data om deg eller din surfing sendes noe sted.
+Utvidelsen henter kun den offisielle butikklisten fra Trumf. Ingen data om deg eller din surfing sendes noe sted.
+
+---
+
+## Utvikling
+
+### Prosjektstruktur
+
+```
+├── manifest.json          # Utvidelseskonfigurasjon (Manifest V3)
+├── content.js             # Hovedlogikk for utvidelse
+├── background.js          # Service worker
+├── options.html/js/css    # Innstillingsside
+├── data/
+│   └── sitelist.json      # Fallback-butikkliste (utvidelse)
+├── icons/                 # Utvidelsesikoner
+├── Trumf-Bonusvarsler-Lite.user.js  # Userscript-versjon
+└── sitelist.json          # Fallback-butikkliste (userscript)
+```
+
+### Bygge fra kilde
+
+Ingen byggeprosess nødvendig — last inn mappen direkte i nettleseren.
 
 ---
 
