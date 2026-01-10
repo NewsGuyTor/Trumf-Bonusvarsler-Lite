@@ -2,9 +2,10 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.4.0
+// @version      2.5.0
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
+// @grant        GM_xmlhttpRequest
 // @connect      wlp.tcb-cdn.com
 // @connect      raw.githubusercontent.com
 // @homepageURL  https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
@@ -50,8 +51,17 @@
     }
 
     function gmFetch(url, options = {}) {
+        // Use GM.xmlHttpRequest (GM4+) or fall back to GM_xmlhttpRequest (GM3/iOS)
+        const xmlHttpRequest = (typeof GM !== 'undefined' && GM.xmlHttpRequest)
+            ? GM.xmlHttpRequest.bind(GM)
+            : (typeof GM_xmlhttpRequest !== 'undefined' ? GM_xmlhttpRequest : null);
+
+        if (!xmlHttpRequest) {
+            return Promise.reject(new Error('No xmlHttpRequest API available'));
+        }
+
         return new Promise((resolve, reject) => {
-            GM.xmlHttpRequest({
+            xmlHttpRequest({
                 method: options.method || 'GET',
                 url,
                 headers: {
