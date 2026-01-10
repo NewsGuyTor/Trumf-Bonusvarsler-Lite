@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      3.0.1
+// @version      3.1.0
 // @match        *://*/*
 // @noframes
 // @run-at       document-idle
@@ -90,6 +90,7 @@
     const hiddenSitesKey = 'TrumfBonusvarslerLite_HiddenSites';
     const themeKey = 'TrumfBonusvarslerLite_Theme';
     const startMinimizedKey = 'TrumfBonusvarslerLite_StartMinimized';
+    const positionKey = 'TrumfBonusvarslerLite_Position';
     const reminderShownKey = 'TrumfBonusvarslerLite_ReminderShown';
 
     // Shared CSS for notification UI
@@ -177,8 +178,6 @@
         }
         .container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
             z-index: 2147483647;
             width: 360px;
             max-width: calc(100vw - 40px);
@@ -186,8 +185,23 @@
             border-radius: 8px;
             box-shadow: 0 8px 24px var(--shadow);
             overflow: hidden;
+            transition: top 0.3s ease, bottom 0.3s ease, left 0.3s ease, right 0.3s ease;
+        }
+        .container.animate-in {
             animation: slideIn 0.4s ease-out;
         }
+        .container.dragging {
+            transition: none;
+            opacity: 0.9;
+        }
+        .container.snapping {
+            transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        top 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .container.bottom-right { bottom: 20px; right: 20px; }
+        .container.bottom-left { bottom: 20px; left: 20px; }
+        .container.top-right { top: 20px; right: 20px; }
+        .container.top-left { top: 20px; left: 20px; }
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(40px); }
             to { opacity: 1; transform: translateY(0); }
@@ -199,6 +213,7 @@
             padding: 12px 16px;
             background: var(--bg-header);
             border-bottom: 1px solid var(--border);
+            user-select: none;
         }
         .logo img {
             all: unset;
@@ -340,7 +355,8 @@
     let settingsCache = {
         hiddenSites: new Set(),
         theme: 'system',
-        startMinimized: false
+        startMinimized: false,
+        position: 'bottom-right' // bottom-right, bottom-left, top-right, top-left
     };
 
     async function loadSettings() {
@@ -348,6 +364,7 @@
         settingsCache.hiddenSites = new Set(hiddenSitesArray);
         settingsCache.theme = await gmGetValue(themeKey, 'system');
         settingsCache.startMinimized = await gmGetValue(startMinimizedKey, false);
+        settingsCache.position = await gmGetValue(positionKey, 'bottom-right');
     }
 
     // ===================
@@ -398,6 +415,19 @@
     async function setStartMinimized(value) {
         settingsCache.startMinimized = value;
         await gmSetValue(startMinimizedKey, value);
+    }
+
+    // ===================
+    // Position Management
+    // ===================
+
+    function getPosition() {
+        return settingsCache.position;
+    }
+
+    async function setPosition(position) {
+        settingsCache.position = position;
+        await gmSetValue(positionKey, position);
     }
 
     // ===================
@@ -659,6 +689,156 @@
     }
 
     // ===================
+    // Draggable Corner Snap
+    // ===================
+
+    function makeCornerDraggable(container, handle) {
+        let isDragging = false;
+        let hasMoved = false;
+        let startX, startY, startLeft, startTop;
+        const DRAG_THRESHOLD = 5; // Minimum pixels to move before considered a drag
+
+        function getContainerRect() {
+            return container.getBoundingClientRect();
+        }
+
+        function onDragStart(e) {
+            // Don't drag if clicking on buttons
+            if (e.target.closest('button, a, .settings-btn, .minimize-btn, .close-btn')) {
+                return;
+            }
+
+            // When minimized, allow dragging from anywhere on container
+            // When expanded, only allow dragging from header
+            const isMinimized = container.classList.contains('minimized');
+            if (!isMinimized && !e.target.closest('.header')) {
+                return;
+            }
+
+            isDragging = true;
+            hasMoved = false;
+
+            const rect = getContainerRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            if (e.type === 'touchstart') {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            // Only start visual drag after threshold
+            if (!hasMoved) {
+                if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) {
+                    return;
+                }
+                hasMoved = true;
+                container.classList.add('dragging');
+                // Remove position classes and use inline styles during drag
+                container.classList.remove('bottom-right', 'bottom-left', 'top-right', 'top-left');
+                container.style.left = startLeft + 'px';
+                container.style.top = startTop + 'px';
+                container.style.right = 'auto';
+                container.style.bottom = 'auto';
+            }
+
+            e.preventDefault();
+            container.style.left = (startLeft + deltaX) + 'px';
+            container.style.top = (startTop + deltaY) + 'px';
+        }
+
+        function onDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // If we didn't actually move, let click events handle it
+            if (!hasMoved) {
+                return;
+            }
+
+            container.classList.remove('dragging');
+
+            // Calculate center of container
+            const rect = getContainerRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Determine nearest corner
+            const isRight = centerX > viewportWidth / 2;
+            const isBottom = centerY > viewportHeight / 2;
+
+            let position;
+            if (isBottom && isRight) position = 'bottom-right';
+            else if (isBottom && !isRight) position = 'bottom-left';
+            else if (!isBottom && isRight) position = 'top-right';
+            else position = 'top-left';
+
+            // Calculate target position in pixels
+            const margin = 20;
+            const targetLeft = isRight ? viewportWidth - rect.width - margin : margin;
+            const targetTop = isBottom ? viewportHeight - rect.height - margin : margin;
+
+            // Animate to target position
+            container.classList.add('snapping');
+            container.style.left = targetLeft + 'px';
+            container.style.top = targetTop + 'px';
+
+            // After animation, switch to class-based positioning
+            setTimeout(() => {
+                container.classList.remove('snapping');
+                container.style.left = '';
+                container.style.top = '';
+                container.style.right = '';
+                container.style.bottom = '';
+                container.classList.add(position);
+            }, 350);
+
+            // Save position
+            setPosition(position);
+        }
+
+        // Prevent click events after drag
+        function onClickCapture(e) {
+            if (hasMoved) {
+                e.stopPropagation();
+                hasMoved = false;
+            }
+        }
+
+        // Mouse events - listen on container to support minimized state
+        container.addEventListener('mousedown', onDragStart);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        container.addEventListener('click', onClickCapture, true);
+
+        // Touch events
+        container.addEventListener('touchstart', onDragStart, { passive: true });
+        document.addEventListener('touchmove', onDragMove, { passive: false });
+        document.addEventListener('touchend', onDragEnd);
+    }
+
+    // ===================
     // Trumfnetthandel.no Reminder
     // ===================
 
@@ -711,7 +891,7 @@
         shadowRoot.appendChild(styleEl);
 
         const container = document.createElement('div');
-        container.className = 'container';
+        container.className = `container animate-in ${getPosition()}`;
         container.setAttribute('role', 'dialog');
         container.setAttribute('aria-label', 'Trumf bonus påminnelse');
 
@@ -778,6 +958,9 @@
 
         closeBtn.addEventListener('click', closeNotification);
         document.addEventListener('keydown', handleKeydown);
+
+        // Make draggable to corners
+        makeCornerDraggable(container, header);
 
         return shadowHost;
     }
@@ -937,6 +1120,14 @@
                 font-size: 16px;
                 font-weight: 600;
                 margin-bottom: 16px;
+            }
+            :host(.tbvl-dark) .settings-title {
+                color: #fff;
+            }
+            @media (prefers-color-scheme: dark) {
+                :host(.tbvl-system) .settings-title {
+                    color: #fff;
+                }
             }
 
             .setting-row {
@@ -1134,7 +1325,7 @@
         shadowRoot.appendChild(styleEl);
 
         const container = document.createElement('div');
-        container.className = 'container';
+        container.className = `container ${getPosition()}`;
         container.setAttribute('role', 'dialog');
         container.setAttribute('aria-label', 'Trumf bonus varsling');
 
@@ -1435,6 +1626,9 @@
                 actionBtn.style.cursor = 'default';
             }
         });
+
+        // Make draggable to corners
+        makeCornerDraggable(container, header);
 
         return shadowHost;
     }
