@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.7.0
+// @version      2.7.2
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
@@ -1151,7 +1151,7 @@
             }
             .container.minimized {
                 width: auto;
-                min-width: 180px;
+                min-width: 270px;
                 cursor: pointer;
             }
             .container.minimized .body {
@@ -1176,11 +1176,12 @@
                 opacity: 0;
                 max-width: 0;
                 overflow: hidden;
+                text-align: center;
                 transition: opacity 0.2s ease, max-width 0.3s ease;
             }
             .container.minimized .cashback-mini {
                 opacity: 1;
-                max-width: 100px;
+                max-width: 150px;
             }
             .settings-btn,
             .minimize-btn {
@@ -1419,11 +1420,15 @@
             }
         }
 
-        closeBtn.addEventListener('click', closeNotification);
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeNotification();
+        });
         document.addEventListener('keydown', handleKeydown);
 
         // Settings toggle
-        settingsBtn.addEventListener('click', () => {
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             content.classList.add('hidden');
             settings.classList.add('active');
         });
@@ -1480,12 +1485,15 @@
             container.classList.add('minimized');
         });
 
+        // Click header to minimize/expand
         container.addEventListener('click', (e) => {
+            const clickedHeader = e.target.closest('.header');
             if (container.classList.contains('minimized')) {
-                // Only expand if clicking on the container itself or header, not buttons
-                if (!e.target.closest('.close-btn')) {
-                    container.classList.remove('minimized');
-                }
+                // Expand when clicking anywhere on minimized container
+                container.classList.remove('minimized');
+            } else if (clickedHeader) {
+                // Minimize when clicking header area (buttons have stopPropagation)
+                container.classList.add('minimized');
             }
         });
 
