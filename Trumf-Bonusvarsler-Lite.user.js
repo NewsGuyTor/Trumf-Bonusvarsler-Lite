@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.7.3
+// @version      2.7.5
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
@@ -57,6 +57,10 @@
         'www.dbjourney.com': 'dbjourney.no',
         'bookbeat.com': 'bookbeat.no',
         'www.bookbeat.com': 'www.bookbeat.no',
+        'www.oakley.com': 'no.oakley.com',
+        'www.viator.com': 'www.viatorcom.no',
+        'www.scandichotels.com': 'www.scandichotels.no',
+        'www.omio.com': 'www.omio.no',
     };
 
     const currentHost = window.location.hostname;
@@ -462,6 +466,7 @@
 
     function createReminderNotification() {
         const shadowHost = document.createElement('div');
+        shadowHost.style.cssText = 'all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;';
         document.body.appendChild(shadowHost);
         const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
 
@@ -481,7 +486,7 @@
                 --shadow: rgba(0,0,0,0.3);
                 color: var(--text);
             }
-            :host(.theme-dark) {
+            :host(.tbvl-dark) {
                 --bg: #1e1e1e;
                 --bg-header: #2d2d2d;
                 --border: #404040;
@@ -492,7 +497,7 @@
                 --shadow: rgba(0,0,0,0.5);
             }
             @media (prefers-color-scheme: dark) {
-                :host(.theme-system) {
+                :host(.tbvl-system) {
                     --bg: #1e1e1e;
                     --bg-header: #2d2d2d;
                     --border: #404040;
@@ -572,11 +577,11 @@
                 display: block;
                 max-height: 28px;
             }
-            :host(.theme-dark) .logo img {
+            :host(.tbvl-dark) .logo img {
                 filter: invert(1) hue-rotate(180deg);
             }
             @media (prefers-color-scheme: dark) {
-                :host(.theme-system) .logo img {
+                :host(.tbvl-system) .logo img {
                     filter: invert(1) hue-rotate(180deg);
                 }
             }
@@ -650,7 +655,7 @@
 
         // Apply theme class
         const currentTheme = getTheme();
-        shadowHost.className = `theme-${currentTheme}`;
+        shadowHost.className = `tbvl-${currentTheme}`;
 
         // Header
         const header = document.createElement('div');
@@ -721,6 +726,7 @@
 
     function createNotification(merchant) {
         const shadowHost = document.createElement('div');
+        shadowHost.style.cssText = 'all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;';
         document.body.appendChild(shadowHost);
         const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
 
@@ -743,7 +749,7 @@
                 --btn-bg-active: #4D4DFF;
                 color: var(--text);
             }
-            :host(.theme-dark) {
+            :host(.tbvl-dark) {
                 --bg: #1e1e1e;
                 --bg-header: #2d2d2d;
                 --border: #404040;
@@ -757,7 +763,7 @@
                 --btn-bg-active: #6b6bff;
             }
             @media (prefers-color-scheme: dark) {
-                :host(.theme-system) {
+                :host(.tbvl-system) {
                     --bg: #1e1e1e;
                     --bg-header: #2d2d2d;
                     --border: #404040;
@@ -840,11 +846,11 @@
                 display: block;
                 max-height: 28px;
             }
-            :host(.theme-dark) .logo img {
+            :host(.tbvl-dark) .logo img {
                 filter: invert(1) hue-rotate(180deg);
             }
             @media (prefers-color-scheme: dark) {
-                :host(.theme-system) .logo img {
+                :host(.tbvl-system) .logo img {
                     filter: invert(1) hue-rotate(180deg);
                 }
             }
@@ -896,11 +902,11 @@
                 opacity: 1;
                 transform: rotate(30deg);
             }
-            :host(.theme-dark) .settings-btn {
+            :host(.tbvl-dark) .settings-btn {
                 filter: invert(1);
             }
             @media (prefers-color-scheme: dark) {
-                :host(.theme-system) .settings-btn {
+                :host(.tbvl-system) .settings-btn {
                     filter: invert(1);
                 }
             }
@@ -1231,7 +1237,7 @@
 
         // Apply theme class
         const currentTheme = getTheme();
-        shadowHost.className = `theme-${currentTheme}`;
+        shadowHost.className = `tbvl-${currentTheme}`;
 
         // Header
         const header = document.createElement('div');
@@ -1463,7 +1469,7 @@
 
             const newTheme = btn.dataset.theme;
             setTheme(newTheme);
-            shadowHost.className = `theme-${newTheme}`;
+            shadowHost.className = `tbvl-${newTheme}`;
 
             themeButtons.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
