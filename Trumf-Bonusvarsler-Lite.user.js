@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.6.1
+// @version      2.7.0
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
@@ -36,6 +36,27 @@
         maxRetries: 5,
         retryDelays: [100, 500, 1000, 2000, 4000], // Exponential backoff
         adblockTimeout: 3000, // 3 seconds timeout for adblock checks
+    };
+
+    // Domain aliases: maps redirect targets to feed domains
+    // Key = domain user visits, Value = domain in feed
+    const DOMAIN_ALIASES = {
+        'nordicfeel.com': 'nordicfeel.no',
+        'www.nordicfeel.com': 'www.nordicfeel.no',
+        'lekmer.com': 'lekmer.no',
+        'www.lekmer.com': 'lekmer.no',
+        'lyko.com': 'lyko.no',
+        'www.lyko.com': 'www.lyko.no',
+        'storytel.com': 'storytel.no',
+        'www.storytel.com': 'www.storytel.no',
+        'beckmann-norway.com': 'beckmann.no',
+        'www.beckmann-norway.com': 'beckmann.no',
+        'nordicnest.no': 'id.nordicnest.no',
+        'www.nordicnest.no': 'id.nordicnest.no',
+        'dbjourney.com': 'dbjourney.no',
+        'www.dbjourney.com': 'dbjourney.no',
+        'bookbeat.com': 'bookbeat.no',
+        'www.bookbeat.com': 'www.bookbeat.no',
     };
 
     const currentHost = window.location.hostname;
@@ -295,22 +316,52 @@
 
         const merchants = feed.merchants;
 
-        // Exact match
-        if (merchants[currentHost]) {
-            return merchants[currentHost];
+        // Helper to try all www variations of a host
+        function tryHost(host) {
+            // Exact match
+            if (merchants[host]) {
+                return merchants[host];
+            }
+
+            // Try without www.
+            const noWww = host.replace(/^www\./, '');
+            if (noWww !== host && merchants[noWww]) {
+                return merchants[noWww];
+            }
+
+            // Try with www. prefix
+            if (!host.startsWith('www.')) {
+                const withWww = 'www.' + host;
+                if (merchants[withWww]) {
+                    return merchants[withWww];
+                }
+            }
+
+            return null;
         }
 
-        // Try without www.
-        const noWww = currentHost.replace(/^www\./, '');
-        if (noWww !== currentHost && merchants[noWww]) {
-            return merchants[noWww];
+        // Try current host first
+        let merchant = tryHost(currentHost);
+        if (merchant) {
+            return merchant;
         }
 
-        // Try with www. prefix
-        if (!currentHost.startsWith('www.')) {
-            const withWww = 'www.' + currentHost;
-            if (merchants[withWww]) {
-                return merchants[withWww];
+        // Try domain alias if exists
+        const aliasedHost = DOMAIN_ALIASES[currentHost];
+        if (aliasedHost) {
+            merchant = tryHost(aliasedHost);
+            if (merchant) {
+                return merchant;
+            }
+        }
+
+        // Also try alias without/with www
+        const noWwwHost = currentHost.replace(/^www\./, '');
+        const aliasedNoWww = DOMAIN_ALIASES[noWwwHost];
+        if (aliasedNoWww && aliasedNoWww !== aliasedHost) {
+            merchant = tryHost(aliasedNoWww);
+            if (merchant) {
+                return merchant;
             }
         }
 
@@ -457,7 +508,7 @@
             :host *::after {
                 all: revert;
                 box-sizing: border-box;
-                font-family: inherit;
+                font-family: 'Segoe UI', system-ui, sans-serif !important;
                 font-size: inherit;
                 line-height: inherit;
                 letter-spacing: normal;
@@ -716,7 +767,7 @@
             :host *::after {
                 all: revert;
                 box-sizing: border-box;
-                font-family: inherit;
+                font-family: 'Segoe UI', system-ui, sans-serif !important;
                 font-size: inherit;
                 line-height: inherit;
                 letter-spacing: normal;
