@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trumf Bonusvarsler Lite - Innstillinger</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img src="icons/icon-48.png" alt="" class="logo">
+      <div class="title-section">
+        <h1>Trumf Bonusvarsler Lite</h1>
+        <span class="version"></span>
+      </div>
+    </header>
+
+    <main class="settings">
+      <section class="setting-group">
+        <h2>Utseende</h2>
+        <div class="setting-row">
+          <label class="setting-label">Tema</label>
+          <div class="theme-buttons" id="theme-buttons">
+            <button class="theme-btn" data-theme="light">Lys</button>
+            <button class="theme-btn" data-theme="dark">Mørk</button>
+            <button class="theme-btn" data-theme="system">System</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="setting-group">
+        <h2>Oppførsel</h2>
+        <div class="setting-row toggle-row">
+          <label class="setting-label">Start minimert</label>
+          <button class="toggle-switch" id="start-minimized" aria-label="Start minimert"></button>
+        </div>
+        <p class="setting-description">Når aktivert, vises varselet i minimert tilstand.</p>
+      </section>
+
+      <section class="setting-group">
+        <h2>Standard posisjon</h2>
+        <div class="setting-row">
+          <div class="position-buttons" id="position-buttons">
+            <button class="position-btn" data-position="top-left" title="Øverst til venstre">↖</button>
+            <button class="position-btn" data-position="top-right" title="Øverst til høyre">↗</button>
+            <button class="position-btn" data-position="bottom-left" title="Nederst til venstre">↙</button>
+            <button class="position-btn" data-position="bottom-right" title="Nederst til høyre">↘</button>
+          </div>
+        </div>
+        <p class="setting-description">Du kan dra varselet til en annen posisjon på spesifikke sider.</p>
+      </section>
+
+      <section class="setting-group">
+        <h2>Skjulte sider</h2>
+        <div id="hidden-sites-container">
+          <p class="no-hidden-sites">Ingen sider er skjult.</p>
+        </div>
+        <div id="hidden-sites-list" class="hidden-sites-list"></div>
+        <div class="hidden-sites-actions" id="hidden-sites-actions" style="display: none;">
+          <button class="btn btn-secondary" id="reset-hidden-sites">Nullstill alle</button>
+        </div>
+      </section>
+
+      <section class="setting-group">
+        <h2>Cache</h2>
+        <p class="setting-description">Butikklisten caches i 48 timer for raskere lasting.</p>
+        <button class="btn btn-secondary" id="clear-cache">Tøm cache</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a href="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <span class="separator">•</span>
+      <a href="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/issues" target="_blank" rel="noopener noreferrer">Rapporter problem</a>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
