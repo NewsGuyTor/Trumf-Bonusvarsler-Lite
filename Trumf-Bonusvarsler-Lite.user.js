@@ -2,10 +2,14 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.5.0
+// @version      2.6.0
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @connect      wlp.tcb-cdn.com
 // @connect      raw.githubusercontent.com
 // @homepageURL  https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
@@ -92,27 +96,67 @@
     }
 
     // ===================
+    // GM Storage (Cross-Site Settings)
+    // ===================
+
+    async function gmGetValue(key, defaultValue) {
+        // Use GM.getValue (GM4+) or fall back to GM_getValue (GM3/iOS)
+        if (typeof GM !== 'undefined' && GM.getValue) {
+            return await GM.getValue(key, defaultValue);
+        } else if (typeof GM_getValue !== 'undefined') {
+            return GM_getValue(key, defaultValue);
+        }
+        // Fallback to localStorage if no GM storage available
+        const stored = localStorage.getItem(key);
+        return stored !== null ? JSON.parse(stored) : defaultValue;
+    }
+
+    async function gmSetValue(key, value) {
+        // Use GM.setValue (GM4+) or fall back to GM_setValue (GM3/iOS)
+        if (typeof GM !== 'undefined' && GM.setValue) {
+            return await GM.setValue(key, value);
+        } else if (typeof GM_setValue !== 'undefined') {
+            return GM_setValue(key, value);
+        }
+        // Fallback to localStorage if no GM storage available
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    // Settings cache (loaded at init, used synchronously)
+    let settingsCache = {
+        hiddenSites: [],
+        theme: 'system',
+        startMinimized: false
+    };
+
+    async function loadSettings() {
+        settingsCache.hiddenSites = await gmGetValue(hiddenSitesKey, []);
+        settingsCache.theme = await gmGetValue(themeKey, 'system');
+        settingsCache.startMinimized = await gmGetValue(startMinimizedKey, false);
+    }
+
+    // ===================
     // Hidden Sites Management
     // ===================
 
     function getHiddenSites() {
-        try {
-            return JSON.parse(localStorage.getItem(hiddenSitesKey)) || [];
-        } catch {
-            return [];
+        return settingsCache.hiddenSites;
+    }
+
+    async function hideSite(host) {
+        if (!settingsCache.hiddenSites.includes(host)) {
+            settingsCache.hiddenSites.push(host);
+            await gmSetValue(hiddenSitesKey, settingsCache.hiddenSites);
         }
     }
 
-    function hideSite(host) {
-        const sites = getHiddenSites();
-        if (!sites.includes(host)) {
-            sites.push(host);
-            localStorage.setItem(hiddenSitesKey, JSON.stringify(sites));
-        }
+    async function resetHiddenSites() {
+        settingsCache.hiddenSites = [];
+        await gmSetValue(hiddenSitesKey, []);
     }
 
     function isSiteHidden(host) {
-        return getHiddenSites().includes(host);
+        return settingsCache.hiddenSites.includes(host);
     }
 
     // ===================
@@ -120,11 +164,12 @@
     // ===================
 
     function getTheme() {
-        return localStorage.getItem(themeKey) || 'system';
+        return settingsCache.theme;
     }
 
-    function setTheme(theme) {
-        localStorage.setItem(themeKey, theme);
+    async function setTheme(theme) {
+        settingsCache.theme = theme;
+        await gmSetValue(themeKey, theme);
     }
 
     // ===================
@@ -132,11 +177,12 @@
     // ===================
 
     function getStartMinimized() {
-        return localStorage.getItem(startMinimizedKey) === 'true';
+        return settingsCache.startMinimized;
     }
 
-    function setStartMinimized(value) {
-        localStorage.setItem(startMinimizedKey, value ? 'true' : 'false');
+    async function setStartMinimized(value) {
+        settingsCache.startMinimized = value;
+        await gmSetValue(startMinimizedKey, value);
     }
 
     // ===================
@@ -1313,7 +1359,7 @@
 
         // Reset hidden sites
         resetHidden.addEventListener('click', () => {
-            localStorage.removeItem(hiddenSitesKey);
+            resetHiddenSites();
             hiddenInfo.textContent = 'Ingen sider skjult';
             resetHidden.style.display = 'none';
         });
@@ -1364,25 +1410,11 @@
     }
 
     // ===================
-    // Migration: Clean up old localStorage keys
-    // ===================
-
-    function migrateOldStorage() {
-        // One-time cleanup of old "Trump" typo keys from v1.x
-        const migrated = localStorage.getItem('TrumfBonusvarslerLite_Migrated');
-        if (!migrated) {
-            localStorage.removeItem('TrumpBonusvarslerLiteFeedData');
-            localStorage.removeItem('TrumpBonusvarslerLiteFeedTimestamp');
-            localStorage.setItem('TrumfBonusvarslerLite_Migrated', '1');
-        }
-    }
-
-    // ===================
     // Main Initialization
     // ===================
 
     async function init() {
-        migrateOldStorage();
+        await loadSettings();
 
         // Check if we should show the reminder on trumfnetthandel.no
         if (shouldShowReminder()) {
