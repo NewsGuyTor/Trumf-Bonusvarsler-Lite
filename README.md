@@ -1,6 +1,6 @@
 # Trumf Bonusvarsler Lite
 
-![Versjon](https://img.shields.io/badge/Versjon-3.2.0-blue)
+![Versjon](https://img.shields.io/badge/Versjon-3.2.1-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Safari-yellow)
 
@@ -11,7 +11,7 @@
 - Respekterer personvernet ditt — ingen sporing
 
 <p align="center">
-  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="80%">
+  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="50%">
 </p>
 
 ---
