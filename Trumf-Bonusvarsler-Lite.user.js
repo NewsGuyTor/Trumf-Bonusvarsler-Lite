@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.7.2
+// @version      2.7.3
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
@@ -512,10 +512,13 @@
                 font-size: inherit;
                 line-height: inherit;
                 letter-spacing: normal;
+                word-spacing: normal;
                 text-transform: none;
                 text-indent: 0;
                 text-shadow: none;
                 text-decoration: none;
+                text-align: left;
+                white-space: normal;
                 font-style: normal;
                 font-weight: normal;
                 font-variant: normal;
@@ -528,6 +531,12 @@
                 vertical-align: baseline;
                 float: none;
                 clear: none;
+                direction: ltr;
+                visibility: visible;
+                opacity: 1;
+                filter: none;
+                transform: none;
+                pointer-events: auto;
             }
 
             .container {
@@ -771,10 +780,13 @@
                 font-size: inherit;
                 line-height: inherit;
                 letter-spacing: normal;
+                word-spacing: normal;
                 text-transform: none;
                 text-indent: 0;
                 text-shadow: none;
                 text-decoration: none;
+                text-align: left;
+                white-space: normal;
                 font-style: normal;
                 font-weight: normal;
                 font-variant: normal;
@@ -787,6 +799,12 @@
                 vertical-align: baseline;
                 float: none;
                 clear: none;
+                direction: ltr;
+                visibility: visible;
+                opacity: 1;
+                filter: none;
+                transform: none;
+                pointer-events: auto;
             }
 
             .container {
