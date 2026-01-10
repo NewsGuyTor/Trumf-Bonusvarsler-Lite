@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      2.6.0
+// @version      2.6.1
 // @match        *://*/*
 // @grant        GM.xmlHttpRequest
 // @grant        GM_xmlhttpRequest
@@ -452,17 +452,38 @@
                     --shadow: rgba(0,0,0,0.5);
                 }
             }
-            :host * {
+            :host *,
+            :host *::before,
+            :host *::after {
+                all: revert;
                 box-sizing: border-box;
                 font-family: inherit;
+                font-size: inherit;
                 line-height: inherit;
+                letter-spacing: normal;
+                text-transform: none;
+                text-indent: 0;
+                text-shadow: none;
+                text-decoration: none;
+                font-style: normal;
+                font-weight: normal;
+                font-variant: normal;
+                color: inherit;
+                background: transparent;
+                border: none;
+                margin: 0;
+                padding: 0;
+                outline: none;
+                vertical-align: baseline;
+                float: none;
+                clear: none;
             }
 
             .container {
                 position: fixed;
                 bottom: 20px;
                 right: 20px;
-                z-index: 999999;
+                z-index: 2147483647;
                 width: 360px;
                 max-width: calc(100vw - 40px);
                 background: var(--bg);
@@ -487,6 +508,7 @@
             }
 
             .logo img {
+                all: unset;
                 display: block;
                 max-height: 28px;
             }
@@ -689,17 +711,38 @@
                     --btn-bg-active: #6b6bff;
                 }
             }
-            :host * {
+            :host *,
+            :host *::before,
+            :host *::after {
+                all: revert;
                 box-sizing: border-box;
                 font-family: inherit;
+                font-size: inherit;
                 line-height: inherit;
+                letter-spacing: normal;
+                text-transform: none;
+                text-indent: 0;
+                text-shadow: none;
+                text-decoration: none;
+                font-style: normal;
+                font-weight: normal;
+                font-variant: normal;
+                color: inherit;
+                background: transparent;
+                border: none;
+                margin: 0;
+                padding: 0;
+                outline: none;
+                vertical-align: baseline;
+                float: none;
+                clear: none;
             }
 
             .container {
                 position: fixed;
                 bottom: 20px;
                 right: 20px;
-                z-index: 999999;
+                z-index: 2147483647;
                 width: 360px;
                 max-width: calc(100vw - 40px);
                 background: var(--bg);
@@ -724,6 +767,7 @@
             }
 
             .logo img {
+                all: unset;
                 display: block;
                 max-height: 28px;
             }
