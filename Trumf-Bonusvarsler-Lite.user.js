@@ -2,7 +2,7 @@
 // @name         Trumf Bonusvarsler Lite
 // @description  Trumf Bonusvarsler Lite er et minimalistisk userscript (Firefox, Safari, Chrome) som gir deg varslel når du er inne på en nettbutikk som gir Trumf-bonus.
 // @namespace    https://github.com/kristofferR/Trumf-Bonusvarsler-Lite
-// @version      3.2.1
+// @version      3.3.0
 // @match        *://*/*
 // @noframes
 // @run-at       document-idle
@@ -649,17 +649,7 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-    "fabel.no",
-    "hoie.no",
-    "no.jbl.com",
-    "sharkgaming.no",
-    "vetzoo.no",
-    "www.bookbeat.no",
     "www.ekstralys.no",
-    "www.elite.se",
-    "www.myprotein.no",
-    "www.strikkia.no",
-    "www.vivara.no",
   ]);
 
   async function checkUrlBlocked(url) {

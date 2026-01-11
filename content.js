@@ -628,17 +628,7 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-    "fabel.no",
-    "hoie.no",
-    "no.jbl.com",
-    "sharkgaming.no",
-    "vetzoo.no",
-    "www.bookbeat.no",
     "www.ekstralys.no",
-    "www.elite.se",
-    "www.myprotein.no",
-    "www.strikkia.no",
-    "www.vivara.no",
   ]);
 
   async function checkUrlBlocked(url) {
