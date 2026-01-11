@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Trumf Bonusvarsler Lite",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "description": "__MSG_extensionDescription__",
   "default_locale": "no",
   "homepage_url": "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite",
@@ -9,7 +9,8 @@
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
     "48": "icons/icon-48.png",
-    "128": "icons/icon-128.png"
+    "128": "icons/icon-128.png",
+    "256": "icons/icon-256.png"
   },
   "permissions": [
     "storage"
