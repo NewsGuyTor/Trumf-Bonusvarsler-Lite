@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "Trumf Bonusvarsler Lite",
   "version": "3.2.1",
-  "description": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig.",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "no",
   "homepage_url": "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite",
   "icons": {
     "16": "icons/icon-16.png",

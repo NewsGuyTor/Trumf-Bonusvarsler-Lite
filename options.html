@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trumf Bonusvarsler Lite - Innstillinger</title>
+  <title data-i18n="optionsTitle">Trumf Bonusvarsler Lite - Innstillinger</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -18,61 +18,76 @@
 
     <main class="settings">
       <section class="setting-group">
-        <h2>Utseende</h2>
+        <h2 data-i18n="language">Språk</h2>
         <div class="setting-row">
-          <label class="setting-label">Tema</label>
-          <div class="theme-buttons" id="theme-buttons">
-            <button class="theme-btn" data-theme="light">Lys</button>
-            <button class="theme-btn" data-theme="dark">Mørk</button>
-            <button class="theme-btn" data-theme="system">System</button>
+          <div class="theme-buttons language-buttons" id="language-buttons">
+            <button class="theme-btn" data-lang="no">Norsk</button>
+            <button class="theme-btn" data-lang="en">English</button>
+            <button class="theme-btn" data-lang="sv">Svenska</button>
+            <button class="theme-btn" data-lang="da">Dansk</button>
+            <button class="theme-btn" data-lang="es">Español</button>
+            <button class="theme-btn" data-lang="fr">Français</button>
+            <button class="theme-btn" data-lang="uk">Українська</button>
           </div>
         </div>
       </section>
 
       <section class="setting-group">
-        <h2>Oppførsel</h2>
-        <div class="setting-row toggle-row">
-          <label class="setting-label">Start minimert</label>
-          <button class="toggle-switch" id="start-minimized" aria-label="Start minimert"></button>
+        <h2 data-i18n="appearance">Utseende</h2>
+        <div class="setting-row">
+          <label class="setting-label" data-i18n="theme">Tema</label>
+          <div class="theme-buttons" id="theme-buttons">
+            <button class="theme-btn" data-theme="light" data-i18n="themeLight">Lys</button>
+            <button class="theme-btn" data-theme="dark" data-i18n="themeDark">Mørk</button>
+            <button class="theme-btn" data-theme="system" data-i18n="themeSystem">System</button>
+          </div>
         </div>
-        <p class="setting-description">Når aktivert, vises varselet i minimert tilstand.</p>
       </section>
 
       <section class="setting-group">
-        <h2>Standard posisjon</h2>
+        <h2 data-i18n="behavior">Oppførsel</h2>
+        <div class="setting-row toggle-row">
+          <label class="setting-label" data-i18n="startMinimized">Start minimert</label>
+          <button class="toggle-switch" id="start-minimized" data-i18n-aria="startMinimized"></button>
+        </div>
+        <p class="setting-description" data-i18n="startMinimizedDescription">Når aktivert, vises varselet i minimert tilstand.</p>
+      </section>
+
+      <section class="setting-group">
+        <h2 data-i18n="defaultPosition">Standard posisjon</h2>
         <div class="setting-row">
           <div class="position-buttons" id="position-buttons">
-            <button class="position-btn" data-position="top-left" title="Øverst til venstre">↖</button>
-            <button class="position-btn" data-position="top-right" title="Øverst til høyre">↗</button>
-            <button class="position-btn" data-position="bottom-left" title="Nederst til venstre">↙</button>
-            <button class="position-btn" data-position="bottom-right" title="Nederst til høyre">↘</button>
+            <button class="position-btn" data-position="top-left" data-i18n-title="positionTopLeft" title="Øverst til venstre">↖</button>
+            <button class="position-btn" data-position="top-right" data-i18n-title="positionTopRight" title="Øverst til høyre">↗</button>
+            <button class="position-btn" data-position="bottom-left" data-i18n-title="positionBottomLeft" title="Nederst til venstre">↙</button>
+            <button class="position-btn" data-position="bottom-right" data-i18n-title="positionBottomRight" title="Nederst til høyre">↘</button>
           </div>
         </div>
-        <p class="setting-description">Du kan dra varselet til en annen posisjon på spesifikke sider.</p>
+        <p class="setting-description" data-i18n="dragPositionHint">Du kan dra varselet til en annen posisjon på spesifikke sider.</p>
       </section>
 
       <section class="setting-group">
-        <h2>Skjulte sider</h2>
+        <h2 data-i18n="hiddenSites">Skjulte sider</h2>
         <div id="hidden-sites-container">
-          <p class="no-hidden-sites">Ingen sider er skjult.</p>
+          <p class="no-hidden-sites" data-i18n="noHiddenSites">Ingen sider er skjult.</p>
         </div>
         <div id="hidden-sites-list" class="hidden-sites-list"></div>
         <div class="hidden-sites-actions" id="hidden-sites-actions" style="display: none;">
-          <button class="btn btn-secondary" id="reset-hidden-sites">Nullstill alle</button>
+          <button class="btn btn-secondary" id="reset-hidden-sites" data-i18n="resetAll">Nullstill alle</button>
         </div>
       </section>
 
       <section class="setting-group">
-        <h2>Cache</h2>
-        <p class="setting-description">Butikklisten caches i 48 timer for raskere lasting.</p>
-        <button class="btn btn-secondary" id="clear-cache">Tøm cache</button>
+        <h2 data-i18n="cache">Cache</h2>
+        <p class="setting-description" data-i18n="cacheDescription">Butikklisten caches i 48 timer for raskere lasting.</p>
+        <button class="btn btn-secondary" id="clear-cache" data-i18n="clearCache">Tøm cache</button>
       </section>
     </main>
 
     <footer class="footer">
       <a href="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite" target="_blank" rel="noopener noreferrer">GitHub</a>
       <span class="separator">•</span>
-      <a href="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/issues" target="_blank" rel="noopener noreferrer">Rapporter problem</a>
+      <a href="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/issues" target="_blank" rel="noopener noreferrer" data-i18n="reportIssue">Rapporter problem</a>
     </footer>
   </div>
 

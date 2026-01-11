@@ -4,6 +4,49 @@
   // Cross-browser compatibility
   const browser = globalThis.browser || globalThis.chrome;
 
+  // Messages cache for i18n
+  let messages = {};
+
+  // Load messages for a specific language
+  async function loadMessages(lang) {
+    try {
+      const url = browser.runtime.getURL(`_locales/${lang}/messages.json`);
+      const response = await fetch(url);
+      return await response.json();
+    } catch {
+      return {};
+    }
+  }
+
+  // i18n helper with placeholder support
+  function i18n(messageName, substitutions) {
+    const entry = messages[messageName];
+    if (!entry || !entry.message) {
+      return messageName;
+    }
+
+    let msg = entry.message;
+
+    // Handle substitutions
+    if (substitutions !== undefined) {
+      const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
+      subs.forEach((sub, index) => {
+        const placeholder = `$${index + 1}`;
+        msg = msg.replace(placeholder, sub);
+        // Also handle named placeholders
+        if (entry.placeholders) {
+          for (const [name, config] of Object.entries(entry.placeholders)) {
+            if (config.content === placeholder) {
+              msg = msg.replace(new RegExp(`\\$${name.toUpperCase()}\\$`, "g"), sub);
+            }
+          }
+        }
+      });
+    }
+
+    return msg;
+  }
+
   // ===================
   // Ultra-early bailouts (before any async work)
   // ===================
@@ -71,6 +114,7 @@
   const positionKey = "TrumfBonusvarslerLite_Position";
   const sitePositionsKey = "TrumfBonusvarslerLite_SitePositions";
   const reminderShownKey = "TrumfBonusvarslerLite_ReminderShown";
+  const languageKey = "TrumfBonusvarslerLite_Language";
 
   // SVG icons as data URIs (extracted to avoid duplication)
   const LOGO_DATA_URI =
@@ -313,6 +357,10 @@
     settingsCache.startMinimized = await getValue(startMinimizedKey, false);
     settingsCache.position = await getValue(positionKey, "bottom-right");
     settingsCache.sitePositions = await getValue(sitePositionsKey, {});
+
+    // Load language preference and messages
+    const lang = await getValue(languageKey, "no");
+    messages = await loadMessages(lang);
   }
 
   // ===================
@@ -866,7 +914,7 @@
     const container = document.createElement("div");
     container.className = `container animate-in ${getPosition()}`;
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", "Trumf bonus påminnelse");
+    container.setAttribute("aria-label", i18n("ariaReminderLabel"));
 
     // Apply theme class
     const currentTheme = getTheme();
@@ -885,7 +933,7 @@
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
-    closeBtn.setAttribute("aria-label", "Lukk");
+    closeBtn.setAttribute("aria-label", i18n("ariaClose"));
 
     header.appendChild(logo);
     header.appendChild(closeBtn);
@@ -896,17 +944,15 @@
 
     const title = document.createElement("span");
     title.className = "title";
-    title.textContent = "Viktig påminnelse!";
+    title.textContent = i18n("importantReminder");
 
     const message = document.createElement("p");
     message.className = "message";
-    message.textContent =
-      'For å være sikker på at Trumf-bonusen registreres, må du klikke på "Få Trumf-bonus her"-knappen på denne siden.';
+    message.textContent = i18n("reminderMessage");
 
     const tip = document.createElement("p");
     tip.className = "tip";
-    tip.textContent =
-      "Tips: Vent til siden laster ferdig, og trykk deretter på den store knappen som tar deg til butikken.";
+    tip.textContent = i18n("reminderTip");
 
     body.appendChild(title);
     body.appendChild(message);
@@ -1318,7 +1364,7 @@
     const container = document.createElement("div");
     container.className = `container ${getPosition()}`;
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", "Trumf bonus varsling");
+    container.setAttribute("aria-label", i18n("ariaNotificationLabel"));
 
     // Apply theme class
     const currentTheme = getTheme();
@@ -1346,15 +1392,15 @@
     const settingsBtn = document.createElement("img");
     settingsBtn.className = "settings-btn";
     settingsBtn.src = SETTINGS_ICON_URI;
-    settingsBtn.alt = "Innstillinger";
+    settingsBtn.alt = i18n("settings");
 
     const minimizeBtn = document.createElement("button");
     minimizeBtn.className = "minimize-btn";
-    minimizeBtn.setAttribute("aria-label", "Minimer");
+    minimizeBtn.setAttribute("aria-label", i18n("ariaMinimize"));
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
-    closeBtn.setAttribute("aria-label", "Lukk");
+    closeBtn.setAttribute("aria-label", i18n("ariaClose"));
 
     headerRight.appendChild(cashbackMini);
     headerRight.appendChild(settingsBtn);
@@ -1377,18 +1423,18 @@
 
     const subtitle = document.createElement("span");
     subtitle.className = "subtitle";
-    subtitle.textContent = `Trumf-bonus hos ${merchant.name || "denne butikken"}`;
+    subtitle.textContent = i18n("trumfBonusAt", merchant.name || i18n("thisStore"));
 
     const reminder = document.createElement("p");
     reminder.className = "reminder";
-    reminder.textContent = "Husk å:";
+    reminder.textContent = i18n("rememberTo");
 
     const checklist = document.createElement("ol");
     checklist.className = "checklist";
     [
-      "Deaktivere uBlock Origin",
-      "Deaktivere AdGuard/Pi-Hole",
-      "Tømme handlevognen",
+      i18n("disableUblockOrigin"),
+      i18n("disableAdguardPihole"),
+      i18n("emptyCart"),
     ].forEach((text) => {
       const li = document.createElement("li");
       li.textContent = text;
@@ -1400,11 +1446,11 @@
     actionBtn.href = `https://trumfnetthandel.no/cashback/${merchant.urlName || ""}`;
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
-    actionBtn.textContent = "Få Trumf-bonus";
+    actionBtn.textContent = i18n("getTrumfBonus");
 
     const hideSiteLink = document.createElement("span");
     hideSiteLink.className = "hide-site";
-    hideSiteLink.textContent = "Ikke vis på denne siden";
+    hideSiteLink.textContent = i18n("dontShowOnThisSite");
 
     content.appendChild(cashback);
     content.appendChild(subtitle);
@@ -1420,22 +1466,22 @@
 
     const settingsTitle = document.createElement("div");
     settingsTitle.className = "settings-title";
-    settingsTitle.textContent = "Innstillinger";
+    settingsTitle.textContent = i18n("settings");
 
     const themeRow = document.createElement("div");
     themeRow.className = "setting-row";
 
     const themeLabel = document.createElement("span");
     themeLabel.className = "setting-label";
-    themeLabel.textContent = "Utseende";
+    themeLabel.textContent = i18n("appearance");
 
     const themeButtons = document.createElement("div");
     themeButtons.className = "theme-buttons";
 
     const themes = [
-      { id: "light", label: "Lys" },
-      { id: "dark", label: "Mørk" },
-      { id: "system", label: "System" },
+      { id: "light", label: i18n("themeLight") },
+      { id: "dark", label: i18n("themeDark") },
+      { id: "system", label: i18n("themeSystem") },
     ];
 
     themes.forEach((theme) => {
@@ -1457,7 +1503,7 @@
     const minimizeLabel = document.createElement("span");
     minimizeLabel.className = "setting-label";
     minimizeLabel.style.marginBottom = "0";
-    minimizeLabel.textContent = "Start minimert";
+    minimizeLabel.textContent = i18n("startMinimized");
 
     const minimizeToggle = document.createElement("span");
     minimizeToggle.className =
@@ -1472,7 +1518,7 @@
 
     const positionLabel = document.createElement("span");
     positionLabel.className = "setting-label";
-    positionLabel.textContent = "Standard posisjon";
+    positionLabel.textContent = i18n("defaultPosition");
 
     const positionButtons = document.createElement("div");
     positionButtons.className = "theme-buttons position-buttons";
@@ -1497,8 +1543,7 @@
     const positionInfo = document.createElement("div");
     positionInfo.className = "hidden-sites-info";
     positionInfo.style.fontStyle = "italic";
-    positionInfo.textContent =
-      "Dra varselet for å overstyre posisjonen på denne siden.";
+    positionInfo.textContent = i18n("dragToOverridePosition");
 
     positionRow.appendChild(positionLabel);
     positionRow.appendChild(positionButtons);
@@ -1516,15 +1561,17 @@
 
       const hiddenLabel = document.createElement("span");
       hiddenLabel.className = "setting-label";
-      hiddenLabel.textContent = "Skjulte sider";
+      hiddenLabel.textContent = i18n("hiddenSites");
 
       const hiddenInfo = document.createElement("div");
       hiddenInfo.className = "hidden-sites-info";
-      hiddenInfo.textContent = `${hiddenCount} side${hiddenCount > 1 ? "r" : ""} skjult`;
+      hiddenInfo.textContent = hiddenCount > 1
+        ? i18n("hiddenSitesCountPlural", hiddenCount.toString())
+        : i18n("hiddenSitesCount", hiddenCount.toString());
 
       resetHidden = document.createElement("span");
       resetHidden.className = "reset-hidden";
-      resetHidden.textContent = "Nullstill";
+      resetHidden.textContent = i18n("reset");
 
       hiddenInfo.appendChild(document.createTextNode(" - "));
       hiddenInfo.appendChild(resetHidden);
@@ -1535,7 +1582,7 @@
 
     const backLink = document.createElement("span");
     backLink.className = "settings-back";
-    backLink.textContent = "← Tilbake";
+    backLink.textContent = i18n("back");
 
     settings.appendChild(settingsTitle);
     settings.appendChild(themeRow);
@@ -1554,7 +1601,7 @@
     infoLink.target = "_blank";
     infoLink.rel = "noopener noreferrer";
     infoLink.textContent = "i";
-    infoLink.title = "Om denne utvidelsen";
+    infoLink.title = i18n("aboutExtension");
 
     container.appendChild(header);
     container.appendChild(body);
@@ -1662,8 +1709,7 @@
       content.innerHTML = "";
       const confirmation = document.createElement("div");
       confirmation.className = "confirmation";
-      confirmation.textContent =
-        "Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert.";
+      confirmation.textContent = i18n("purchaseRegistered");
       content.appendChild(confirmation);
     });
 
@@ -1690,7 +1736,7 @@
       .then((isBlocked) => {
         if (isBlocked) {
           actionBtn.classList.add("adblock");
-          actionBtn.textContent = "Adblocker funnet!";
+          actionBtn.textContent = i18n("adblockerDetected");
           actionBtn.removeAttribute("href");
           actionBtn.removeAttribute("target");
           actionBtn.style.pointerEvents = "none";

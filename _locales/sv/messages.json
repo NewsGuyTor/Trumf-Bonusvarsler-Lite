@@ -1,0 +1,201 @@
+{
+  "extensionDescription": {
+    "message": "Meddelar dig när du besöker en nätbutik som ger Trumf-bonus. Lätt, snabb och integritetsvänlig."
+  },
+
+  "language": {
+    "message": "Språk"
+  },
+  "languageSaved": {
+    "message": "Språk sparat"
+  },
+  "optionsTitle": {
+    "message": "Trumf Bonusvarsler Lite - Inställningar"
+  },
+  "appearance": {
+    "message": "Utseende"
+  },
+  "theme": {
+    "message": "Tema"
+  },
+  "themeLight": {
+    "message": "Ljust"
+  },
+  "themeDark": {
+    "message": "Mörkt"
+  },
+  "themeSystem": {
+    "message": "System"
+  },
+  "behavior": {
+    "message": "Beteende"
+  },
+  "startMinimized": {
+    "message": "Starta minimerad"
+  },
+  "startMinimizedDescription": {
+    "message": "När aktiverat visas meddelandet i minimerat läge."
+  },
+  "defaultPosition": {
+    "message": "Standardposition"
+  },
+  "positionTopLeft": {
+    "message": "Uppe till vänster"
+  },
+  "positionTopRight": {
+    "message": "Uppe till höger"
+  },
+  "positionBottomLeft": {
+    "message": "Nere till vänster"
+  },
+  "positionBottomRight": {
+    "message": "Nere till höger"
+  },
+  "dragPositionHint": {
+    "message": "Du kan dra meddelandet till en annan position på specifika sidor."
+  },
+  "hiddenSites": {
+    "message": "Dolda sidor"
+  },
+  "noHiddenSites": {
+    "message": "Inga sidor är dolda."
+  },
+  "resetAll": {
+    "message": "Återställ alla"
+  },
+  "reset": {
+    "message": "Återställ"
+  },
+  "cache": {
+    "message": "Cache"
+  },
+  "cacheDescription": {
+    "message": "Butikslistan cachas i 48 timmar för snabbare laddning."
+  },
+  "clearCache": {
+    "message": "Rensa cache"
+  },
+  "reportIssue": {
+    "message": "Rapportera problem"
+  },
+
+  "themeSaved": {
+    "message": "Tema sparat"
+  },
+  "startMinimizedEnabled": {
+    "message": "Starta minimerad aktiverat"
+  },
+  "startMinimizedDisabled": {
+    "message": "Starta minimerad inaktiverat"
+  },
+  "positionSaved": {
+    "message": "Position sparad"
+  },
+  "remove": {
+    "message": "Ta bort"
+  },
+  "confirmResetHiddenSites": {
+    "message": "Är du säker på att du vill återställa alla dolda sidor?"
+  },
+  "siteRemoved": {
+    "message": "$SITE$ borttagen",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "allHiddenSitesRemoved": {
+    "message": "Alla dolda sidor borttagna"
+  },
+  "cacheCleared": {
+    "message": "Cache rensad"
+  },
+
+  "ariaReminderLabel": {
+    "message": "Trumf-bonuspåminnelse"
+  },
+  "ariaNotificationLabel": {
+    "message": "Trumf-bonusmeddelande"
+  },
+  "ariaMinimize": {
+    "message": "Minimera"
+  },
+  "ariaClose": {
+    "message": "Stäng"
+  },
+  "settings": {
+    "message": "Inställningar"
+  },
+
+  "importantReminder": {
+    "message": "Viktig påminnelse!"
+  },
+  "reminderMessage": {
+    "message": "För att säkerställa att din Trumf-bonus registreras måste du klicka på knappen \"Få Trumf-bonus här\" på denna sida."
+  },
+  "reminderTip": {
+    "message": "Tips: Vänta tills sidan har laddats klart och klicka sedan på den stora knappen som tar dig till butiken."
+  },
+
+  "trumfBonusAt": {
+    "message": "Trumf-bonus hos $STORE$",
+    "placeholders": {
+      "store": {
+        "content": "$1"
+      }
+    }
+  },
+  "rememberTo": {
+    "message": "Kom ihåg att:"
+  },
+  "disableUblockOrigin": {
+    "message": "Inaktivera uBlock Origin"
+  },
+  "disableAdguardPihole": {
+    "message": "Inaktivera AdGuard/Pi-Hole"
+  },
+  "emptyCart": {
+    "message": "Töm din varukorg"
+  },
+  "getTrumfBonus": {
+    "message": "Få Trumf-bonus"
+  },
+  "dontShowOnThisSite": {
+    "message": "Visa inte på denna sida"
+  },
+  "aboutExtension": {
+    "message": "Om detta tillägg"
+  },
+  "purchaseRegistered": {
+    "message": "Om allt gjordes korrekt bör ditt köp vara registrerat."
+  },
+  "adblockerDetected": {
+    "message": "Annonsblockerare upptäckt!"
+  },
+  "back": {
+    "message": "← Tillbaka"
+  },
+  "hiddenSitesCount": {
+    "message": "$COUNT$ sida dold",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenSitesCountPlural": {
+    "message": "$COUNT$ sidor dolda",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragToOverridePosition": {
+    "message": "Dra meddelandet för att åsidosätta positionen på denna sida."
+  },
+  "thisStore": {
+    "message": "denna butik"
+  }
+}

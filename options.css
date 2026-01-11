@@ -114,6 +114,15 @@ body {
   gap: 8px;
 }
 
+/* Language buttons - allow wrapping */
+.language-buttons {
+  flex-wrap: wrap;
+}
+
+.language-buttons .theme-btn {
+  padding: 6px 12px;
+}
+
 .theme-btn {
   padding: 8px 16px;
   background: var(--bg-secondary);
