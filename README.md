@@ -2,7 +2,7 @@
 
 # Trumf Bonusvarsler Lite
 
-![Versjon](https://img.shields.io/badge/Versjon-3.2.1-blue)
+![Versjon](https://img.shields.io/badge/Versjon-4.2.0-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
