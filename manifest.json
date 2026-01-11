@@ -42,6 +42,12 @@
     },
     "default_title": "Trumf Bonusvarsler Lite"
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["_locales/*/*.json"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "trumf-bonusvarsler-lite@kristofferR",

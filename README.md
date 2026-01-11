@@ -1,3 +1,5 @@
+<img src="icon.png" alt="Trumf Bonusvarsler Lite" width="64" align="left" style="margin-right: 16px;">
+
 # Trumf Bonusvarsler Lite
 
 ![Versjon](https://img.shields.io/badge/Versjon-3.2.1-blue)
