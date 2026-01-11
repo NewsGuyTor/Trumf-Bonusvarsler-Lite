@@ -134,6 +134,9 @@
   "reminderMessage": {
     "message": "Щоб переконатися, що ваш бонус Trumf зараховано, вам потрібно натиснути кнопку «Отримати бонус Trumf тут» на цій сторінці."
   },
+  "reminderAdblockWarning": {
+    "message": "Важливо, щоб розширення для блокування реклами були повністю вимкнені, а не лише додані до білого списку."
+  },
   "reminderTip": {
     "message": "Порада: Зачекайте, поки сторінка завантажиться, потім натисніть велику кнопку, яка переведе вас до магазину."
   },
@@ -149,11 +152,11 @@
   "rememberTo": {
     "message": "Не забудьте:"
   },
-  "disableUblockOrigin": {
-    "message": "Вимкнути uBlock Origin"
+  "acceptAllCookies": {
+    "message": "Прийняти всі cookies"
   },
-  "disableAdguardPihole": {
-    "message": "Вимкнути AdGuard/Pi-Hole"
+  "disableAdblockers": {
+    "message": "Вимкнути uBlock/AdGuard Home/Pi-Hole"
   },
   "emptyCart": {
     "message": "Очистити кошик"
@@ -172,6 +175,12 @@
   },
   "adblockerDetected": {
     "message": "Виявлено блокувальник реклами!"
+  },
+  "checkingAdblock": {
+    "message": "Перевірка..."
+  },
+  "checkAdblockAgain": {
+    "message": "Перевірити знову"
   },
   "back": {
     "message": "← Назад"

@@ -134,6 +134,9 @@
   "reminderMessage": {
     "message": "For å være sikker på at Trumf-bonusen registreres, må du klikke på \"Få Trumf-bonus her\"-knappen på denne siden."
   },
+  "reminderAdblockWarning": {
+    "message": "Det er viktig at adblocker-utvidelser er helt deaktivert, ikke bare hvitelistet."
+  },
   "reminderTip": {
     "message": "Tips: Vent til siden laster ferdig, og trykk deretter på den store knappen som tar deg til butikken."
   },
@@ -149,11 +152,11 @@
   "rememberTo": {
     "message": "Husk å:"
   },
-  "disableUblockOrigin": {
-    "message": "Deaktivere uBlock Origin"
+  "disableAdblockers": {
+    "message": "Deaktivere uBlock/AdGuard Home/Pi-Hole"
   },
-  "disableAdguardPihole": {
-    "message": "Deaktivere AdGuard/Pi-Hole"
+  "acceptAllCookies": {
+    "message": "Akseptere alle cookies"
   },
   "emptyCart": {
     "message": "Tømme handlevognen"
@@ -172,6 +175,12 @@
   },
   "adblockerDetected": {
     "message": "Adblocker funnet!"
+  },
+  "checkingAdblock": {
+    "message": "Sjekker..."
+  },
+  "checkAdblockAgain": {
+    "message": "Sjekk på nytt"
   },
   "back": {
     "message": "← Tilbake"

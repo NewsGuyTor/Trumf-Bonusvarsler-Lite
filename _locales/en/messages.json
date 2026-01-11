@@ -134,6 +134,9 @@
   "reminderMessage": {
     "message": "To ensure your Trumf bonus is registered, you must click the \"Get Trumf bonus here\" button on this page."
   },
+  "reminderAdblockWarning": {
+    "message": "It is important that adblocker extensions are completely disabled, not just whitelisted."
+  },
   "reminderTip": {
     "message": "Tip: Wait for the page to finish loading, then click the large button that takes you to the store."
   },
@@ -149,11 +152,11 @@
   "rememberTo": {
     "message": "Remember to:"
   },
-  "disableUblockOrigin": {
-    "message": "Disable uBlock Origin"
+  "acceptAllCookies": {
+    "message": "Accept all cookies"
   },
-  "disableAdguardPihole": {
-    "message": "Disable AdGuard/Pi-Hole"
+  "disableAdblockers": {
+    "message": "Disable uBlock/AdGuard Home/Pi-Hole"
   },
   "emptyCart": {
     "message": "Empty your cart"
@@ -172,6 +175,12 @@
   },
   "adblockerDetected": {
     "message": "Adblocker detected!"
+  },
+  "checkingAdblock": {
+    "message": "Checking..."
+  },
+  "checkAdblockAgain": {
+    "message": "Check again"
   },
   "back": {
     "message": "← Back"

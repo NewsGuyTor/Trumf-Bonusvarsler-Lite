@@ -647,9 +647,27 @@
   // Adblock Detection
   // ===================
 
+  // Sites with strict CSP that blocks our test URLs (causes false positives)
+  const CSP_RESTRICTED_SITES = new Set([
+    "www.ekstralys.no",
+    "vetzoo.no",
+    "www.myprotein.no",
+    "www.strikkia.no",
+    "hoie.no",
+    "www.elite.se",
+    "www.sportmann.no",
+    "www.getyourguide.com",
+    "www.klokkegiganten.no",
+    "www.skyshowtime.com",
+    "fabel.no",
+    "www.bookbeat.no",
+    "sharkgaming.no",
+    "www.vivara.no",
+  ]);
+
   async function checkUrlBlocked(url) {
     try {
-      const response = await fetch(url, { mode: "no-cors" });
+      await fetch(url, { mode: "no-cors" });
       // With no-cors, we can't read the response, but if we get here, it wasn't blocked
       return false;
     } catch {
@@ -700,10 +718,13 @@
       "https://srvtrck.com/assets/css/LineIcons.css",
     ];
 
+    // Skip URL checks on sites with strict CSP (causes false positives)
+    const skipUrlChecks = CSP_RESTRICTED_SITES.has(currentHost);
+
     try {
       const checks = await withTimeout(
         Promise.all([
-          ...adUrls.map((url) => checkUrlBlocked(url)),
+          ...(skipUrlChecks ? [] : adUrls.map((url) => checkUrlBlocked(url))),
           checkBannerIds(),
         ]),
         CONFIG.adblockTimeout,
@@ -980,6 +1001,11 @@
     message.textContent =
       'For å være sikker på at Trumf-bonusen registreres, må du klikke på "Få Trumf-bonus her"-knappen på denne siden.';
 
+    const adblockWarning = document.createElement("p");
+    adblockWarning.className = "message";
+    adblockWarning.textContent =
+      "Det er viktig at adblocker-utvidelser er helt deaktivert, ikke bare hvitelistet.";
+
     const tip = document.createElement("p");
     tip.className = "tip";
     tip.textContent =
@@ -987,6 +1013,7 @@
 
     body.appendChild(title);
     body.appendChild(message);
+    body.appendChild(adblockWarning);
     body.appendChild(tip);
 
     container.appendChild(header);
@@ -1112,10 +1139,42 @@
             .action-btn.adblock {
                 background: #ff0000;
                 animation: pulse 0.7s infinite alternate ease-in-out;
+                pointer-events: none;
+                cursor: default;
             }
             @keyframes pulse {
                 from { transform: scale(1); }
                 to { transform: scale(1.03); }
+            }
+
+            .recheck-icon {
+                display: none;
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 18px;
+                cursor: pointer;
+                pointer-events: auto;
+                opacity: 0.8;
+                transition: opacity 0.2s, transform 0.2s;
+            }
+            .recheck-icon:hover {
+                opacity: 1;
+            }
+            .action-btn.adblock .recheck-icon {
+                display: inline-block;
+            }
+            .action-btn.adblock {
+                position: relative;
+                padding-right: 36px;
+            }
+            .recheck-icon.spinning {
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: translateY(-50%) rotate(0deg); }
+                to { transform: translateY(-50%) rotate(360deg); }
             }
 
             .hide-site {
@@ -1468,8 +1527,8 @@
     const checklist = document.createElement("ol");
     checklist.className = "checklist";
     [
-      "Deaktivere uBlock Origin",
-      "Deaktivere AdGuard/Pi-Hole",
+      "Deaktivere uBlock/AdGuard Home/Pi-Hole",
+      "Akseptere alle cookies",
       "Tømme handlevognen",
     ].forEach((text) => {
       const li = document.createElement("li");
@@ -1768,15 +1827,50 @@
     });
 
     // Adblock detection
-    detectAdblock().then((isBlocked) => {
+    const originalHref = actionBtn.href;
+    const originalText = actionBtn.textContent;
+
+    // Create recheck icon (hidden by default)
+    const recheckIcon = document.createElement("span");
+    recheckIcon.className = "recheck-icon";
+    recheckIcon.innerHTML = "&#x21bb;"; // ↻ refresh symbol
+    recheckIcon.title = "Sjekk på nytt";
+    actionBtn.appendChild(recheckIcon);
+
+    function showAdblockWarning() {
+      actionBtn.classList.add("adblock");
+      actionBtn.childNodes[0].textContent = "Adblocker funnet!";
+      actionBtn.removeAttribute("href");
+      actionBtn.removeAttribute("target");
+    }
+
+    function restoreButton() {
+      actionBtn.classList.remove("adblock");
+      actionBtn.childNodes[0].textContent = originalText;
+      actionBtn.href = originalHref;
+      actionBtn.target = "_blank";
+    }
+
+    async function checkAndUpdateButton() {
+      const isBlocked = await detectAdblock();
       if (isBlocked) {
-        actionBtn.classList.add("adblock");
-        actionBtn.textContent = "Adblocker funnet!";
-        actionBtn.removeAttribute("href");
-        actionBtn.removeAttribute("target");
-        actionBtn.style.pointerEvents = "none";
-        actionBtn.style.cursor = "default";
+        showAdblockWarning();
+      } else {
+        restoreButton();
       }
+    }
+
+    recheckIcon.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      actionBtn.childNodes[0].textContent = "Sjekker...";
+      recheckIcon.classList.add("spinning");
+      await checkAndUpdateButton();
+      recheckIcon.classList.remove("spinning");
+    });
+
+    checkAndUpdateButton().catch(() => {
+      // Silently ignore detection failures
     });
 
     // Make draggable to corners
