@@ -38,21 +38,6 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ---
 
-## Ytelse
-
-Utvidelsen kjører teknisk sett på alle nettsider, men er designet for å være så lett som mulig:
-
-| Hva | Hvordan |
-|-----|---------|
-| **Rask sjekk** | Butikklisten caches i 48 timer og deles på tvers av alle sider |
-| **Instant oppslag** | Sjekker om siden er en Trumf-butikk på under 1ms |
-| **Minimal ressursbruk** | Hopper over iframes og venter til siden er ferdig lastet |
-| **Tidlig avbrudd** | Gjør ingenting hvis siden allerede er sjekket eller skjult |
-
-Du merker ikke at den kjører.
-
----
-
 ## Installering
 
 ### Nettleserutvidelse (anbefalt)
