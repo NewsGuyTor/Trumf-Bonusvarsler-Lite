@@ -1,0 +1,201 @@
+{
+  "extensionDescription": {
+    "message": "Alerts you when visiting an online store that offers Trumf bonus. Lightweight, fast, and privacy-friendly."
+  },
+
+  "language": {
+    "message": "Language"
+  },
+  "languageSaved": {
+    "message": "Language saved"
+  },
+  "optionsTitle": {
+    "message": "Trumf Bonus Alert Lite - Settings"
+  },
+  "appearance": {
+    "message": "Appearance"
+  },
+  "theme": {
+    "message": "Theme"
+  },
+  "themeLight": {
+    "message": "Light"
+  },
+  "themeDark": {
+    "message": "Dark"
+  },
+  "themeSystem": {
+    "message": "System"
+  },
+  "behavior": {
+    "message": "Behavior"
+  },
+  "startMinimized": {
+    "message": "Start minimized"
+  },
+  "startMinimizedDescription": {
+    "message": "When enabled, the alert appears in a minimized state."
+  },
+  "defaultPosition": {
+    "message": "Default position"
+  },
+  "positionTopLeft": {
+    "message": "Top left"
+  },
+  "positionTopRight": {
+    "message": "Top right"
+  },
+  "positionBottomLeft": {
+    "message": "Bottom left"
+  },
+  "positionBottomRight": {
+    "message": "Bottom right"
+  },
+  "dragPositionHint": {
+    "message": "You can drag the alert to a different position on specific pages."
+  },
+  "hiddenSites": {
+    "message": "Hidden sites"
+  },
+  "noHiddenSites": {
+    "message": "No sites are hidden."
+  },
+  "resetAll": {
+    "message": "Reset all"
+  },
+  "reset": {
+    "message": "Reset"
+  },
+  "cache": {
+    "message": "Cache"
+  },
+  "cacheDescription": {
+    "message": "The store list is cached for 48 hours for faster loading."
+  },
+  "clearCache": {
+    "message": "Clear cache"
+  },
+  "reportIssue": {
+    "message": "Report issue"
+  },
+
+  "themeSaved": {
+    "message": "Theme saved"
+  },
+  "startMinimizedEnabled": {
+    "message": "Start minimized enabled"
+  },
+  "startMinimizedDisabled": {
+    "message": "Start minimized disabled"
+  },
+  "positionSaved": {
+    "message": "Position saved"
+  },
+  "remove": {
+    "message": "Remove"
+  },
+  "confirmResetHiddenSites": {
+    "message": "Are you sure you want to reset all hidden sites?"
+  },
+  "siteRemoved": {
+    "message": "$SITE$ removed",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "allHiddenSitesRemoved": {
+    "message": "All hidden sites removed"
+  },
+  "cacheCleared": {
+    "message": "Cache cleared"
+  },
+
+  "ariaReminderLabel": {
+    "message": "Trumf bonus reminder"
+  },
+  "ariaNotificationLabel": {
+    "message": "Trumf bonus notification"
+  },
+  "ariaMinimize": {
+    "message": "Minimize"
+  },
+  "ariaClose": {
+    "message": "Close"
+  },
+  "settings": {
+    "message": "Settings"
+  },
+
+  "importantReminder": {
+    "message": "Important reminder!"
+  },
+  "reminderMessage": {
+    "message": "To ensure your Trumf bonus is registered, you must click the \"Get Trumf bonus here\" button on this page."
+  },
+  "reminderTip": {
+    "message": "Tip: Wait for the page to finish loading, then click the large button that takes you to the store."
+  },
+
+  "trumfBonusAt": {
+    "message": "Trumf bonus at $STORE$",
+    "placeholders": {
+      "store": {
+        "content": "$1"
+      }
+    }
+  },
+  "rememberTo": {
+    "message": "Remember to:"
+  },
+  "disableUblockOrigin": {
+    "message": "Disable uBlock Origin"
+  },
+  "disableAdguardPihole": {
+    "message": "Disable AdGuard/Pi-Hole"
+  },
+  "emptyCart": {
+    "message": "Empty your cart"
+  },
+  "getTrumfBonus": {
+    "message": "Get Trumf bonus"
+  },
+  "dontShowOnThisSite": {
+    "message": "Don't show on this site"
+  },
+  "aboutExtension": {
+    "message": "About this extension"
+  },
+  "purchaseRegistered": {
+    "message": "If everything was done correctly, your purchase should be registered."
+  },
+  "adblockerDetected": {
+    "message": "Adblocker detected!"
+  },
+  "back": {
+    "message": "← Back"
+  },
+  "hiddenSitesCount": {
+    "message": "$COUNT$ site hidden",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenSitesCountPlural": {
+    "message": "$COUNT$ sites hidden",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragToOverridePosition": {
+    "message": "Drag the alert to override the position on this page."
+  },
+  "thisStore": {
+    "message": "this store"
+  }
+}

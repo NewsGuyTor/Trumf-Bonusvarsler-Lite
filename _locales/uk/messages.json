@@ -1,0 +1,201 @@
+{
+  "extensionDescription": {
+    "message": "Сповіщає вас, коли ви відвідуєте інтернет-магазин, який пропонує бонус Trumf. Легкий, швидкий та приватний."
+  },
+
+  "language": {
+    "message": "Мова"
+  },
+  "languageSaved": {
+    "message": "Мову збережено"
+  },
+  "optionsTitle": {
+    "message": "Trumf Bonusvarsler Lite - Налаштування"
+  },
+  "appearance": {
+    "message": "Зовнішній вигляд"
+  },
+  "theme": {
+    "message": "Тема"
+  },
+  "themeLight": {
+    "message": "Світла"
+  },
+  "themeDark": {
+    "message": "Темна"
+  },
+  "themeSystem": {
+    "message": "Системна"
+  },
+  "behavior": {
+    "message": "Поведінка"
+  },
+  "startMinimized": {
+    "message": "Запускати згорнутим"
+  },
+  "startMinimizedDescription": {
+    "message": "Коли увімкнено, сповіщення з'являється у згорнутому стані."
+  },
+  "defaultPosition": {
+    "message": "Позиція за замовчуванням"
+  },
+  "positionTopLeft": {
+    "message": "Вгорі зліва"
+  },
+  "positionTopRight": {
+    "message": "Вгорі справа"
+  },
+  "positionBottomLeft": {
+    "message": "Внизу зліва"
+  },
+  "positionBottomRight": {
+    "message": "Внизу справа"
+  },
+  "dragPositionHint": {
+    "message": "Ви можете перетягнути сповіщення в іншу позицію на конкретних сторінках."
+  },
+  "hiddenSites": {
+    "message": "Приховані сайти"
+  },
+  "noHiddenSites": {
+    "message": "Немає прихованих сайтів."
+  },
+  "resetAll": {
+    "message": "Скинути все"
+  },
+  "reset": {
+    "message": "Скинути"
+  },
+  "cache": {
+    "message": "Кеш"
+  },
+  "cacheDescription": {
+    "message": "Список магазинів кешується на 48 годин для швидшого завантаження."
+  },
+  "clearCache": {
+    "message": "Очистити кеш"
+  },
+  "reportIssue": {
+    "message": "Повідомити про проблему"
+  },
+
+  "themeSaved": {
+    "message": "Тему збережено"
+  },
+  "startMinimizedEnabled": {
+    "message": "Запуск згорнутим увімкнено"
+  },
+  "startMinimizedDisabled": {
+    "message": "Запуск згорнутим вимкнено"
+  },
+  "positionSaved": {
+    "message": "Позицію збережено"
+  },
+  "remove": {
+    "message": "Видалити"
+  },
+  "confirmResetHiddenSites": {
+    "message": "Ви впевнені, що хочете скинути всі приховані сайти?"
+  },
+  "siteRemoved": {
+    "message": "$SITE$ видалено",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "allHiddenSitesRemoved": {
+    "message": "Усі приховані сайти видалено"
+  },
+  "cacheCleared": {
+    "message": "Кеш очищено"
+  },
+
+  "ariaReminderLabel": {
+    "message": "Нагадування про бонус Trumf"
+  },
+  "ariaNotificationLabel": {
+    "message": "Сповіщення про бонус Trumf"
+  },
+  "ariaMinimize": {
+    "message": "Згорнути"
+  },
+  "ariaClose": {
+    "message": "Закрити"
+  },
+  "settings": {
+    "message": "Налаштування"
+  },
+
+  "importantReminder": {
+    "message": "Важливе нагадування!"
+  },
+  "reminderMessage": {
+    "message": "Щоб переконатися, що ваш бонус Trumf зараховано, вам потрібно натиснути кнопку «Отримати бонус Trumf тут» на цій сторінці."
+  },
+  "reminderTip": {
+    "message": "Порада: Зачекайте, поки сторінка завантажиться, потім натисніть велику кнопку, яка переведе вас до магазину."
+  },
+
+  "trumfBonusAt": {
+    "message": "Бонус Trumf у $STORE$",
+    "placeholders": {
+      "store": {
+        "content": "$1"
+      }
+    }
+  },
+  "rememberTo": {
+    "message": "Не забудьте:"
+  },
+  "disableUblockOrigin": {
+    "message": "Вимкнути uBlock Origin"
+  },
+  "disableAdguardPihole": {
+    "message": "Вимкнути AdGuard/Pi-Hole"
+  },
+  "emptyCart": {
+    "message": "Очистити кошик"
+  },
+  "getTrumfBonus": {
+    "message": "Отримати бонус Trumf"
+  },
+  "dontShowOnThisSite": {
+    "message": "Не показувати на цьому сайті"
+  },
+  "aboutExtension": {
+    "message": "Про це розширення"
+  },
+  "purchaseRegistered": {
+    "message": "Якщо все було зроблено правильно, ваша покупка має бути зареєстрована."
+  },
+  "adblockerDetected": {
+    "message": "Виявлено блокувальник реклами!"
+  },
+  "back": {
+    "message": "← Назад"
+  },
+  "hiddenSitesCount": {
+    "message": "$COUNT$ сайт приховано",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenSitesCountPlural": {
+    "message": "$COUNT$ сайтів приховано",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragToOverridePosition": {
+    "message": "Перетягніть сповіщення, щоб змінити позицію на цій сторінці."
+  },
+  "thisStore": {
+    "message": "цей магазин"
+  }
+}

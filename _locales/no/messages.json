@@ -1,0 +1,201 @@
+{
+  "extensionDescription": {
+    "message": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig."
+  },
+
+  "language": {
+    "message": "Språk"
+  },
+  "languageSaved": {
+    "message": "Språk lagret"
+  },
+  "optionsTitle": {
+    "message": "Trumf Bonusvarsler Lite - Innstillinger"
+  },
+  "appearance": {
+    "message": "Utseende"
+  },
+  "theme": {
+    "message": "Tema"
+  },
+  "themeLight": {
+    "message": "Lys"
+  },
+  "themeDark": {
+    "message": "Mørk"
+  },
+  "themeSystem": {
+    "message": "System"
+  },
+  "behavior": {
+    "message": "Oppførsel"
+  },
+  "startMinimized": {
+    "message": "Start minimert"
+  },
+  "startMinimizedDescription": {
+    "message": "Når aktivert, vises varselet i minimert tilstand."
+  },
+  "defaultPosition": {
+    "message": "Standard posisjon"
+  },
+  "positionTopLeft": {
+    "message": "Øverst til venstre"
+  },
+  "positionTopRight": {
+    "message": "Øverst til høyre"
+  },
+  "positionBottomLeft": {
+    "message": "Nederst til venstre"
+  },
+  "positionBottomRight": {
+    "message": "Nederst til høyre"
+  },
+  "dragPositionHint": {
+    "message": "Du kan dra varselet til en annen posisjon på spesifikke sider."
+  },
+  "hiddenSites": {
+    "message": "Skjulte sider"
+  },
+  "noHiddenSites": {
+    "message": "Ingen sider er skjult."
+  },
+  "resetAll": {
+    "message": "Nullstill alle"
+  },
+  "reset": {
+    "message": "Nullstill"
+  },
+  "cache": {
+    "message": "Cache"
+  },
+  "cacheDescription": {
+    "message": "Butikklisten caches i 48 timer for raskere lasting."
+  },
+  "clearCache": {
+    "message": "Tøm cache"
+  },
+  "reportIssue": {
+    "message": "Rapporter problem"
+  },
+
+  "themeSaved": {
+    "message": "Tema lagret"
+  },
+  "startMinimizedEnabled": {
+    "message": "Start minimert aktivert"
+  },
+  "startMinimizedDisabled": {
+    "message": "Start minimert deaktivert"
+  },
+  "positionSaved": {
+    "message": "Posisjon lagret"
+  },
+  "remove": {
+    "message": "Fjern"
+  },
+  "confirmResetHiddenSites": {
+    "message": "Er du sikker på at du vil nullstille alle skjulte sider?"
+  },
+  "siteRemoved": {
+    "message": "$SITE$ fjernet",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "allHiddenSitesRemoved": {
+    "message": "Alle skjulte sider fjernet"
+  },
+  "cacheCleared": {
+    "message": "Cache tømt"
+  },
+
+  "ariaReminderLabel": {
+    "message": "Trumf bonus påminnelse"
+  },
+  "ariaNotificationLabel": {
+    "message": "Trumf bonus varsling"
+  },
+  "ariaMinimize": {
+    "message": "Minimer"
+  },
+  "ariaClose": {
+    "message": "Lukk"
+  },
+  "settings": {
+    "message": "Innstillinger"
+  },
+
+  "importantReminder": {
+    "message": "Viktig påminnelse!"
+  },
+  "reminderMessage": {
+    "message": "For å være sikker på at Trumf-bonusen registreres, må du klikke på \"Få Trumf-bonus her\"-knappen på denne siden."
+  },
+  "reminderTip": {
+    "message": "Tips: Vent til siden laster ferdig, og trykk deretter på den store knappen som tar deg til butikken."
+  },
+
+  "trumfBonusAt": {
+    "message": "Trumf-bonus hos $STORE$",
+    "placeholders": {
+      "store": {
+        "content": "$1"
+      }
+    }
+  },
+  "rememberTo": {
+    "message": "Husk å:"
+  },
+  "disableUblockOrigin": {
+    "message": "Deaktivere uBlock Origin"
+  },
+  "disableAdguardPihole": {
+    "message": "Deaktivere AdGuard/Pi-Hole"
+  },
+  "emptyCart": {
+    "message": "Tømme handlevognen"
+  },
+  "getTrumfBonus": {
+    "message": "Få Trumf-bonus"
+  },
+  "dontShowOnThisSite": {
+    "message": "Ikke vis på denne siden"
+  },
+  "aboutExtension": {
+    "message": "Om denne utvidelsen"
+  },
+  "purchaseRegistered": {
+    "message": "Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert."
+  },
+  "adblockerDetected": {
+    "message": "Adblocker funnet!"
+  },
+  "back": {
+    "message": "← Tilbake"
+  },
+  "hiddenSitesCount": {
+    "message": "$COUNT$ side skjult",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenSitesCountPlural": {
+    "message": "$COUNT$ sider skjult",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragToOverridePosition": {
+    "message": "Dra varselet for å overstyre posisjonen på denne siden."
+  },
+  "thisStore": {
+    "message": "denne butikken"
+  }
+}

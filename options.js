@@ -12,7 +12,85 @@ const KEYS = {
   feedData: "TrumfBonusvarslerLite_FeedData_v3",
   feedTime: "TrumfBonusvarslerLite_FeedTime_v3",
   hostIndex: "TrumfBonusvarslerLite_HostIndex_v3",
+  language: "TrumfBonusvarslerLite_Language",
 };
+
+// Messages cache
+let messages = {};
+let currentLang = "no";
+
+// Load messages for a specific language
+async function loadMessages(lang) {
+  try {
+    const url = browser.runtime.getURL(`_locales/${lang}/messages.json`);
+    const response = await fetch(url);
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
+
+// i18n helper with placeholder support
+function i18n(messageName, substitutions) {
+  const entry = messages[messageName];
+  if (!entry || !entry.message) {
+    return messageName;
+  }
+
+  let msg = entry.message;
+
+  // Handle substitutions
+  if (substitutions !== undefined) {
+    const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
+    subs.forEach((sub, index) => {
+      const placeholder = `$${index + 1}`;
+      msg = msg.replace(placeholder, sub);
+      // Also handle named placeholders
+      if (entry.placeholders) {
+        for (const [name, config] of Object.entries(entry.placeholders)) {
+          if (config.content === placeholder) {
+            msg = msg.replace(new RegExp(`\\$${name.toUpperCase()}\\$`, "g"), sub);
+          }
+        }
+      }
+    });
+  }
+
+  return msg;
+}
+
+// Translate all elements with data-i18n attributes
+function translatePage() {
+  // Translate text content
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    const message = i18n(key);
+    if (message && message !== key) {
+      el.textContent = message;
+    }
+  });
+
+  // Translate titles
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-title");
+    const message = i18n(key);
+    if (message && message !== key) {
+      el.title = message;
+    }
+  });
+
+  // Translate aria-labels
+  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-aria");
+    const message = i18n(key);
+    if (message && message !== key) {
+      el.setAttribute("aria-label", message);
+    }
+  });
+
+  // Update page title
+  document.title = i18n("optionsTitle");
+}
 
 // Get value from storage
 async function getValue(key, defaultValue) {
@@ -48,6 +126,31 @@ function showStatus(message) {
   }, 2000);
 }
 
+// Initialize language buttons
+async function initLanguage() {
+  const buttons = document.querySelectorAll("#language-buttons .theme-btn");
+
+  buttons.forEach((btn) => {
+    if (btn.dataset.lang === currentLang) {
+      btn.classList.add("active");
+    }
+
+    btn.addEventListener("click", async () => {
+      const newLang = btn.dataset.lang;
+      if (newLang === currentLang) return;
+
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      await setValue(KEYS.language, newLang);
+      currentLang = newLang;
+      messages = await loadMessages(newLang);
+      translatePage();
+      showStatus(i18n("languageSaved"));
+    });
+  });
+}
+
 // Initialize theme buttons
 async function initTheme() {
   const currentTheme = await getValue(KEYS.theme, "system");
@@ -62,7 +165,7 @@ async function initTheme() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       await setValue(KEYS.theme, btn.dataset.theme);
-      showStatus("Tema lagret");
+      showStatus(i18n("themeSaved"));
     });
   });
 }
@@ -79,7 +182,7 @@ async function initStartMinimized() {
   toggle.addEventListener("click", async () => {
     const isActive = toggle.classList.toggle("active");
     await setValue(KEYS.startMinimized, isActive);
-    showStatus(isActive ? "Start minimert aktivert" : "Start minimert deaktivert");
+    showStatus(isActive ? i18n("startMinimizedEnabled") : i18n("startMinimizedDisabled"));
   });
 }
 
@@ -97,7 +200,7 @@ async function initPosition() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       await setValue(KEYS.position, btn.dataset.position);
-      showStatus("Posisjon lagret");
+      showStatus(i18n("positionSaved"));
     });
   });
 }
@@ -132,12 +235,12 @@ async function initHiddenSites() {
       const removeBtn = document.createElement("button");
       removeBtn.className = "remove-site-btn";
       removeBtn.textContent = "×";
-      removeBtn.title = "Fjern";
+      removeBtn.title = i18n("remove");
       removeBtn.addEventListener("click", async () => {
         hiddenSites.splice(index, 1);
         await setValue(KEYS.hiddenSites, hiddenSites);
         render();
-        showStatus(`${site} fjernet`);
+        showStatus(i18n("siteRemoved", site));
       });
 
       item.appendChild(name);
@@ -150,11 +253,11 @@ async function initHiddenSites() {
 
   // Reset all hidden sites
   document.getElementById("reset-hidden-sites").addEventListener("click", async () => {
-    if (confirm("Er du sikker på at du vil nullstille alle skjulte sider?")) {
+    if (confirm(i18n("confirmResetHiddenSites"))) {
       hiddenSites.length = 0;
       await setValue(KEYS.hiddenSites, []);
       render();
-      showStatus("Alle skjulte sider fjernet");
+      showStatus(i18n("allHiddenSitesRemoved"));
     }
   });
 }
@@ -165,7 +268,7 @@ function initClearCache() {
     await setValue(KEYS.feedData, null);
     await setValue(KEYS.feedTime, null);
     await setValue(KEYS.hostIndex, null);
-    showStatus("Cache tømt");
+    showStatus(i18n("cacheCleared"));
   });
 }
 
@@ -176,8 +279,14 @@ function initVersion() {
 }
 
 // Initialize everything
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Load language preference and messages first
+  currentLang = await getValue(KEYS.language, "no");
+  messages = await loadMessages(currentLang);
+
+  translatePage();
   initVersion();
+  initLanguage();
   initTheme();
   initStartMinimized();
   initPosition();

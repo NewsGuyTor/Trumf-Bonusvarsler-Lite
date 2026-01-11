@@ -1,0 +1,201 @@
+{
+  "extensionDescription": {
+    "message": "Vous alerte lorsque vous visitez une boutique en ligne offrant un bonus Trumf. Léger, rapide et respectueux de la vie privée."
+  },
+
+  "language": {
+    "message": "Langue"
+  },
+  "languageSaved": {
+    "message": "Langue enregistrée"
+  },
+  "optionsTitle": {
+    "message": "Trumf Bonusvarsler Lite - Paramètres"
+  },
+  "appearance": {
+    "message": "Apparence"
+  },
+  "theme": {
+    "message": "Thème"
+  },
+  "themeLight": {
+    "message": "Clair"
+  },
+  "themeDark": {
+    "message": "Sombre"
+  },
+  "themeSystem": {
+    "message": "Système"
+  },
+  "behavior": {
+    "message": "Comportement"
+  },
+  "startMinimized": {
+    "message": "Démarrer minimisé"
+  },
+  "startMinimizedDescription": {
+    "message": "Lorsque activé, l'alerte apparaît dans un état minimisé."
+  },
+  "defaultPosition": {
+    "message": "Position par défaut"
+  },
+  "positionTopLeft": {
+    "message": "En haut à gauche"
+  },
+  "positionTopRight": {
+    "message": "En haut à droite"
+  },
+  "positionBottomLeft": {
+    "message": "En bas à gauche"
+  },
+  "positionBottomRight": {
+    "message": "En bas à droite"
+  },
+  "dragPositionHint": {
+    "message": "Vous pouvez faire glisser l'alerte vers une position différente sur des pages spécifiques."
+  },
+  "hiddenSites": {
+    "message": "Sites masqués"
+  },
+  "noHiddenSites": {
+    "message": "Aucun site n'est masqué."
+  },
+  "resetAll": {
+    "message": "Tout réinitialiser"
+  },
+  "reset": {
+    "message": "Réinitialiser"
+  },
+  "cache": {
+    "message": "Cache"
+  },
+  "cacheDescription": {
+    "message": "La liste des boutiques est mise en cache pendant 48 heures pour un chargement plus rapide."
+  },
+  "clearCache": {
+    "message": "Vider le cache"
+  },
+  "reportIssue": {
+    "message": "Signaler un problème"
+  },
+
+  "themeSaved": {
+    "message": "Thème enregistré"
+  },
+  "startMinimizedEnabled": {
+    "message": "Démarrer minimisé activé"
+  },
+  "startMinimizedDisabled": {
+    "message": "Démarrer minimisé désactivé"
+  },
+  "positionSaved": {
+    "message": "Position enregistrée"
+  },
+  "remove": {
+    "message": "Supprimer"
+  },
+  "confirmResetHiddenSites": {
+    "message": "Êtes-vous sûr de vouloir réinitialiser tous les sites masqués ?"
+  },
+  "siteRemoved": {
+    "message": "$SITE$ supprimé",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "allHiddenSitesRemoved": {
+    "message": "Tous les sites masqués supprimés"
+  },
+  "cacheCleared": {
+    "message": "Cache vidé"
+  },
+
+  "ariaReminderLabel": {
+    "message": "Rappel de bonus Trumf"
+  },
+  "ariaNotificationLabel": {
+    "message": "Notification de bonus Trumf"
+  },
+  "ariaMinimize": {
+    "message": "Minimiser"
+  },
+  "ariaClose": {
+    "message": "Fermer"
+  },
+  "settings": {
+    "message": "Paramètres"
+  },
+
+  "importantReminder": {
+    "message": "Rappel important !"
+  },
+  "reminderMessage": {
+    "message": "Pour vous assurer que votre bonus Trumf est enregistré, vous devez cliquer sur le bouton « Obtenir le bonus Trumf ici » sur cette page."
+  },
+  "reminderTip": {
+    "message": "Conseil : Attendez que la page finisse de charger, puis cliquez sur le grand bouton qui vous emmène vers la boutique."
+  },
+
+  "trumfBonusAt": {
+    "message": "Bonus Trumf chez $STORE$",
+    "placeholders": {
+      "store": {
+        "content": "$1"
+      }
+    }
+  },
+  "rememberTo": {
+    "message": "N'oubliez pas de :"
+  },
+  "disableUblockOrigin": {
+    "message": "Désactiver uBlock Origin"
+  },
+  "disableAdguardPihole": {
+    "message": "Désactiver AdGuard/Pi-Hole"
+  },
+  "emptyCart": {
+    "message": "Vider votre panier"
+  },
+  "getTrumfBonus": {
+    "message": "Obtenir le bonus Trumf"
+  },
+  "dontShowOnThisSite": {
+    "message": "Ne pas afficher sur ce site"
+  },
+  "aboutExtension": {
+    "message": "À propos de cette extension"
+  },
+  "purchaseRegistered": {
+    "message": "Si tout a été fait correctement, votre achat devrait être enregistré."
+  },
+  "adblockerDetected": {
+    "message": "Bloqueur de publicités détecté !"
+  },
+  "back": {
+    "message": "← Retour"
+  },
+  "hiddenSitesCount": {
+    "message": "$COUNT$ site masqué",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "hiddenSitesCountPlural": {
+    "message": "$COUNT$ sites masqués",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragToOverridePosition": {
+    "message": "Faites glisser l'alerte pour remplacer la position sur cette page."
+  },
+  "thisStore": {
+    "message": "cette boutique"
+  }
+}
