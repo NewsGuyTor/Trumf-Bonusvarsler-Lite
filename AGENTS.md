@@ -1,60 +1,79 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents (Codex, etc.) when working with code in this repository.
 
 ## Project Overview
 
-Trumf Bonusvarsler Lite is a userscript that displays notifications when users visit online stores that offer Trumf bonus (a Norwegian loyalty program). It runs in userscript managers like Violentmonkey and the iOS Userscripts app.
+Trumf Bonusvarsler Lite is a browser extension and userscript that displays notifications when users visit online stores that offer Trumf bonus (a Norwegian loyalty program).
 
 ## Architecture
 
-**Single-file userscript**: `Trumf-Bonusvarsler-Lite.user.js` (v2.2.1) contains all logic, organized in sections:
+The project has two versions that share most code:
 
-1. **Configuration** - URLs, cache durations, storage keys
-2. **Utility Functions** - `sleep()`, `gmFetch()` (Promise wrapper for GM.xmlHttpRequest), `withTimeout()`
-3. **Hidden Sites Management** - Persistent per-site dismissal
-4. **Theme Management** - Light/Dark/System preference
-5. **Early Exit Checks** - Skip if hidden, session-closed, or recently shown
-6. **Feed Management** - Fetch with retry/backoff, caching, fallback to sitelist.json
-7. **Merchant Matching** - Host matching with www/non-www variations
-8. **Adblock Detection** - Multiple fetch checks + DOM banner detection with timeout
-9. **Notification UI** - Shadow DOM with CSS custom properties for theming
-10. **Migration** - Cleanup of old localStorage keys
+### Web Extension (Primary)
+- `content.js` - Main content script with all notification logic
+- `background.js` - Service worker for feed fetching (handles CORS)
+- `options.html/js/css` - Settings page
+- `manifest.json` - Extension manifest (Manifest V3)
+- `_locales/*/messages.json` - i18n translations (7 languages)
 
-**Data file**: `sitelist.json` serves as the backup merchant feed with the same structure as the primary CDN feed.
+### Userscript (Legacy)
+- `Trumf-Bonusvarsler-Lite.user.js` - Self-contained single file with all logic (Norwegian only)
+
+### Data
+- `sitelist.json` - Backup merchant feed (same structure as CDN feed)
+
+## Code Organization (content.js / userscript)
+
+1. **Configuration** - URLs, cache durations, storage keys, domain aliases
+2. **i18n** - Message loading and placeholder substitution (extension only)
+3. **Utility Functions** - `sleep()`, `withTimeout()`
+4. **Browser Storage** - Settings cache, getValue/setValue helpers
+5. **Hidden Sites Management** - Persistent per-site dismissal
+6. **Theme Management** - Light/Dark/System preference
+7. **Position Management** - Default + per-site position overrides
+8. **Feed Management** - Fetch with caching, fallback to sitelist.json
+9. **Merchant Matching** - Host matching with www/non-www variations and domain aliases
+10. **Adblock Detection** - URL fetch checks + DOM banner ID detection (skips URL checks on CSP-restricted sites)
+11. **Draggable Corner Snap** - Drag notification to corners with smooth animation
+12. **Reminder Notification** - Shows on trumfnetthandel.no/cashback/* pages
+13. **Main Notification UI** - Shadow DOM with CSS custom properties for theming
 
 ## Key Features
 
-- **Settings pane**: Cog icon toggles between notification and settings view
-- **Theme selector**: Light / Dark / System (follows OS preference via CSS custom properties)
-- **Per-site hiding**: "Ikke vis på denne siden" permanently hides notifications for a site
+- **Adblock detection** with re-check button (refresh icon)
+- **Settings pane**: Theme, start minimized, default position, hidden sites
+- **Draggable**: Drag to any corner, position saved per-site
+- **i18n**: 7 languages (no, en, sv, da, fr, es, uk)
+- **Per-site hiding**: Permanently hide notifications for specific sites
+- **Minimized mode**: Collapses to header with cashback badge
 - **Keyboard support**: ESC closes notification
-- **Responsive**: Hides checklist on narrow screens (<700px)
 
 ## Key Implementation Details
 
-- Uses `GM.xmlHttpRequest` wrapped in Promises with async/await
-- Exponential backoff on retries (100ms, 500ms, 1s, 2s, 4s)
-- Feed cached in localStorage for 6 hours
 - Shadow DOM isolates styles from host page
 - CSS custom properties (`--bg`, `--text`, `--accent`, etc.) enable theming
-- Theme applied via class on shadow host: `.theme-light`, `.theme-dark`, `.theme-system`
+- Theme applied via class on shadow host: `tbvl-light`, `tbvl-dark`, `tbvl-system`
+- Feed cached in browser storage for 48 hours
+- CSP-restricted sites skip URL-based adblock checks to avoid false positives
 
-## Storage Keys
+## Storage Keys (browser.storage.local)
 
-- `TrumfBonusvarslerLite_FeedData_v2` / `_FeedTime_v2` - Cached feed
-- `TrumfBonusvarslerLite_HiddenSites` - JSON array of hidden hostnames
+- `TrumfBonusvarslerLite_FeedData_v3` / `_FeedTime_v3` / `_HostIndex_v3` - Cached feed
+- `TrumfBonusvarslerLite_HiddenSites` - Array of hidden hostnames
 - `TrumfBonusvarslerLite_Theme` - "light", "dark", or "system"
-- `TrumfBonusvarslerLite_Closed_<host>` (sessionStorage) - Session dismissal
-- `TrumfBonusvarslerLite_MessageShown_<host>` - 10-minute cooldown timestamp
+- `TrumfBonusvarslerLite_StartMinimized` - Boolean
+- `TrumfBonusvarslerLite_Position` - Default position
+- `TrumfBonusvarslerLite_SitePositions` - Per-site position overrides
+- `TrumfBonusvarslerLite_Language` - Language code
 
 ## Development Notes
 
-- Version number is in the userscript header block (line 5)
-- The `@match *://*/*` pattern means the script runs on all sites
-- The `@connect` directives whitelist domains for GM.xmlHttpRequest
-- Update URLs point to GitHub raw files for automatic updates
+- Web extension version is primary; userscript is maintained for compatibility
+- Userscript uses hardcoded Norwegian strings; extension uses i18n
+- Both versions should be kept in sync for core functionality
+- Version number in manifest.json and userscript header
 
 ## Language
 
-The userscript UI is in Norwegian. Use Norwegian for user-facing strings.
+The userscript UI is in Norwegian. The extension supports multiple languages via `_locales/`. Use Norwegian for the primary language.
