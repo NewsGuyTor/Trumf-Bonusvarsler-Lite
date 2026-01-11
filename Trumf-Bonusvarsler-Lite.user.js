@@ -942,6 +942,7 @@
             }
             .message {
                 margin: 0 0 12px;
+                color: var(--text);
             }
             .tip {
                 font-size: 13px;
