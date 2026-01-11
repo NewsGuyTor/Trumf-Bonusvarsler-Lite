@@ -649,19 +649,16 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-    "www.ekstralys.no",
+    "fabel.no",
+    "hoie.no",
+    "no.jbl.com",
+    "sharkgaming.no",
     "vetzoo.no",
+    "www.bookbeat.no",
+    "www.ekstralys.no",
+    "www.elite.se",
     "www.myprotein.no",
     "www.strikkia.no",
-    "hoie.no",
-    "www.elite.se",
-    "www.sportmann.no",
-    "www.getyourguide.com",
-    "www.klokkegiganten.no",
-    "www.skyshowtime.com",
-    "fabel.no",
-    "www.bookbeat.no",
-    "sharkgaming.no",
     "www.vivara.no",
   ]);
 
