@@ -134,6 +134,9 @@
   "reminderMessage": {
     "message": "För att säkerställa att din Trumf-bonus registreras måste du klicka på knappen \"Få Trumf-bonus här\" på denna sida."
   },
+  "reminderAdblockWarning": {
+    "message": "Det är viktigt att annonsblockerare är helt inaktiverade, inte bara vitlistade."
+  },
   "reminderTip": {
     "message": "Tips: Vänta tills sidan har laddats klart och klicka sedan på den stora knappen som tar dig till butiken."
   },
@@ -149,11 +152,11 @@
   "rememberTo": {
     "message": "Kom ihåg att:"
   },
-  "disableUblockOrigin": {
-    "message": "Inaktivera uBlock Origin"
+  "acceptAllCookies": {
+    "message": "Acceptera alla cookies"
   },
-  "disableAdguardPihole": {
-    "message": "Inaktivera AdGuard/Pi-Hole"
+  "disableAdblockers": {
+    "message": "Inaktivera uBlock/AdGuard Home/Pi-Hole"
   },
   "emptyCart": {
     "message": "Töm din varukorg"
@@ -172,6 +175,12 @@
   },
   "adblockerDetected": {
     "message": "Annonsblockerare upptäckt!"
+  },
+  "checkingAdblock": {
+    "message": "Kontrollerar..."
+  },
+  "checkAdblockAgain": {
+    "message": "Kontrollera igen"
   },
   "back": {
     "message": "← Tillbaka"

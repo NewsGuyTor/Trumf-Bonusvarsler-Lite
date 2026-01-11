@@ -134,6 +134,9 @@
   "reminderMessage": {
     "message": "Para asegurarte de que tu bonificación Trumf se registre, debes hacer clic en el botón \"Obtener bonificación Trumf aquí\" en esta página."
   },
+  "reminderAdblockWarning": {
+    "message": "Es importante que las extensiones de bloqueo de anuncios estén completamente desactivadas, no solo en lista blanca."
+  },
   "reminderTip": {
     "message": "Consejo: Espera a que la página termine de cargar, luego haz clic en el botón grande que te lleva a la tienda."
   },
@@ -149,11 +152,11 @@
   "rememberTo": {
     "message": "Recuerda:"
   },
-  "disableUblockOrigin": {
-    "message": "Desactivar uBlock Origin"
+  "acceptAllCookies": {
+    "message": "Aceptar todas las cookies"
   },
-  "disableAdguardPihole": {
-    "message": "Desactivar AdGuard/Pi-Hole"
+  "disableAdblockers": {
+    "message": "Desactivar uBlock/AdGuard Home/Pi-Hole"
   },
   "emptyCart": {
     "message": "Vaciar tu carrito"
@@ -172,6 +175,12 @@
   },
   "adblockerDetected": {
     "message": "¡Bloqueador de anuncios detectado!"
+  },
+  "checkingAdblock": {
+    "message": "Comprobando..."
+  },
+  "checkAdblockAgain": {
+    "message": "Comprobar de nuevo"
   },
   "back": {
     "message": "← Volver"
