@@ -58,10 +58,14 @@
   const messageShownKey = `TrumfBonusvarslerLite_MessageShown_${currentHost}`;
 
   // Check cheap sync storage before any extension API calls
-  const messageShownTime = localStorage.getItem(messageShownKey);
-  if (messageShownTime) {
-    const elapsed = Date.now() - parseInt(messageShownTime, 10);
-    if (elapsed < 10 * 60 * 1000) return; // 10 minute cooldown
+  try {
+    const messageShownTime = localStorage.getItem(messageShownKey);
+    if (messageShownTime) {
+      const elapsed = Date.now() - parseInt(messageShownTime, 10);
+      if (elapsed < 10 * 60 * 1000) return; // 10 minute cooldown
+    }
+  } catch {
+    // Storage blocked on this site, continue anyway
   }
 
   // ===================
@@ -894,8 +898,12 @@
     }
 
     // Check if reminder was shown this session
-    if (sessionStorage.getItem(reminderShownKey) === "true") {
-      return false;
+    try {
+      if (sessionStorage.getItem(reminderShownKey) === "true") {
+        return false;
+      }
+    } catch {
+      // Storage blocked, continue anyway
     }
 
     return true;
@@ -989,7 +997,11 @@
     shadowRoot.appendChild(container);
 
     // Mark reminder as shown for this session
-    sessionStorage.setItem(reminderShownKey, "true");
+    try {
+      sessionStorage.setItem(reminderShownKey, "true");
+    } catch {
+      // Storage blocked on this site
+    }
 
     // Event handlers
     function closeNotification() {
@@ -1763,7 +1775,11 @@
     });
 
     actionBtn.addEventListener("click", () => {
-      localStorage.setItem(messageShownKey, Date.now().toString());
+      try {
+        localStorage.setItem(messageShownKey, Date.now().toString());
+      } catch {
+        // Storage blocked on this site
+      }
       content.innerHTML = "";
       const confirmation = document.createElement("div");
       confirmation.className = "confirmation";
