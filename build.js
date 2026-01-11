@@ -3,9 +3,9 @@
 /**
  * Build script for Trumf Bonusvarsler Lite
  * - Downloads fresh sitelist from CDN
- * - Checks CSP on all sites to find those that block adblock detection URLs
+ * - Checks CSP on all sites to find those that block adblock detection URLs (cached for 24h)
  * - Updates CSP_RESTRICTED_SITES in content.js and userscript
- * - Creates Firefox XPI and Chrome ZIP packages
+ * - Creates Firefox XPI and Chrome ZIP packages with platform-specific manifests
  */
 
 const fs = require("fs");
@@ -23,8 +23,10 @@ const AD_TEST_URLS = [
 ];
 
 const BUILD_DIR = "dist";
+const CSP_CACHE_FILE = ".csp-cache.json";
+const CSP_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours in ms
+
 const EXTENSION_FILES = [
-  "manifest.json",
   "content.js",
   "background.js",
   "options.html",
@@ -166,11 +168,40 @@ async function downloadSitelist() {
   return sitelist;
 }
 
+function loadCSPCache() {
+  try {
+    if (fs.existsSync(CSP_CACHE_FILE)) {
+      const cache = JSON.parse(fs.readFileSync(CSP_CACHE_FILE, "utf8"));
+      const age = Date.now() - cache.timestamp;
+      if (age < CSP_CACHE_MAX_AGE) {
+        return cache;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function saveCSPCache(restrictedSites) {
+  const cache = {
+    timestamp: Date.now(),
+    restrictedSites,
+  };
+  fs.writeFileSync(CSP_CACHE_FILE, JSON.stringify(cache, null, 2));
+}
+
 async function checkAllSitesCSP(sitelist) {
+  // Check cache first
+  const cache = loadCSPCache();
+  if (cache) {
+    const ageHours = Math.round((Date.now() - cache.timestamp) / (60 * 60 * 1000));
+    console.log(`\n🔍 Using cached CSP results (${ageHours}h old, ${cache.restrictedSites.length} restricted sites)`);
+    return cache.restrictedSites;
+  }
+
   const merchants = Object.keys(sitelist.merchants || {});
   console.log(`\n🔍 Checking CSP on ${merchants.length} sites (parallel)...`);
 
-  const CONCURRENCY = 50;
+  const CONCURRENCY = 30;
   const restrictedSites = [];
   let checked = 0;
 
@@ -189,8 +220,13 @@ async function checkAllSitesCSP(sitelist) {
     process.stdout.write(`\r   [${checked}/${merchants.length}] Checking...`);
   }
 
-  console.log(`\n   ✓ Found ${restrictedSites.length} CSP-restricted sites`);
-  return restrictedSites.sort();
+  const sorted = restrictedSites.sort();
+  console.log(`\n   ✓ Found ${sorted.length} CSP-restricted sites`);
+
+  // Save to cache
+  saveCSPCache(sorted);
+
+  return sorted;
 }
 
 function updateCSPRestrictedSites(restrictedSites) {
@@ -218,6 +254,41 @@ function updateCSPRestrictedSites(restrictedSites) {
   console.log("   ✓ Updated Trumf-Bonusvarsler-Lite.user.js");
 }
 
+function createManifest(platform) {
+  const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+
+  if (platform === "chrome") {
+    // Chrome uses service_worker
+    manifest.background = {
+      service_worker: "background.js",
+    };
+    // Remove Firefox-specific settings
+    delete manifest.browser_specific_settings;
+  } else {
+    // Firefox uses scripts array
+    manifest.background = {
+      scripts: ["background.js"],
+    };
+    // Ensure Firefox-specific settings exist
+    if (!manifest.browser_specific_settings) {
+      manifest.browser_specific_settings = {
+        gecko: {
+          id: "trumf-bonusvarsler-lite@kristofferR",
+        },
+      };
+    }
+    // Set minimum version to 142 (required for data_collection_permissions on Android)
+    manifest.browser_specific_settings.gecko.strict_min_version = "142.0";
+    // data_collection_permissions - no data collection
+    manifest.browser_specific_settings.gecko.data_collection_permissions = {
+      required: ["none"],
+      optional: [],
+    };
+  }
+
+  return manifest;
+}
+
 function createPackages() {
   console.log("\n📦 Creating extension packages...");
 
@@ -227,33 +298,49 @@ function createPackages() {
   }
   fs.mkdirSync(BUILD_DIR, { recursive: true });
 
-  // Create temp directory for extension files
-  const tempDir = path.join(BUILD_DIR, "temp");
-  fs.mkdirSync(tempDir, { recursive: true });
+  // Read version from manifest
+  const baseManifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+  const version = baseManifest.version;
 
-  // Copy extension files
+  // Build Firefox XPI
+  const firefoxDir = path.join(BUILD_DIR, "firefox");
+  fs.mkdirSync(firefoxDir, { recursive: true });
+
   for (const file of EXTENSION_FILES) {
     if (fs.existsSync(file)) {
-      copyRecursive(file, path.join(tempDir, file));
+      copyRecursive(file, path.join(firefoxDir, file));
     }
   }
+  fs.writeFileSync(
+    path.join(firefoxDir, "manifest.json"),
+    JSON.stringify(createManifest("firefox"), null, 2)
+  );
 
-  // Read version from manifest
-  const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
-  const version = manifest.version;
-
-  // Create Firefox XPI (ZIP with .xpi extension)
   const xpiName = `trumf-bonusvarsler-lite-${version}.xpi`;
-  execSync(`cd "${tempDir}" && zip -r "../${xpiName}" .`, { stdio: "pipe" });
+  execSync(`cd "${firefoxDir}" && zip -r "../${xpiName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${xpiName}`);
 
-  // Create Chrome ZIP
+  // Build Chrome ZIP
+  const chromeDir = path.join(BUILD_DIR, "chrome");
+  fs.mkdirSync(chromeDir, { recursive: true });
+
+  for (const file of EXTENSION_FILES) {
+    if (fs.existsSync(file)) {
+      copyRecursive(file, path.join(chromeDir, file));
+    }
+  }
+  fs.writeFileSync(
+    path.join(chromeDir, "manifest.json"),
+    JSON.stringify(createManifest("chrome"), null, 2)
+  );
+
   const zipName = `trumf-bonusvarsler-lite-${version}-chrome.zip`;
-  execSync(`cd "${tempDir}" && zip -r "../${zipName}" .`, { stdio: "pipe" });
+  execSync(`cd "${chromeDir}" && zip -r "../${zipName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${zipName}`);
 
-  // Clean up temp directory
-  fs.rmSync(tempDir, { recursive: true });
+  // Clean up temp directories
+  fs.rmSync(firefoxDir, { recursive: true });
+  fs.rmSync(chromeDir, { recursive: true });
 
   console.log(`\n✅ Build complete! Packages in ${BUILD_DIR}/`);
 }
@@ -261,6 +348,7 @@ function createPackages() {
 function updateGitignore() {
   const gitignorePath = ".gitignore";
   let gitignore = "";
+  let updated = false;
 
   if (fs.existsSync(gitignorePath)) {
     gitignore = fs.readFileSync(gitignorePath, "utf8");
@@ -268,8 +356,17 @@ function updateGitignore() {
 
   if (!gitignore.includes(BUILD_DIR)) {
     gitignore = gitignore.trimEnd() + `\n\n# Build output\n${BUILD_DIR}/\n`;
+    updated = true;
+  }
+
+  if (!gitignore.includes(CSP_CACHE_FILE)) {
+    gitignore = gitignore.trimEnd() + `\n${CSP_CACHE_FILE}\n`;
+    updated = true;
+  }
+
+  if (updated) {
     fs.writeFileSync(gitignorePath, gitignore);
-    console.log("   ✓ Added dist/ to .gitignore");
+    console.log("   ✓ Updated .gitignore");
   }
 }
 
