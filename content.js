@@ -159,12 +159,12 @@
             --border: #404040;
             --text: #e0e0e0;
             --text-muted: #999;
-            --accent: #6b6bff;
-            --accent-hover: #5252ff;
+            --accent: #8c8cff;
+            --accent-hover: #7a7aff;
             --shadow: rgba(0,0,0,0.5);
             --info-bg: #555;
             --btn-bg: #404040;
-            --btn-bg-active: #6b6bff;
+            --btn-bg-active: #8c8cff;
         }
         @media (prefers-color-scheme: dark) {
             :host(.tbvl-system) {
@@ -178,7 +178,7 @@
                 --shadow: rgba(0,0,0,0.5);
                 --info-bg: #555;
                 --btn-bg: #404040;
-                --btn-bg-active: #6b6bff;
+                --btn-bg-active: #8c8cff;
             }
         }
         :host *,
@@ -1199,6 +1199,7 @@
             .confirmation {
                 text-align: center;
                 padding: 8px 0;
+                color: var(--text);
             }
 
             .settings {
