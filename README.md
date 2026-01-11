@@ -42,6 +42,11 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ### Nettleserutvidelse (anbefalt)
 
+Kommer snart i nettleserbutikkene.
+
+<details>
+<summary>Manuell installering (for utviklere)</summary>
+
 #### Chrome / Edge / Brave / Opera
 
 1. Last ned eller klon dette repositoriet
@@ -56,7 +61,9 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 3. Klikk "Last midlertidig tillegg..."
 4. Velg `manifest.json` i mappen med utvidelsen
 
-> **Merk:** Midlertidige tillegg i Firefox fjernes når nettleseren lukkes. For permanent installasjon, publiser utvidelsen på [addons.mozilla.org](https://addons.mozilla.org).
+> **Merk:** Midlertidige tillegg i Firefox fjernes når nettleseren lukkes.
+
+</details>
 
 ### Userscript (alternativ)
 
@@ -93,28 +100,6 @@ Bare surf som vanlig. Når du besøker en nettbutikk som gir Trumf-bonus, dukker
 ## Personvern
 
 Utvidelsen henter kun den offisielle butikklisten fra Trumf. Ingen data om deg eller din surfing sendes noe sted.
-
----
-
-## Utvikling
-
-### Prosjektstruktur
-
-```
-├── manifest.json          # Utvidelseskonfigurasjon (Manifest V3)
-├── content.js             # Hovedlogikk for utvidelse
-├── background.js          # Service worker
-├── options.html/js/css    # Innstillingsside
-├── data/
-│   └── sitelist.json      # Fallback-butikkliste (utvidelse)
-├── icons/                 # Utvidelsesikoner
-├── Trumf-Bonusvarsler-Lite.user.js  # Userscript-versjon
-└── sitelist.json          # Fallback-butikkliste (userscript)
-```
-
-### Bygge fra kilde
-
-Ingen byggeprosess nødvendig — last inn mappen direkte i nettleseren.
 
 ---
 
