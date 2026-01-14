@@ -81,7 +81,7 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ### Userscript (alternativ)
 
-Foretrekker du en userscript-manager? Trumf Bonusvarsler Lite er også tilgjengelig som userscript.
+Foretrekker du en userscript-manager eller bruker iOS? Trumf Bonusvarsler Lite er også tilgjengelig som userscript.
 
 **1. Installer en userscript-manager:**
 - Desktop: [Violentmonkey](https://violentmonkey.github.io/) (anbefalt)
