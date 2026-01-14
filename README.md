@@ -6,6 +6,8 @@
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
+<a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+
 **Glem aldri Trumf-bonus igjen.** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
 
 - Lynrask og ressursvennlig — du merker ikke at den kjører
@@ -42,7 +44,10 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ### Nettleserutvidelse (anbefalt)
 
-Kommer snart i nettleserbutikkene.
+<a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+
+Chrome Web Store — venter på godkjenning
+<!-- <a href="https://chrome.google.com/webstore/detail/EXTENSION_ID"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="206" height="58"></a> -->
 
 <details>
 <summary>Manuell installering (for utviklere)</summary>
