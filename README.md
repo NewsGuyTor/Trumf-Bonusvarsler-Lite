@@ -6,7 +6,10 @@
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
-<a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/trumf-bonusvarsler-lite/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
+  <a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+</p>
 
 **Glem aldri Trumf-bonus igjen.** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
 
@@ -44,10 +47,10 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ### Nettleserutvidelse (anbefalt)
 
-<a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
-
-Chrome Web Store — venter på godkjenning
-<!-- <a href="https://chrome.google.com/webstore/detail/EXTENSION_ID"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="206" height="58"></a> -->
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/trumf-bonusvarsler-lite/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
+  <a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+</p>
 
 <details>
 <summary>Manuell installering (for utviklere)</summary>
