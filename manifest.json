@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Trumf Bonusvarsler Lite",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "__MSG_extensionDescription__",
   "default_locale": "no",
   "homepage_url": "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite",
@@ -52,6 +52,7 @@
     "gecko": {
       "id": "trumf-bonusvarsler-lite@kristofferR",
       "strict_min_version": "142.0",
+      "granted_host_permissions": true,
       "data_collection_permissions": {
         "required": ["none"],
         "optional": []

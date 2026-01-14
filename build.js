@@ -279,6 +279,8 @@ function createManifest(platform) {
     }
     // Set minimum version to 142 (required for data_collection_permissions on Android)
     manifest.browser_specific_settings.gecko.strict_min_version = "142.0";
+    // Grant host_permissions automatically (don't make them optional)
+    manifest.browser_specific_settings.gecko.granted_host_permissions = true;
     // data_collection_permissions - no data collection
     manifest.browser_specific_settings.gecko.data_collection_permissions = {
       required: ["none"],
