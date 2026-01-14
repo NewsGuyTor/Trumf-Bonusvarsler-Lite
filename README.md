@@ -1,27 +1,33 @@
 <img src="icon.png" alt="Trumf Bonusvarsler Lite" width="64" align="left" style="margin-right: 16px;">
 
 # Trumf Bonusvarsler Lite
-
+<p align="center">
+  
 ![Versjon](https://img.shields.io/badge/Versjon-4.2.0-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
-<p align="center">
-  <a href="https://chromewebstore.google.com/detail/trumf-bonusvarsler-lite/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
-  <a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
 </p>
 
-**Glem aldri Trumf-bonus igjen.** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
+---
+
+**Glem aldri Trumf-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
 
 - Lynrask og ressursvennlig — du merker ikke at den kjører
 - Stilrent design med lys/mørk modus
 - Respekterer personvernet ditt — ingen sporing
 
+---
 <p align="center">
-  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="50%">
+  <a href="https://chromewebstore.google.com/detail/trumf-bonusvarsler-lite/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
+  <a href="https://addons.mozilla.org/firefox/addon/trumf-bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
 </p>
 
 ---
+
+<p align="center">
+  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="50%">
+</p>
 
 ## Hvorfor bruke dette?
 
