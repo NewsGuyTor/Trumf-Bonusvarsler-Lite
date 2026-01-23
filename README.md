@@ -36,9 +36,9 @@
 
 ## Hvorfor bruke dette?
 
-Trumf Netthandel gir deg cashback hos hundrevis av nettbutikker, men du må huske å gå via deres portal for at bonusen skal registreres. Det er lett å glemme.
+Bonusprogrammer som Trumf, re:member, OBOS og SAS EuroBonus gir deg cashback hos hundrevis av nettbutikker, men du må huske å gå via deres portal for at bonusen skal registreres. Det er lett å glemme.
 
-Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når butikken gir Trumf-bonus. Ett klikk, så er du i gang.
+Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når butikken gir bonus. Ett klikk, så er du i gang.
 
 ---
 
@@ -49,8 +49,8 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 - **Minimerbar** — Klikk på headeren for å minimere, klikk igjen for å utvide
 - **Lys/mørk modus** — Følger systemet ditt, eller velg manuelt
 - **Skjul per nettsted** — Får du ikke bonus hos favorittbutikken? Skjul varselet der permanent
-- **Adblocker-advarsel** — Trumf-tracking fungerer ikke med adblocker, så du får beskjed
-- **Påminnelse på Trumf-siden** — Ekstra varsel på trumfnetthandel.no så du ikke glemmer å klikke riktig
+- **Adblocker-advarsel** — Bonus-tracking fungerer ikke med adblocker, så du får beskjed
+- **Påminnelse på bonusportalen** — Ekstra varsel på bonusportalen så du ikke glemmer å klikke riktig
 
 ---
 
@@ -100,7 +100,7 @@ Foretrekker du en userscript-manager eller bruker iOS? BonusVarsler er også til
 
 ## Bruk
 
-Bare surf som vanlig. Når du besøker en nettbutikk som gir Trumf-bonus, dukker varselet opp.
+Bare surf som vanlig. Når du besøker en nettbutikk som gir bonus, dukker varselet opp.
 
 **Tips:**
 - **Dra varselet** til hjørnet du foretrekker — den husker posisjonen
@@ -118,7 +118,7 @@ Bare surf som vanlig. Når du besøker en nettbutikk som gir Trumf-bonus, dukker
 
 ## Personvern
 
-Utvidelsen henter kun den offisielle butikklisten fra Trumf. Ingen data om deg eller din surfing sendes noe sted.
+Utvidelsen henter kun offisielle butikklister fra bonusprogrammene. Ingen data om deg eller din surfing sendes noe sted.
 
 ---
 
