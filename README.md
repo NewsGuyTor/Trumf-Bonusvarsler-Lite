@@ -1,6 +1,9 @@
-<img src="icon.png" alt="BonusVarsler" width="64" align="left" style="margin-right: 16px;">
+<!-- <img src="icon.png" alt="BonusVarsler" width="64" align="left" style="margin-right: 16px;"> -->
 
-# BonusVarsler (for Trumf, re:member, OBOS, SAS +++)
+# BonusVarsler
+
+**Trumf | re:member *(kommer snart)* | OBOS *(kommer snart)* | SAS EuroBonus *(kommer snart)***
+
 <p align="center">
 
 ![Versjon](https://img.shields.io/badge/Versjon-4.2.1-blue)
@@ -11,7 +14,9 @@
 
 ---
 
-**Glem aldri cashback-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
+**Glem aldri cashback-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir bonus.
+
+> 🛒 Dette er et uavhengig hobbyprosjekt og har ingen tilknytning til Trumf, re:member, OBOS, SAS eller andre bonusprogrammer. Bare en utvikler som ble lei av å glemme å aktivere bonus!
 
 - Lynrask og ressursvennlig — du merker ikke at den kjører
 - Stilrent design med lys/mørk modus
