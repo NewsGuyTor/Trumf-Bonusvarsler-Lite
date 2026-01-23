@@ -1,4 +1,4 @@
-// Trumf Bonusvarsler Lite - Background Service Worker
+// BonusVarsler - Background Service Worker
 // Handles cross-origin requests to bypass CORS restrictions
 
 const browser = globalThis.browser || globalThis.chrome;
@@ -6,7 +6,7 @@ const browser = globalThis.browser || globalThis.chrome;
 const CONFIG = {
   feedUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
   fallbackUrl:
-    "https://raw.githubusercontent.com/kristofferR/Trumf-Bonusvarsler-Lite/main/sitelist.json",
+    "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
   maxRetries: 5,
   retryDelays: [100, 500, 1000, 2000, 4000],
 };
@@ -96,10 +96,10 @@ browser.action.onClicked.addListener(() => {
 // Handle extension installation
 browser.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
-    console.log("Trumf Bonusvarsler Lite installed");
+    console.log("BonusVarsler installed");
   } else if (details.reason === "update") {
     console.log(
-      "Trumf Bonusvarsler Lite updated to version",
+      "BonusVarsler updated to version",
       browser.runtime.getManifest().version,
     );
   }

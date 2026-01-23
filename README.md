@@ -1,6 +1,6 @@
-<img src="icon.png" alt="Trumf Bonusvarsler Lite" width="64" align="left" style="margin-right: 16px;">
+<img src="icon.png" alt="BonusVarsler" width="64" align="left" style="margin-right: 16px;">
 
-# Trumf Bonusvarsler Lite
+# BonusVarsler (for Trumf, re:member, OBOS, SAS +++)
 <p align="center">
 
 ![Versjon](https://img.shields.io/badge/Versjon-4.2.1-blue)
@@ -11,7 +11,7 @@
 
 ---
 
-**Glem aldri Trumf-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
+**Glem aldri cashback-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir Trumf-bonus.
 
 - Lynrask og ressursvennlig — du merker ikke at den kjører
 - Stilrent design med lys/mørk modus
@@ -26,7 +26,7 @@
 ---
 
 <p align="center">
-  <img src="https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/video.gif" width="50%">
+  <img src="https://github.com/kristofferR/BonusVarsler/raw/main/video.gif" width="50%">
 </p>
 
 ## Hvorfor bruke dette?
@@ -81,7 +81,7 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 ### Userscript (alternativ)
 
-Foretrekker du en userscript-manager eller bruker iOS? Trumf Bonusvarsler Lite er også tilgjengelig som userscript.
+Foretrekker du en userscript-manager eller bruker iOS? BonusVarsler er også tilgjengelig som userscript.
 
 **1. Installer en userscript-manager:**
 - Desktop: [Violentmonkey](https://violentmonkey.github.io/) (anbefalt)
@@ -89,7 +89,7 @@ Foretrekker du en userscript-manager eller bruker iOS? Trumf Bonusvarsler Lite e
 
 **2. Installer scriptet:**
 
-**[Klikk her for å installere Trumf Bonusvarsler Lite (Userscript)](https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/raw/main/Trumf-Bonusvarsler-Lite.user.js)**
+**[Klikk her for å installere BonusVarsler (Userscript)](https://github.com/kristofferR/BonusVarsler/raw/main/BonusVarsler.user.js)**
 
 ---
 
@@ -125,4 +125,4 @@ Utvidelsen henter kun den offisielle butikklisten fra Trumf. Ingen data om deg e
 
 ## Problemer eller forslag?
 
-[Opprett en issue på GitHub](https://github.com/kristofferR/Trumf-Bonusvarsler-Lite/issues)
+[Opprett en issue på GitHub](https://github.com/kristofferR/BonusVarsler/issues)

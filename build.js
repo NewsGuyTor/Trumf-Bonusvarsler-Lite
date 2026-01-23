@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Build script for Trumf Bonusvarsler Lite
+ * Build script for BonusVarsler
  * - Downloads fresh sitelist from CDN
  * - Checks CSP on all sites to find those that block adblock detection URLs (cached for 24h)
  * - Updates CSP_RESTRICTED_SITES in content.js and userscript
@@ -245,13 +245,13 @@ function updateCSPRestrictedSites(restrictedSites) {
   console.log("   ✓ Updated content.js");
 
   // Update userscript
-  let userscript = fs.readFileSync("Trumf-Bonusvarsler-Lite.user.js", "utf8");
+  let userscript = fs.readFileSync("BonusVarsler.user.js", "utf8");
   userscript = userscript.replace(
     /const CSP_RESTRICTED_SITES = new Set\(\[\n[\s\S]*?\]\);/,
     newSetCode
   );
-  fs.writeFileSync("Trumf-Bonusvarsler-Lite.user.js", userscript);
-  console.log("   ✓ Updated Trumf-Bonusvarsler-Lite.user.js");
+  fs.writeFileSync("BonusVarsler.user.js", userscript);
+  console.log("   ✓ Updated BonusVarsler.user.js");
 }
 
 function createManifest(platform) {
@@ -273,7 +273,7 @@ function createManifest(platform) {
     if (!manifest.browser_specific_settings) {
       manifest.browser_specific_settings = {
         gecko: {
-          id: "trumf-bonusvarsler-lite@kristofferR",
+          id: "bonusvarsler@kristofferR",
         },
       };
     }
@@ -318,7 +318,7 @@ function createPackages() {
     JSON.stringify(createManifest("firefox"), null, 2)
   );
 
-  const xpiName = `trumf-bonusvarsler-lite-${version}.xpi`;
+  const xpiName = `bonusvarsler-${version}.xpi`;
   execSync(`cd "${firefoxDir}" && zip -r "../${xpiName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${xpiName}`);
 
@@ -336,7 +336,7 @@ function createPackages() {
     JSON.stringify(createManifest("chrome"), null, 2)
   );
 
-  const zipName = `trumf-bonusvarsler-lite-${version}-chrome.zip`;
+  const zipName = `bonusvarsler-${version}-chrome.zip`;
   execSync(`cd "${chromeDir}" && zip -r "../${zipName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${zipName}`);
 
@@ -377,7 +377,7 @@ function updateGitignore() {
 // ===================
 
 async function main() {
-  console.log("🚀 Building Trumf Bonusvarsler Lite\n");
+  console.log("🚀 Building BonusVarsler\n");
 
   try {
     // Download fresh sitelist

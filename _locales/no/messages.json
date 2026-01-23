@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig."
+    "message": "Varsler deg når du besøker en nettbutikk som gir cashback eller bonus (Trumf, re:member, OBOS, SAS +++). Lett, rask og personvernvennlig."
   },
 
   "language": {
@@ -10,7 +10,7 @@
     "message": "Språk lagret"
   },
   "optionsTitle": {
-    "message": "Trumf Bonusvarsler Lite - Innstillinger"
+    "message": "BonusVarsler - Innstillinger"
   },
   "appearance": {
     "message": "Utseende"

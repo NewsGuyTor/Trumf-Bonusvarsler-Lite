@@ -1,18 +1,18 @@
-// Trumf Bonusvarsler Lite - Options Page
+// BonusVarsler - Options Page
 
 const browser = globalThis.browser || globalThis.chrome;
 
 // Storage keys
 const KEYS = {
-  hiddenSites: "TrumfBonusvarslerLite_HiddenSites",
-  theme: "TrumfBonusvarslerLite_Theme",
-  startMinimized: "TrumfBonusvarslerLite_StartMinimized",
-  position: "TrumfBonusvarslerLite_Position",
-  sitePositions: "TrumfBonusvarslerLite_SitePositions",
-  feedData: "TrumfBonusvarslerLite_FeedData_v3",
-  feedTime: "TrumfBonusvarslerLite_FeedTime_v3",
-  hostIndex: "TrumfBonusvarslerLite_HostIndex_v3",
-  language: "TrumfBonusvarslerLite_Language",
+  hiddenSites: "BonusVarsler_HiddenSites",
+  theme: "BonusVarsler_Theme",
+  startMinimized: "BonusVarsler_StartMinimized",
+  position: "BonusVarsler_Position",
+  sitePositions: "BonusVarsler_SitePositions",
+  feedData: "BonusVarsler_FeedData_v3",
+  feedTime: "BonusVarsler_FeedTime_v3",
+  hostIndex: "BonusVarsler_HostIndex_v3",
+  language: "BonusVarsler_Language",
 };
 
 // Messages cache

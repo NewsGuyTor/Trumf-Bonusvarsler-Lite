@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Codex, etc.) when working with 
 
 ## Project Overview
 
-Trumf Bonusvarsler Lite is a browser extension and userscript that displays notifications when users visit online stores that offer Trumf bonus (a Norwegian loyalty program).
+BonusVarsler is a browser extension and userscript that displays notifications when users visit online stores that offer cashback or bonus (Trumf, re:member, OBOS, SAS and more).
 
 ## Architecture
 
@@ -18,7 +18,7 @@ The project has two versions that share most code:
 - `_locales/*/messages.json` - i18n translations (7 languages)
 
 ### Userscript (Legacy)
-- `Trumf-Bonusvarsler-Lite.user.js` - Self-contained single file with all logic (Norwegian only)
+- `BonusVarsler.user.js` - Self-contained single file with all logic (Norwegian only)
 
 ### Data
 - `sitelist.json` - Backup merchant feed (same structure as CDN feed)
@@ -59,13 +59,13 @@ The project has two versions that share most code:
 
 ## Storage Keys (browser.storage.local)
 
-- `TrumfBonusvarslerLite_FeedData_v3` / `_FeedTime_v3` / `_HostIndex_v3` - Cached feed
-- `TrumfBonusvarslerLite_HiddenSites` - Array of hidden hostnames
-- `TrumfBonusvarslerLite_Theme` - "light", "dark", or "system"
-- `TrumfBonusvarslerLite_StartMinimized` - Boolean
-- `TrumfBonusvarslerLite_Position` - Default position
-- `TrumfBonusvarslerLite_SitePositions` - Per-site position overrides
-- `TrumfBonusvarslerLite_Language` - Language code
+- `BonusVarsler_FeedData_v3` / `_FeedTime_v3` / `_HostIndex_v3` - Cached feed
+- `BonusVarsler_HiddenSites` - Array of hidden hostnames
+- `BonusVarsler_Theme` - "light", "dark", or "system"
+- `BonusVarsler_StartMinimized` - Boolean
+- `BonusVarsler_Position` - Default position
+- `BonusVarsler_SitePositions` - Per-site position overrides
+- `BonusVarsler_Language` - Language code
 
 ## Development Notes
 

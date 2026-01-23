@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Trumf Bonusvarsler Lite",
+  "name": "BonusVarsler (for Trumf, re:member, OBOS, SAS +++)",
   "version": "4.2.1",
   "description": "__MSG_extensionDescription__",
   "default_locale": "no",
-  "homepage_url": "https://github.com/kristofferR/Trumf-Bonusvarsler-Lite",
+  "homepage_url": "https://github.com/kristofferR/BonusVarsler",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -40,7 +40,7 @@
       "32": "icons/icon-32.png",
       "48": "icons/icon-48.png"
     },
-    "default_title": "Trumf Bonusvarsler Lite"
+    "default_title": "BonusVarsler"
   },
   "web_accessible_resources": [
     {
@@ -50,7 +50,7 @@
   ],
   "browser_specific_settings": {
     "gecko": {
-      "id": "trumf-bonusvarsler-lite@kristofferR",
+      "id": "bonusvarsler@kristofferR",
       "strict_min_version": "142.0",
       "granted_host_permissions": true,
       "data_collection_permissions": {

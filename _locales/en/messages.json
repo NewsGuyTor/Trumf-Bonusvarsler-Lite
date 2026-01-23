@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Alerts you when visiting an online store that offers Trumf bonus. Lightweight, fast, and privacy-friendly."
+    "message": "Alerts you when visiting an online store that offers cashback or bonus (Trumf, re:member, OBOS, SAS +++). Lightweight, fast, and privacy-friendly."
   },
 
   "language": {
@@ -10,7 +10,7 @@
     "message": "Language saved"
   },
   "optionsTitle": {
-    "message": "Trumf Bonus Alert Lite - Settings"
+    "message": "BonusVarsler - Settings"
   },
   "appearance": {
     "message": "Appearance"
