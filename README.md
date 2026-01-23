@@ -16,7 +16,7 @@
 
 **Glem aldri cashback-bonus igjen!** En lett og stilren nettleserutvidelse som varsler deg når du besøker en nettbutikk som gir bonus.
 
-> 🛒 Dette er et uavhengig hobbyprosjekt og har ingen tilknytning til Trumf, re:member, OBOS, SAS eller andre bonusprogrammer. Bare en utvikler som ble lei av å glemme å aktivere bonus!
+> 🛒 Dette er et uavhengig hobbyprosjekt og har ingen tilknytning til Trumf, re:member, OBOS, SAS eller andre bonusprogrammer.
 
 - Lynrask og ressursvennlig — du merker ikke at den kjører
 - Stilrent design med lys/mørk modus
