@@ -430,6 +430,11 @@
 
       // Version 6.0 migration: Clear all cache to fix multi-service issues
       if (storedVersion !== CURRENT_VERSION) {
+        // Check if this is a legacy user (had enabledServices or any stored data)
+        const existingEnabledServices = await gmGetValue(enabledServicesKey, null);
+        const hadLegacyData = await gmGetValue(CONFIG.cacheKey, null);
+        const isLegacyUser = existingEnabledServices !== null || hadLegacyData !== null;
+
         // Clear all settings for a clean slate
         await gmDeleteValue(hiddenSitesKey);
         await gmDeleteValue(themeKey);
@@ -441,6 +446,11 @@
         await gmDeleteValue(CONFIG.cacheTimeKey);
         await gmDeleteValue(CONFIG.hostIndexKey);
         await gmDeleteValue(reminderShownKey);
+
+        // Seed legacy users with Trumf-only (preserve their single-service experience)
+        if (isLegacyUser) {
+          await gmSetValue(enabledServicesKey, ["trumf"]);
+        }
 
         // Set version to prevent re-running migration
         await gmSetValue(versionKey, CURRENT_VERSION);

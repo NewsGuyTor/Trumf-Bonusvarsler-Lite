@@ -419,6 +419,12 @@
 
       // Version 6.0 migration: Clear cache and legacy keys (preserve user preferences)
       if (storedVersion !== CURRENT_VERSION) {
+        // Check if this is a legacy user upgrading (has legacy data but no enabledServices)
+        const existingEnabledServices = await getValue(enabledServicesKey, null);
+        const legacyFeedData = await getValue(LEGACY_KEYS.feedData, null);
+        const legacyFeedTime = await getValue(LEGACY_KEYS.feedTime, null);
+        const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null);
+
         // Only remove cache-related and legacy keys, preserving user preferences
         const keysToRemove = [
           // Current cache keys
@@ -434,6 +440,11 @@
         ];
 
         await browser.storage.local.remove(keysToRemove);
+
+        // Seed legacy users with Trumf-only (preserve their single-service experience)
+        if (isLegacyUser) {
+          await setValue(enabledServicesKey, ["trumf"]);
+        }
 
         // Set version to prevent re-running migration
         await setValue(versionKey, CURRENT_VERSION);
