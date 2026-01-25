@@ -1,0 +1,12 @@
+{
+  "name": "bonusvarsler-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "bun run scrape-trumf.ts"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
