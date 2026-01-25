@@ -4,16 +4,11 @@ This file provides guidance to AI coding agents (Codex, etc.) when working with 
 
 ## Project Overview
 
-BonusVarsler Lite is a browser extension and userscript that displays notifications when users visit online stores that offer Trumf cashback bonus.
+BonusVarsler is a browser extension and userscript that displays notifications when users visit online stores that offer cashback bonus through various loyalty programs.
 
 ### Roadmap
-1. **Current**: Release BonusVarsler Lite (for Trumf) - Trumf-only version
-2. **Next**: Develop BonusVarsler (for Trumf, re:member, OBOS, SAS +++) with multi-program support
-3. **Future**: Transition extension users from BonusVarsler Lite to BonusVarsler (both will coexist during transition period)
-
-Notes:
-- The userscript is already named "BonusVarsler" (without "Lite") and will simply be updated in place when adding more services - no transition needed.
-- The Firefox extension ID is `trumf-bonusvarsler-lite@kristofferR` on AMO. When creating the full BonusVarsler extension, register a new add-on with a new ID (e.g., `bonusvarsler@kristofferR`).
+1. **Current**: Trumf support
+2. **Next**: Add re:member, OBOS, SAS EuroBonus support (in-place update)
 
 ## Architecture
 

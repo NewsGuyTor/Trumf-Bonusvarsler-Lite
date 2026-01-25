@@ -6,7 +6,6 @@
  * - Checks CSP on all sites to find those that block adblock detection URLs (cached for 24h)
  * - Updates CSP_RESTRICTED_SITES in content.js and userscript
  * - Creates Firefox XPI and Chrome ZIP packages with platform-specific manifests
- * - Supports multiple variants (lite, full) via --variant flag
  */
 
 const fs = require("fs");
@@ -14,23 +13,6 @@ const path = require("path");
 const https = require("https");
 const http = require("http");
 const { execSync } = require("child_process");
-
-// ===================
-// CLI Argument Parsing
-// ===================
-
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const result = { variant: null };
-
-  for (const arg of args) {
-    if (arg.startsWith("--variant=")) {
-      result.variant = arg.split("=")[1];
-    }
-  }
-
-  return result;
-}
 
 // ===================
 // Configuration
@@ -60,30 +42,14 @@ const EXTENSION_FILES = [
   "data",
 ];
 
-const AVAILABLE_VARIANTS = ["lite", "full"];
 const SUPPORTED_LOCALES = ["no", "en", "sv", "da", "fr", "es"];
 
-// ===================
-// Variant Management
-// ===================
-
-function loadVariantConfig(variantId) {
-  const configPath = path.join("variants", variantId, "config.json");
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`Variant config not found: ${configPath}`);
-  }
-  return JSON.parse(fs.readFileSync(configPath, "utf8"));
-}
-
-function getVariantsToBuild(requestedVariant) {
-  if (requestedVariant) {
-    if (!AVAILABLE_VARIANTS.includes(requestedVariant)) {
-      throw new Error(`Unknown variant: ${requestedVariant}. Available: ${AVAILABLE_VARIANTS.join(", ")}`);
-    }
-    return [requestedVariant];
-  }
-  return AVAILABLE_VARIANTS;
-}
+// Extension metadata
+const EXTENSION_CONFIG = {
+  name: "BonusVarsler Lite (for Trumf)",
+  shortName: "BonusVarsler Lite",
+  firefoxId: "trumf-bonusvarsler-lite@kristofferR",
+};
 
 // ===================
 // Utility Functions
@@ -301,12 +267,12 @@ function updateCSPRestrictedSites(restrictedSites) {
   console.log("   ✓ Updated BonusVarsler.user.js");
 }
 
-function createManifest(platform, variantConfig) {
+function createManifest(platform) {
   const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
 
-  // Inject variant-specific values
-  manifest.name = variantConfig.name;
-  manifest.action.default_title = variantConfig.shortName;
+  // Set extension name
+  manifest.name = EXTENSION_CONFIG.name;
+  manifest.action.default_title = EXTENSION_CONFIG.shortName;
 
   if (platform === "chrome") {
     // Chrome uses service_worker
@@ -323,7 +289,7 @@ function createManifest(platform, variantConfig) {
     // Firefox-specific settings
     manifest.browser_specific_settings = {
       gecko: {
-        id: variantConfig.firefoxId,
+        id: EXTENSION_CONFIG.firefoxId,
         strict_min_version: "142.0",
         granted_host_permissions: true,
         data_collection_permissions: {
@@ -337,123 +303,50 @@ function createManifest(platform, variantConfig) {
   return manifest;
 }
 
-function injectVariantConfig(contentJs, variantConfig) {
-  // Create a minimal config object to inject (only what's needed at runtime)
-  const runtimeConfig = {
-    id: variantConfig.id,
-    shortName: variantConfig.shortName,
-    showMigrationBanner: variantConfig.showMigrationBanner,
-    migrationUrl: variantConfig.migrationUrl,
-  };
+function createPackages() {
+  console.log("\n📦 Creating extension packages...");
 
-  const configCode = `const VARIANT_CONFIG = ${JSON.stringify(runtimeConfig)};`;
-
-  // Inject after the "use strict" line
-  return contentJs.replace(
-    /("use strict";)/,
-    `$1\n\n  // Variant configuration (injected by build script)\n  ${configCode}`
-  );
-}
-
-function generateLocaleMessages(variantConfig, locale) {
-  // Read the original messages file
-  const messagesPath = path.join("_locales", locale, "messages.json");
-  const messages = JSON.parse(fs.readFileSync(messagesPath, "utf8"));
-
-  // Update extensionDescription with variant-specific text
-  if (variantConfig.description[locale]) {
-    messages.extensionDescription.message = variantConfig.description[locale];
+  // Clean and create build directory
+  if (fs.existsSync(BUILD_DIR)) {
+    fs.rmSync(BUILD_DIR, { recursive: true });
   }
-
-  // Update optionsTitle to use variant name
-  if (messages.optionsTitle) {
-    messages.optionsTitle.message = `${variantConfig.shortName} - ${messages.optionsTitle.message.split(" - ")[1] || "Settings"}`;
-  }
-
-  return messages;
-}
-
-function createPackagesForVariant(variantConfig) {
-  const variantId = variantConfig.id;
-  console.log(`\n📦 Creating packages for variant: ${variantId}...`);
-
-  // Create variant output directory
-  const variantDir = path.join(BUILD_DIR, variantId);
-  if (fs.existsSync(variantDir)) {
-    fs.rmSync(variantDir, { recursive: true });
-  }
-  fs.mkdirSync(variantDir, { recursive: true });
-
-  // Read and transform content.js
-  let contentJs = fs.readFileSync("content.js", "utf8");
-  contentJs = injectVariantConfig(contentJs, variantConfig);
+  fs.mkdirSync(BUILD_DIR, { recursive: true });
 
   // Read version from manifest
   const baseManifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
   const version = baseManifest.version;
 
-  // Determine package name prefix based on variant
-  const packagePrefix = variantId === "lite" ? "bonusvarsler-lite" : "bonusvarsler";
-
   // Build Firefox XPI
-  const firefoxDir = path.join(variantDir, "firefox");
+  const firefoxDir = path.join(BUILD_DIR, "firefox");
   fs.mkdirSync(firefoxDir, { recursive: true });
 
   for (const file of EXTENSION_FILES) {
     if (!fs.existsSync(file)) continue;
-
-    if (file === "content.js") {
-      // Write transformed content.js
-      fs.writeFileSync(path.join(firefoxDir, file), contentJs);
-    } else if (file === "_locales") {
-      // Generate variant-specific locale files
-      for (const locale of SUPPORTED_LOCALES) {
-        const localeDir = path.join(firefoxDir, "_locales", locale);
-        fs.mkdirSync(localeDir, { recursive: true });
-        const messages = generateLocaleMessages(variantConfig, locale);
-        fs.writeFileSync(path.join(localeDir, "messages.json"), JSON.stringify(messages, null, 2));
-      }
-    } else {
-      copyRecursive(file, path.join(firefoxDir, file));
-    }
+    copyRecursive(file, path.join(firefoxDir, file));
   }
   fs.writeFileSync(
     path.join(firefoxDir, "manifest.json"),
-    JSON.stringify(createManifest("firefox", variantConfig), null, 2)
+    JSON.stringify(createManifest("firefox"), null, 2)
   );
 
-  const xpiName = `${packagePrefix}-${version}.xpi`;
+  const xpiName = `bonusvarsler-lite-${version}.xpi`;
   execSync(`cd "${firefoxDir}" && zip -r "../${xpiName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${xpiName}`);
 
   // Build Chrome ZIP
-  const chromeDir = path.join(variantDir, "chrome");
+  const chromeDir = path.join(BUILD_DIR, "chrome");
   fs.mkdirSync(chromeDir, { recursive: true });
 
   for (const file of EXTENSION_FILES) {
     if (!fs.existsSync(file)) continue;
-
-    if (file === "content.js") {
-      // Write transformed content.js
-      fs.writeFileSync(path.join(chromeDir, file), contentJs);
-    } else if (file === "_locales") {
-      // Generate variant-specific locale files
-      for (const locale of SUPPORTED_LOCALES) {
-        const localeDir = path.join(chromeDir, "_locales", locale);
-        fs.mkdirSync(localeDir, { recursive: true });
-        const messages = generateLocaleMessages(variantConfig, locale);
-        fs.writeFileSync(path.join(localeDir, "messages.json"), JSON.stringify(messages, null, 2));
-      }
-    } else {
-      copyRecursive(file, path.join(chromeDir, file));
-    }
+    copyRecursive(file, path.join(chromeDir, file));
   }
   fs.writeFileSync(
     path.join(chromeDir, "manifest.json"),
-    JSON.stringify(createManifest("chrome", variantConfig), null, 2)
+    JSON.stringify(createManifest("chrome"), null, 2)
   );
 
-  const zipName = `${packagePrefix}-${version}-chrome.zip`;
+  const zipName = `bonusvarsler-lite-${version}-chrome.zip`;
   execSync(`cd "${chromeDir}" && zip -r "../${zipName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${zipName}`);
 
@@ -461,35 +354,9 @@ function createPackagesForVariant(variantConfig) {
   fs.rmSync(firefoxDir, { recursive: true });
   fs.rmSync(chromeDir, { recursive: true });
 
-  return { xpiName, zipName };
-}
-
-function createPackages(variants) {
-  console.log("\n📦 Creating extension packages...");
-
-  // Clean build directory only for variants we're building
-  for (const variantId of variants) {
-    const variantDir = path.join(BUILD_DIR, variantId);
-    if (fs.existsSync(variantDir)) {
-      fs.rmSync(variantDir, { recursive: true });
-    }
-  }
-
-  // Ensure build directory exists
-  fs.mkdirSync(BUILD_DIR, { recursive: true });
-
-  const results = {};
-  for (const variantId of variants) {
-    const config = loadVariantConfig(variantId);
-    results[variantId] = createPackagesForVariant(config);
-  }
-
   console.log(`\n✅ Build complete! Packages in ${BUILD_DIR}/`);
-  for (const [variantId, files] of Object.entries(results)) {
-    console.log(`   ${variantId}/`);
-    console.log(`     - ${files.xpiName}`);
-    console.log(`     - ${files.zipName}`);
-  }
+  console.log(`   - ${xpiName}`);
+  console.log(`   - ${zipName}`);
 }
 
 function updateGitignore() {
@@ -522,11 +389,8 @@ function updateGitignore() {
 // ===================
 
 async function main() {
-  const args = parseArgs();
-
   try {
-    const variants = getVariantsToBuild(args.variant);
-    console.log(`🚀 Building BonusVarsler (variants: ${variants.join(", ")})\n`);
+    console.log("🚀 Building BonusVarsler\n");
 
     // Download fresh sitelist
     const sitelist = await downloadSitelist();
@@ -540,8 +404,8 @@ async function main() {
     // Update .gitignore
     updateGitignore();
 
-    // Create packages for each variant
-    createPackages(variants);
+    // Create packages
+    createPackages();
   } catch (error) {
     console.error("\n❌ Build failed:", error.message);
     process.exit(1);
