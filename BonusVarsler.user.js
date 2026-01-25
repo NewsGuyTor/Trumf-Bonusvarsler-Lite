@@ -231,8 +231,8 @@
             letter-spacing: -0.5px;
         }
         .logo-icon {
-            width: 22px;
-            height: 22px;
+            width: 32px;
+            height: 32px;
             flex-shrink: 0;
         }
         .close-btn {
