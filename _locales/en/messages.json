@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Alerts you when visiting an online store that offers Trumf bonus. Lightweight, fast, and privacy-friendly."
+    "message": "Alerts you when visiting an online store that offers cashback bonus. Lightweight, fast, and privacy-friendly."
   },
 
   "language": {
@@ -75,6 +75,15 @@
   "clearCache": {
     "message": "Clear cache"
   },
+  "cashbackServices": {
+    "message": "Cashback services"
+  },
+  "servicesDescription": {
+    "message": "Choose which cashback services you want to use."
+  },
+  "servicesSaved": {
+    "message": "Settings saved"
+  },
   "reportIssue": {
     "message": "Report issue"
   },
@@ -113,10 +122,10 @@
   },
 
   "ariaReminderLabel": {
-    "message": "Trumf bonus reminder"
+    "message": "Cashback bonus reminder"
   },
   "ariaNotificationLabel": {
-    "message": "Trumf bonus notification"
+    "message": "Cashback bonus notification"
   },
   "ariaMinimize": {
     "message": "Minimize"
@@ -149,6 +158,17 @@
       }
     }
   },
+  "serviceBonusAt": {
+    "message": "$SERVICE$ bonus at $STORE$",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      },
+      "store": {
+        "content": "$2"
+      }
+    }
+  },
   "rememberTo": {
     "message": "Remember to:"
   },
@@ -163,6 +183,14 @@
   },
   "getTrumfBonus": {
     "message": "Get Trumf bonus"
+  },
+  "getServiceBonus": {
+    "message": "Get $SERVICE$ bonus",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      }
+    }
   },
   "dontShowOnThisSite": {
     "message": "Don't show on this site"

@@ -2,6 +2,22 @@
 
 const browser = globalThis.browser || globalThis.chrome;
 
+// Service registry (must match content.js)
+const SERVICES = {
+  trumf: {
+    id: "trumf",
+    name: "Trumf",
+    color: "#E31837",
+    defaultEnabled: true,
+  },
+  remember: {
+    id: "remember",
+    name: "re:member",
+    color: "#00A0D2",
+    defaultEnabled: false,
+  },
+};
+
 // Storage keys
 const KEYS = {
   hiddenSites: "BonusVarsler_HiddenSites",
@@ -9,10 +25,11 @@ const KEYS = {
   startMinimized: "BonusVarsler_StartMinimized",
   position: "BonusVarsler_Position",
   sitePositions: "BonusVarsler_SitePositions",
-  feedData: "BonusVarsler_FeedData_v3",
-  feedTime: "BonusVarsler_FeedTime_v3",
-  hostIndex: "BonusVarsler_HostIndex_v3",
+  feedData: "BonusVarsler_FeedData_v4",
+  feedTime: "BonusVarsler_FeedTime_v4",
+  hostIndex: "BonusVarsler_HostIndex_v4",
   language: "BonusVarsler_Language",
+  enabledServices: "BonusVarsler_EnabledServices",
 };
 
 // Messages cache
@@ -262,6 +279,73 @@ async function initHiddenSites() {
   });
 }
 
+// Initialize services checkboxes
+async function initServices() {
+  const container = document.getElementById("services-list");
+  if (!container) return;
+
+  // Get default enabled services
+  const defaultEnabled = Object.values(SERVICES)
+    .filter((s) => s.defaultEnabled)
+    .map((s) => s.id);
+
+  // Load enabled services from storage
+  let enabledServices = await getValue(KEYS.enabledServices, null);
+  if (!enabledServices) {
+    enabledServices = defaultEnabled;
+  }
+
+  // Create checkbox for each service
+  Object.values(SERVICES).forEach((service) => {
+    const row = document.createElement("div");
+    row.className = "service-row";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `service-${service.id}`;
+    checkbox.checked = enabledServices.includes(service.id);
+
+    const label = document.createElement("label");
+    label.htmlFor = `service-${service.id}`;
+    label.className = "service-label";
+
+    const colorDot = document.createElement("span");
+    colorDot.className = "service-color";
+    colorDot.style.backgroundColor = service.color;
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "service-name";
+    nameSpan.textContent = service.name;
+
+    label.appendChild(colorDot);
+    label.appendChild(nameSpan);
+
+    row.appendChild(checkbox);
+    row.appendChild(label);
+    container.appendChild(row);
+
+    // Handle checkbox change
+    checkbox.addEventListener("change", async () => {
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      const checkedCount = Array.from(checkboxes).filter((cb) => cb.checked).length;
+
+      // Prevent disabling all services
+      if (checkedCount === 0) {
+        checkbox.checked = true;
+        return;
+      }
+
+      // Update enabled services
+      const newEnabled = Array.from(checkboxes)
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.id.replace("service-", ""));
+
+      await setValue(KEYS.enabledServices, newEnabled);
+      showStatus(i18n("servicesSaved"));
+    });
+  });
+}
+
 // Initialize clear cache
 function initClearCache() {
   document.getElementById("clear-cache").addEventListener("click", async () => {
@@ -290,6 +374,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initStartMinimized();
   initPosition();
+  initServices();
   initHiddenSites();
   initClearCache();
 });

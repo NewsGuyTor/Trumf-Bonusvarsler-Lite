@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         BonusVarsler (for Trumf)
-// @description  BonusVarsler er et minimalistisk userscript (Firefox, Safari, Chrome) som varsler deg når du er inne på en nettbutikk som gir cashback eller bonus.
+// @name         BonusVarsler
+// @description  Varsler deg når du er inne på en nettbutikk som gir cashback-bonus gjennom Trumf, re:member og andre tjenester.
 // @namespace    https://github.com/kristofferR/BonusVarsler
-// @version      5.0.1
+// @version      6.0.0
 // @match        *://*/*
 // @noframes
 // @run-at       document-idle
@@ -50,14 +50,34 @@
   const CONFIG = {
     feedUrl: "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
     fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
-    cacheKey: "BonusVarsler_FeedData_v3",
-    cacheTimeKey: "BonusVarsler_FeedTime_v3",
-    hostIndexKey: "BonusVarsler_HostIndex_v3",
+    cacheKey: "BonusVarsler_FeedData_v4",
+    cacheTimeKey: "BonusVarsler_FeedTime_v4",
+    hostIndexKey: "BonusVarsler_HostIndex_v4",
     cacheDuration: 48 * 60 * 60 * 1000, // 48 hours
     messageDuration: 10 * 60 * 1000, // 10 minutes
     maxRetries: 5,
     retryDelays: [100, 500, 1000, 2000, 4000], // Exponential backoff
     adblockTimeout: 3000, // 3 seconds timeout for adblock checks
+  };
+
+  // Service registry
+  const SERVICES = {
+    trumf: {
+      id: "trumf",
+      name: "Trumf",
+      clickthroughUrl: "https://trumfnetthandel.no/cashback/{urlName}",
+      reminderDomain: "trumfnetthandel.no",
+      color: "#E31837",
+      defaultEnabled: true,
+    },
+    remember: {
+      id: "remember",
+      name: "re:member",
+      clickthroughUrl: "https://remember.no/shop/{urlName}",
+      reminderDomain: "remember.no",
+      color: "#00A0D2",
+      defaultEnabled: false,
+    },
   };
 
   // Domain aliases: maps redirect targets to feed domains
@@ -93,6 +113,7 @@
   const positionKey = "BonusVarsler_Position";
   const sitePositionsKey = "BonusVarsler_SitePositions";
   const reminderShownKey = "BonusVarsler_ReminderShown";
+  const enabledServicesKey = "BonusVarsler_EnabledServices";
 
   // Logo icon as data URI (64px for 2x retina, displayed at 32px)
   const LOGO_ICON_URL =
@@ -367,7 +388,15 @@
     startMinimized: false,
     position: "bottom-right", // default position
     sitePositions: {}, // per-site position overrides
+    enabledServices: null, // loaded at init
   };
+
+  // Get default enabled services from SERVICES registry
+  function getDefaultEnabledServices() {
+    return Object.values(SERVICES)
+      .filter((s) => s.defaultEnabled)
+      .map((s) => s.id);
+  }
 
   async function loadSettings() {
     const hiddenSitesArray = await gmGetValue(hiddenSitesKey, []);
@@ -376,6 +405,25 @@
     settingsCache.startMinimized = await gmGetValue(startMinimizedKey, false);
     settingsCache.position = await gmGetValue(positionKey, "bottom-right");
     settingsCache.sitePositions = await gmGetValue(sitePositionsKey, {});
+    // Load enabled services, default to Trumf-only for existing users
+    let enabledServices = await gmGetValue(enabledServicesKey, null);
+    if (!enabledServices) {
+      enabledServices = getDefaultEnabledServices();
+    }
+    settingsCache.enabledServices = enabledServices;
+  }
+
+  function getEnabledServices() {
+    return settingsCache.enabledServices || getDefaultEnabledServices();
+  }
+
+  function isServiceEnabled(serviceId) {
+    return getEnabledServices().includes(serviceId);
+  }
+
+  async function setEnabledServices(services) {
+    settingsCache.enabledServices = services;
+    await gmSetValue(enabledServicesKey, services);
   }
 
   // ===================
@@ -588,7 +636,12 @@
   // Merchant Matching
   // ===================
 
-  function findMerchant(feed) {
+  /**
+   * Find the best offer for the current host from the feed
+   * @param {object} feed - The merchant feed data
+   * @returns {{ merchant: object, offer: object, service: object } | null}
+   */
+  function findBestOffer(feed) {
     if (!feed?.merchants) {
       return null;
     }
@@ -621,30 +674,138 @@
 
     // Try current host first
     let merchant = tryHost(currentHost);
-    if (merchant) {
-      return merchant;
-    }
 
     // Try domain alias if exists
-    const aliasedHost = DOMAIN_ALIASES[currentHost];
-    if (aliasedHost) {
-      merchant = tryHost(aliasedHost);
-      if (merchant) {
-        return merchant;
+    if (!merchant) {
+      const aliasedHost = DOMAIN_ALIASES[currentHost];
+      if (aliasedHost) {
+        merchant = tryHost(aliasedHost);
       }
     }
 
     // Also try alias without/with www
-    const noWwwHost = currentHost.replace(/^www\./, "");
-    const aliasedNoWww = DOMAIN_ALIASES[noWwwHost];
-    if (aliasedNoWww && aliasedNoWww !== aliasedHost) {
-      merchant = tryHost(aliasedNoWww);
-      if (merchant) {
-        return merchant;
+    if (!merchant) {
+      const noWwwHost = currentHost.replace(/^www\./, "");
+      const aliasedNoWww = DOMAIN_ALIASES[noWwwHost];
+      if (aliasedNoWww) {
+        merchant = tryHost(aliasedNoWww);
       }
     }
 
-    return null;
+    if (!merchant) {
+      return null;
+    }
+
+    // Handle new unified format with offers array
+    if (merchant.offers && Array.isArray(merchant.offers)) {
+      const enabledServices = getEnabledServices();
+
+      // Filter offers to enabled services only
+      const eligibleOffers = merchant.offers.filter((offer) =>
+        enabledServices.includes(offer.serviceId),
+      );
+
+      if (eligibleOffers.length === 0) {
+        return null;
+      }
+
+      // Sort by rate (best first)
+      eligibleOffers.sort((a, b) =>
+        compareCashbackRates(b.cashbackDescription, a.cashbackDescription),
+      );
+
+      const bestOffer = eligibleOffers[0];
+      const service = SERVICES[bestOffer.serviceId] || feed.services?.[bestOffer.serviceId];
+
+      if (!service) {
+        return null;
+      }
+
+      return {
+        merchant,
+        offer: bestOffer,
+        service,
+      };
+    }
+
+    // Handle old Trumf-only format for backwards compatibility
+    if (!isServiceEnabled("trumf")) {
+      return null;
+    }
+
+    const service = SERVICES.trumf;
+    return {
+      merchant,
+      offer: {
+        serviceId: "trumf",
+        urlName: merchant.urlName,
+        cashbackDescription: merchant.cashbackDescription,
+      },
+      service,
+    };
+  }
+
+  // ===================
+  // Rate Parsing and Comparison
+  // ===================
+
+  /**
+   * Parse a cashback rate description into a comparable object
+   * @param {string} description - e.g. "5,4%", "Opptil 4,6%", "35kr"
+   * @returns {{ value: number, type: 'percent'|'fixed', isVariable: boolean }}
+   */
+  function parseCashbackRate(description) {
+    if (!description) {
+      return { value: 0, type: "percent", isVariable: false };
+    }
+
+    const normalized = description.toLowerCase().trim();
+    const isVariable =
+      normalized.startsWith("opptil") ||
+      normalized.startsWith("opp til") ||
+      normalized.startsWith("up to") ||
+      normalized.includes("-");
+
+    // Match percentage: "5,4%", "5.4%", "Opptil 4,6%"
+    const percentMatch = normalized.match(/([\d,\.]+)\s*%/);
+    if (percentMatch) {
+      const value = parseFloat(percentMatch[1].replace(",", "."));
+      return { value, type: "percent", isVariable };
+    }
+
+    // Match fixed amount: "35kr", "35 kr", "35 NOK"
+    const fixedMatch = normalized.match(/([\d,\.]+)\s*(kr|nok)/i);
+    if (fixedMatch) {
+      const value = parseFloat(fixedMatch[1].replace(",", "."));
+      return { value, type: "fixed", isVariable };
+    }
+
+    return { value: 0, type: "percent", isVariable: false };
+  }
+
+  /**
+   * Compare two cashback rates
+   * @returns {number} -1 if a < b, 0 if equal, 1 if a > b
+   */
+  function compareCashbackRates(a, b) {
+    const rateA = parseCashbackRate(a);
+    const rateB = parseCashbackRate(b);
+
+    // Percentage beats fixed amount
+    if (rateA.type === "percent" && rateB.type === "fixed") return 1;
+    if (rateA.type === "fixed" && rateB.type === "percent") return -1;
+
+    // Higher value wins
+    if (rateA.value !== rateB.value) {
+      return rateA.value > rateB.value ? 1 : -1;
+    }
+
+    // Non-variable preferred over variable (at same value)
+    if (rateA.isVariable !== rateB.isVariable) {
+      return rateA.isVariable ? -1 : 1;
+    }
+
+    return 0;
   }
 
   // ===================
@@ -898,32 +1059,64 @@
   }
 
   // ===================
-  // Trumfnetthandel.no Reminder
+  // Cashback Page Reminder
   // ===================
 
+  /**
+   * Check if we're on a cashback portal page for any enabled service
+   * @returns {{ isOnPage: boolean, service: object | null }}
+   */
   function isOnCashbackPage() {
-    const isTrumfDomain =
-      currentHost === "trumfnetthandel.no" ||
-      currentHost === "www.trumfnetthandel.no";
-    const isCashbackPath = window.location.pathname.startsWith("/cashback/");
-    return isTrumfDomain && isCashbackPath;
+    const enabledServices = getEnabledServices();
+
+    for (const serviceId of enabledServices) {
+      const service = SERVICES[serviceId];
+      if (!service || !service.reminderDomain) continue;
+
+      const domain = service.reminderDomain;
+      const isServiceDomain =
+        currentHost === domain || currentHost === `www.${domain}`;
+
+      if (isServiceDomain) {
+        // Check for cashback path (varies by service)
+        const path = window.location.pathname;
+        if (
+          path.startsWith("/cashback/") ||
+          path.startsWith("/shop/") ||
+          path.startsWith("/butikk/")
+        ) {
+          return { isOnPage: true, service };
+        }
+      }
+    }
+
+    return { isOnPage: false, service: null };
   }
 
+  /**
+   * Check if we should show the reminder notification
+   * @returns {{ show: boolean, service: object | null }}
+   */
   function shouldShowReminder() {
+    const { isOnPage, service } = isOnCashbackPage();
+
     // Only show on cashback pages
-    if (!isOnCashbackPage()) {
-      return false;
+    if (!isOnPage) {
+      return { show: false, service: null };
     }
 
     // Check if reminder was shown this session
     if (sessionStorage.getItem(reminderShownKey) === "true") {
-      return false;
+      return { show: false, service: null };
     }
 
-    return true;
+    return { show: true, service };
   }
 
-  function createReminderNotification() {
+  function createReminderNotification(service) {
+    const serviceName = service?.name || "Trumf";
+    const serviceColor = service?.color || SERVICES.trumf.color;
+
     const shadowHost = document.createElement("div");
     shadowHost.style.cssText =
       "all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;";
@@ -933,6 +1126,10 @@
     const styles =
       BASE_CSS +
       `
+            :host {
+                --accent: ${serviceColor};
+                --accent-hover: ${serviceColor};
+            }
             .title {
                 display: block;
                 font-size: 16px;
@@ -958,7 +1155,7 @@
     const container = document.createElement("div");
     container.className = `container animate-in ${getPosition()}`;
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", "Trumf bonus påminnelse");
+    container.setAttribute("aria-label", `${serviceName} bonus påminnelse`);
 
     // Apply theme class
     const currentTheme = getTheme();
@@ -996,8 +1193,7 @@
 
     const message = document.createElement("p");
     message.className = "message";
-    message.textContent =
-      'For å være sikker på at Trumf-bonusen registreres, må du klikke på "Få Trumf-bonus her"-knappen på denne siden.';
+    message.textContent = `For å være sikker på at ${serviceName}-bonusen registreres, må du klikke på "Få ${serviceName}-bonus her"-knappen på denne siden.`;
 
     const adblockWarning = document.createElement("p");
     adblockWarning.className = "message";
@@ -1046,7 +1242,14 @@
   // Notification UI
   // ===================
 
-  function createNotification(merchant) {
+  function createNotification(match) {
+    const { merchant, offer, service } = match;
+    const serviceName = service.name;
+    const serviceColor = service.color;
+    const cashbackDescription = offer.cashbackDescription || "";
+    const urlName = offer.urlName || "";
+    const clickthroughUrl = service.clickthroughUrl.replace("{urlName}", urlName);
+
     const shadowHost = document.createElement("div");
     shadowHost.style.cssText =
       "all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;";
@@ -1055,6 +1258,12 @@
 
     const styles =
       BASE_CSS +
+      `
+            :host {
+                --accent: ${serviceColor};
+                --accent-hover: ${serviceColor};
+            }
+      ` +
       `
             .settings-btn {
                 width: 20px;
@@ -1450,7 +1659,7 @@
     const container = document.createElement("div");
     container.className = `container ${getPosition()}`;
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", "Trumf bonus varsling");
+    container.setAttribute("aria-label", `${serviceName} bonus varsling`);
 
     // Apply theme class
     const currentTheme = getTheme();
@@ -1477,7 +1686,7 @@
     // Cashback badge for minimized state
     const cashbackMini = document.createElement("span");
     cashbackMini.className = "cashback-mini";
-    cashbackMini.textContent = merchant.cashbackDescription || "";
+    cashbackMini.textContent = cashbackDescription;
 
     const settingsBtn = document.createElement("img");
     settingsBtn.className = "settings-btn";
@@ -1513,11 +1722,11 @@
 
     const cashback = document.createElement("span");
     cashback.className = "cashback";
-    cashback.textContent = merchant.cashbackDescription || "";
+    cashback.textContent = cashbackDescription;
 
     const subtitle = document.createElement("span");
     subtitle.className = "subtitle";
-    subtitle.textContent = `Trumf-bonus hos ${merchant.name || "denne butikken"}`;
+    subtitle.textContent = `${serviceName}-bonus hos ${merchant.name || "denne butikken"}`;
 
     const reminder = document.createElement("p");
     reminder.className = "reminder";
@@ -1537,10 +1746,10 @@
 
     const actionBtn = document.createElement("a");
     actionBtn.className = "action-btn";
-    actionBtn.href = `https://trumfnetthandel.no/cashback/${merchant.urlName || ""}`;
+    actionBtn.href = clickthroughUrl;
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
-    actionBtn.textContent = "Få Trumf-bonus";
+    actionBtn.textContent = `Få ${serviceName}-bonus`;
 
     const hideSiteLink = document.createElement("span");
     hideSiteLink.className = "hide-site";
@@ -1885,9 +2094,10 @@
   async function init() {
     await loadSettings();
 
-    // Check if we should show the reminder on trumfnetthandel.no
-    if (shouldShowReminder()) {
-      createReminderNotification();
+    // Check if we should show the reminder on a cashback portal page
+    const { show: showReminder, service: reminderService } = shouldShowReminder();
+    if (showReminder) {
+      createReminderNotification(reminderService);
       return;
     }
 
@@ -1908,12 +2118,12 @@
       return;
     }
 
-    const merchant = findMerchant(feed);
-    if (!merchant) {
+    const match = findBestOffer(feed);
+    if (!match) {
       return;
     }
 
-    createNotification(merchant);
+    createNotification(match);
   }
 
   // ===================
@@ -1930,6 +2140,37 @@
 
   async function registerMenuCommands() {
     await loadSettings();
+
+    // Service toggle commands
+    const enabledServices = getEnabledServices();
+    for (const serviceId of Object.keys(SERVICES)) {
+      const service = SERVICES[serviceId];
+      const isEnabled = enabledServices.includes(serviceId);
+      registerMenuCommand(
+        `${service.name}: ${isEnabled ? "På ✓" : "Av"}`,
+        async () => {
+          const current = getEnabledServices();
+          let newServices;
+
+          if (current.includes(serviceId)) {
+            // Disabling - prevent disabling all services
+            if (current.length === 1) {
+              alert("Du må ha minst én tjeneste aktivert.");
+              return;
+            }
+            newServices = current.filter((id) => id !== serviceId);
+          } else {
+            // Enabling
+            newServices = [...current, serviceId];
+          }
+
+          await setEnabledServices(newServices);
+          alert(
+            `${service.name}: ${newServices.includes(serviceId) ? "På" : "Av"}\n\nLast siden på nytt for å se endringen.`,
+          );
+        },
+      );
+    }
 
     const themeLabels = { light: "Lys", dark: "Mørk", system: "System" };
     const currentTheme = getTheme();

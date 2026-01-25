@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Te avisa cuando visitas una tienda en línea que ofrece bonificación Trumf. Ligero, rápido y respetuoso con la privacidad."
+    "message": "Te avisa cuando visitas una tienda en línea que ofrece cashback. Ligero, rápido y respetuoso con la privacidad."
   },
 
   "language": {
@@ -75,6 +75,15 @@
   "clearCache": {
     "message": "Limpiar caché"
   },
+  "cashbackServices": {
+    "message": "Servicios de cashback"
+  },
+  "servicesDescription": {
+    "message": "Elige qué servicios de cashback quieres usar."
+  },
+  "servicesSaved": {
+    "message": "Configuración guardada"
+  },
   "reportIssue": {
     "message": "Reportar problema"
   },
@@ -113,10 +122,10 @@
   },
 
   "ariaReminderLabel": {
-    "message": "Recordatorio de bonificación Trumf"
+    "message": "Recordatorio de cashback"
   },
   "ariaNotificationLabel": {
-    "message": "Notificación de bonificación Trumf"
+    "message": "Notificación de cashback"
   },
   "ariaMinimize": {
     "message": "Minimizar"
@@ -149,6 +158,17 @@
       }
     }
   },
+  "serviceBonusAt": {
+    "message": "Bonificación $SERVICE$ en $STORE$",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      },
+      "store": {
+        "content": "$2"
+      }
+    }
+  },
   "rememberTo": {
     "message": "Recuerda:"
   },
@@ -163,6 +183,14 @@
   },
   "getTrumfBonus": {
     "message": "Obtener bonificación Trumf"
+  },
+  "getServiceBonus": {
+    "message": "Obtener bonificación $SERVICE$",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      }
+    }
   },
   "dontShowOnThisSite": {
     "message": "No mostrar en este sitio"

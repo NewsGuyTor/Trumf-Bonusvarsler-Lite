@@ -18,6 +18,28 @@ const { execSync } = require("child_process");
 // Configuration
 // ===================
 
+// Service definitions (must match content.js)
+const SERVICES = {
+  trumf: {
+    id: "trumf",
+    name: "Trumf",
+    feedUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
+    clickthroughUrl: "https://trumfnetthandel.no/cashback/{urlName}",
+    reminderDomain: "trumfnetthandel.no",
+    color: "#E31837",
+    defaultEnabled: true,
+  },
+  remember: {
+    id: "remember",
+    name: "re:member",
+    feedUrl: "https://wlp.tcb-cdn.com/remember/notifierfeed.json",
+    clickthroughUrl: "https://remember.no/shop/{urlName}",
+    reminderDomain: "remember.no",
+    color: "#00A0D2",
+    defaultEnabled: false,
+  },
+};
+
 const FEED_URL = "https://wlp.tcb-cdn.com/trumf/notifierfeed.json";
 const AD_TEST_URLS = [
   "https://widgets.outbrain.com/outbrain.js",
@@ -46,9 +68,9 @@ const SUPPORTED_LOCALES = ["no", "en", "sv", "da", "fr", "es"];
 
 // Extension metadata
 const EXTENSION_CONFIG = {
-  name: "BonusVarsler Lite (for Trumf)",
-  shortName: "BonusVarsler Lite",
-  firefoxId: "trumf-bonusvarsler-lite@kristofferR",
+  name: "BonusVarsler",
+  shortName: "BonusVarsler",
+  firefoxId: "bonusvarsler@kristofferR",
 };
 
 // ===================
@@ -164,21 +186,85 @@ function copyRecursive(src, dest) {
 // Main Build Steps
 // ===================
 
-async function downloadSitelist() {
-  console.log("📥 Downloading fresh sitelist...");
-  const response = await fetch(FEED_URL);
-  if (response.statusCode !== 200) {
-    throw new Error(`Failed to download sitelist: ${response.statusCode}`);
+async function downloadServiceFeed(service) {
+  console.log(`   Fetching ${service.name} feed...`);
+  try {
+    const response = await fetch(service.feedUrl);
+    if (response.statusCode !== 200) {
+      console.log(`   ⚠ Failed to download ${service.name} feed: ${response.statusCode}`);
+      return null;
+    }
+    const feed = JSON.parse(response.data);
+    const merchantCount = Object.keys(feed.merchants || {}).length;
+    console.log(`   ✓ ${service.name}: ${merchantCount} merchants`);
+    return feed;
+  } catch (error) {
+    console.log(`   ⚠ Error fetching ${service.name} feed: ${error.message}`);
+    return null;
   }
-  const sitelist = JSON.parse(response.data);
+}
+
+async function downloadSitelist() {
+  console.log("📥 Downloading service feeds...");
+
+  // Download all service feeds in parallel
+  const feedPromises = Object.values(SERVICES).map(async (service) => ({
+    service,
+    feed: await downloadServiceFeed(service),
+  }));
+  const results = await Promise.all(feedPromises);
+
+  // Create unified feed structure
+  const unifiedFeed = {
+    services: {},
+    merchants: {},
+  };
+
+  // Add service metadata
+  for (const service of Object.values(SERVICES)) {
+    unifiedFeed.services[service.id] = {
+      name: service.name,
+      clickthroughUrl: service.clickthroughUrl,
+      reminderDomain: service.reminderDomain,
+      color: service.color,
+      defaultEnabled: service.defaultEnabled,
+    };
+  }
+
+  // Merge merchants from all feeds
+  for (const { service, feed } of results) {
+    if (!feed || !feed.merchants) continue;
+
+    for (const [host, merchant] of Object.entries(feed.merchants)) {
+      // Create merchant entry if doesn't exist
+      if (!unifiedFeed.merchants[host]) {
+        unifiedFeed.merchants[host] = {
+          hostName: merchant.hostName || host,
+          name: merchant.name,
+          offers: [],
+        };
+      }
+
+      // Add offer for this service
+      unifiedFeed.merchants[host].offers.push({
+        serviceId: service.id,
+        urlName: merchant.urlName,
+        cashbackDescription: merchant.cashbackDescription,
+      });
+    }
+  }
 
   // Save to both locations
-  fs.writeFileSync("sitelist.json", JSON.stringify(sitelist));
-  fs.writeFileSync("data/sitelist.json", JSON.stringify(sitelist));
+  fs.writeFileSync("sitelist.json", JSON.stringify(unifiedFeed));
+  fs.writeFileSync("data/sitelist.json", JSON.stringify(unifiedFeed));
 
-  const merchantCount = Object.keys(sitelist.merchants || {}).length;
-  console.log(`   ✓ Downloaded ${merchantCount} merchants`);
-  return sitelist;
+  const merchantCount = Object.keys(unifiedFeed.merchants).length;
+  const multiServiceCount = Object.values(unifiedFeed.merchants).filter(
+    (m) => m.offers.length > 1
+  ).length;
+  console.log(`   ✓ Combined feed: ${merchantCount} merchants (${multiServiceCount} with multiple services)`);
+
+  return unifiedFeed;
 }
 
 function loadCSPCache() {
@@ -211,6 +297,7 @@ async function checkAllSitesCSP(sitelist) {
     return cache.restrictedSites;
   }
 
+  // Get all unique merchant hosts
   const merchants = Object.keys(sitelist.merchants || {});
   console.log(`\n🔍 Checking CSP on ${merchants.length} sites (parallel)...`);
 

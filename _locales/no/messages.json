@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig."
+    "message": "Varsler deg når du besøker en nettbutikk som gir cashback-bonus. Lett, rask og personvernvennlig."
   },
 
   "language": {
@@ -75,6 +75,15 @@
   "clearCache": {
     "message": "Tøm cache"
   },
+  "cashbackServices": {
+    "message": "Cashback-tjenester"
+  },
+  "servicesDescription": {
+    "message": "Velg hvilke cashback-tjenester du vil bruke."
+  },
+  "servicesSaved": {
+    "message": "Innstillinger lagret"
+  },
   "reportIssue": {
     "message": "Rapporter problem"
   },
@@ -113,10 +122,10 @@
   },
 
   "ariaReminderLabel": {
-    "message": "Trumf bonus påminnelse"
+    "message": "Cashback-bonus påminnelse"
   },
   "ariaNotificationLabel": {
-    "message": "Trumf bonus varsling"
+    "message": "Cashback-bonus varsling"
   },
   "ariaMinimize": {
     "message": "Minimer"
@@ -149,6 +158,17 @@
       }
     }
   },
+  "serviceBonusAt": {
+    "message": "$SERVICE$-bonus hos $STORE$",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      },
+      "store": {
+        "content": "$2"
+      }
+    }
+  },
   "rememberTo": {
     "message": "Husk å:"
   },
@@ -163,6 +183,14 @@
   },
   "getTrumfBonus": {
     "message": "Få Trumf-bonus"
+  },
+  "getServiceBonus": {
+    "message": "Få $SERVICE$-bonus",
+    "placeholders": {
+      "service": {
+        "content": "$1"
+      }
+    }
   },
   "dontShowOnThisSite": {
     "message": "Ikke vis på denne siden"
