@@ -9,7 +9,9 @@ BonusVarsler Lite is a browser extension and userscript that displays notificati
 ### Roadmap
 1. **Current**: Release BonusVarsler Lite (for Trumf) - Trumf-only version
 2. **Next**: Develop BonusVarsler (for Trumf, re:member, OBOS, SAS +++) with multi-program support
-3. **Future**: Transition users from BonusVarsler Lite to BonusVarsler (both will coexist during transition period)
+3. **Future**: Transition extension users from BonusVarsler Lite to BonusVarsler (both will coexist during transition period)
+
+Note: The userscript is already named "BonusVarsler" (without "Lite") and will simply be updated in place when adding more services - no transition needed.
 
 ## Architecture
 
@@ -24,6 +26,8 @@ The project has two versions that share most code:
 
 ### Userscript (Legacy)
 - `BonusVarsler.user.js` - Self-contained single file with all logic (Norwegian only)
+- Note: Userscript is named "BonusVarsler" (without "Lite") since it's easy to update when adding more services
+- `Trumf-Bonusvarsler-Lite.user.js` - Symlink to BonusVarsler.user.js for backwards compatibility
 
 ### Data
 - `sitelist.json` - Backup merchant feed (same structure as CDN feed)

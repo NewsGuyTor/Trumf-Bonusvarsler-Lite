@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         BonusVarsler Lite (for Trumf)
+// @name         BonusVarsler (for Trumf)
 // @description  BonusVarsler er et minimalistisk userscript (Firefox, Safari, Chrome) som varsler deg når du er inne på en nettbutikk som gir cashback eller bonus.
 // @namespace    https://github.com/kristofferR/BonusVarsler
-// @version      4.2.1
+// @version      5.0
 // @match        *://*/*
 // @noframes
 // @run-at       document-idle
@@ -976,7 +976,7 @@
     logoIcon.src = LOGO_ICON_URL;
     logoIcon.alt = "";
     const logoText = document.createElement("span");
-    logoText.textContent = "BonusVarsler Lite";
+    logoText.textContent = "BonusVarsler";
     logo.appendChild(logoIcon);
     logo.appendChild(logoText);
 
@@ -1468,7 +1468,7 @@
     logoIcon.src = LOGO_ICON_URL;
     logoIcon.alt = "";
     const logoText = document.createElement("span");
-    logoText.textContent = "BonusVarsler Lite";
+    logoText.textContent = "BonusVarsler";
     logo.appendChild(logoIcon);
     logo.appendChild(logoText);
 
@@ -1695,7 +1695,7 @@
     infoLink.target = "_blank";
     infoLink.rel = "noopener noreferrer";
     infoLink.textContent = "i";
-    infoLink.title = "Om BonusVarsler Lite";
+    infoLink.title = "Om BonusVarsler";
 
     container.appendChild(header);
     container.appendChild(body);
