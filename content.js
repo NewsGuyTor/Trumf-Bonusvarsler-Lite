@@ -77,9 +77,8 @@
   // Configuration
   // ===================
   const CONFIG = {
-    feedUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
-    fallbackUrl:
-      "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
+    feedUrl: "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
+    fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
     cacheKey: "BonusVarsler_FeedData_v3",
     cacheTimeKey: "BonusVarsler_FeedTime_v3",
     hostIndexKey: "BonusVarsler_HostIndex_v3",

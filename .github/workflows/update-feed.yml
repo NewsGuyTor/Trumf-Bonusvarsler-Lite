@@ -2,8 +2,8 @@ name: Update Trumf Feed
 
 on:
   schedule:
-    # Run weekly on Monday at 6am UTC
-    - cron: '0 6 * * 1'
+    # Run twice weekly: Monday and Thursday at 6am UTC
+    - cron: '0 6 * * 1,4'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
