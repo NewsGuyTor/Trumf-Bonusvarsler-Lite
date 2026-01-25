@@ -391,6 +391,21 @@
     }
   }
 
+  async function gmDeleteValue(key) {
+    try {
+      // Use GM.deleteValue (GM4+) or fall back to GM_deleteValue (GM3/iOS)
+      if (typeof GM !== "undefined" && GM.deleteValue) {
+        return await GM.deleteValue(key);
+      } else if (typeof GM_deleteValue !== "undefined") {
+        return GM_deleteValue(key);
+      }
+      // Fallback to localStorage if no GM storage available
+      localStorage.removeItem(key);
+    } catch {
+      // Storage unavailable, fail silently
+    }
+  }
+
   // Settings cache (loaded at init, used synchronously)
   let settingsCache = {
     hiddenSites: new Set(),
@@ -416,16 +431,16 @@
       // Version 6.0 migration: Clear all cache to fix multi-service issues
       if (storedVersion !== CURRENT_VERSION) {
         // Clear all settings for a clean slate
-        await GM.deleteValue(hiddenSitesKey);
-        await GM.deleteValue(themeKey);
-        await GM.deleteValue(startMinimizedKey);
-        await GM.deleteValue(positionKey);
-        await GM.deleteValue(sitePositionsKey);
-        await GM.deleteValue(enabledServicesKey);
-        await GM.deleteValue(feedDataKey);
-        await GM.deleteValue(feedTimeKey);
-        await GM.deleteValue(hostIndexKey);
-        await GM.deleteValue(reminderShownKey);
+        await gmDeleteValue(hiddenSitesKey);
+        await gmDeleteValue(themeKey);
+        await gmDeleteValue(startMinimizedKey);
+        await gmDeleteValue(positionKey);
+        await gmDeleteValue(sitePositionsKey);
+        await gmDeleteValue(enabledServicesKey);
+        await gmDeleteValue(CONFIG.cacheKey);
+        await gmDeleteValue(CONFIG.cacheTimeKey);
+        await gmDeleteValue(CONFIG.hostIndexKey);
+        await gmDeleteValue(reminderShownKey);
 
         // Set version to prevent re-running migration
         await gmSetValue(versionKey, CURRENT_VERSION);
@@ -803,11 +818,13 @@
     }
 
     const normalized = description.toLowerCase().trim();
+    // Match numeric ranges like "10-15", "10 - 15", "10–15", "10%-15%"
+    const rangePattern = /\d+%?\s*[-–]\s*\d+%?/;
     const isVariable =
       normalized.startsWith("opptil") ||
       normalized.startsWith("opp til") ||
       normalized.startsWith("up to") ||
-      normalized.includes("-");
+      rangePattern.test(normalized);
 
     // Match percentage: "5,4%", "5.4%", "Opptil 4,6%"
     const percentMatch = normalized.match(/([\d,\.]+)\s*%/);

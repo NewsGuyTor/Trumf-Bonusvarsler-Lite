@@ -372,9 +372,10 @@ async function loadServicesFromFeed() {
   try {
     const feedData = await getValue(KEYS.feedData, null);
     if (feedData?.services && typeof feedData.services === "object") {
-      // Merge feed services with fallback (feed takes priority)
+      // Merge feed services with fallback (feed overrides, but missing fields preserved)
       for (const [id, service] of Object.entries(feedData.services)) {
-        SERVICES[id] = { id, ...service };
+        const fallback = SERVICES[id] || {};
+        SERVICES[id] = { ...fallback, ...service, id };
       }
     }
   } catch {

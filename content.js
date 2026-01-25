@@ -417,10 +417,23 @@
     try {
       const storedVersion = await getValue(versionKey, null);
 
-      // Version 6.0 migration: Clear all cache to fix multi-service issues
+      // Version 6.0 migration: Clear cache and legacy keys (preserve user preferences)
       if (storedVersion !== CURRENT_VERSION) {
-        // Clear all extension storage for a clean slate
-        await browser.storage.local.clear();
+        // Only remove cache-related and legacy keys, preserving user preferences
+        const keysToRemove = [
+          // Current cache keys
+          CONFIG.cacheKey,
+          CONFIG.cacheTimeKey,
+          CONFIG.hostIndexKey,
+          // Legacy v3 keys
+          LEGACY_KEYS.feedData,
+          LEGACY_KEYS.feedTime,
+          LEGACY_KEYS.hostIndex,
+          // Reminder shown key (per-session, safe to clear)
+          reminderShownKey,
+        ];
+
+        await browser.storage.local.remove(keysToRemove);
 
         // Set version to prevent re-running migration
         await setValue(versionKey, CURRENT_VERSION);
