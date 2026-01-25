@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "BonusVarsler (for Trumf, re:member, OBOS, SAS +++)",
+  "name": "BonusVarsler Lite (for Trumf)",
   "version": "4.2.1",
   "description": "__MSG_extensionDescription__",
   "default_locale": "no",
@@ -40,7 +40,7 @@
       "32": "icons/icon-32.png",
       "48": "icons/icon-48.png"
     },
-    "default_title": "BonusVarsler"
+    "default_title": "BonusVarsler Lite"
   },
   "web_accessible_resources": [
     {

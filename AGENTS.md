@@ -4,7 +4,12 @@ This file provides guidance to AI coding agents (Codex, etc.) when working with 
 
 ## Project Overview
 
-BonusVarsler is a browser extension and userscript that displays notifications when users visit online stores that offer cashback or bonus (Trumf, re:member, OBOS, SAS and more).
+BonusVarsler Lite is a browser extension and userscript that displays notifications when users visit online stores that offer Trumf cashback bonus.
+
+### Roadmap
+1. **Current**: Release BonusVarsler Lite (for Trumf) - Trumf-only version
+2. **Next**: Develop BonusVarsler (for Trumf, re:member, OBOS, SAS +++) with multi-program support
+3. **Future**: Transition users from BonusVarsler Lite to BonusVarsler (both will coexist during transition period)
 
 ## Architecture
 
@@ -15,7 +20,7 @@ The project has two versions that share most code:
 - `background.js` - Service worker for feed fetching (handles CORS)
 - `options.html/js/css` - Settings page
 - `manifest.json` - Extension manifest (Manifest V3)
-- `_locales/*/messages.json` - i18n translations (7 languages)
+- `_locales/*/messages.json` - i18n translations (6 languages)
 
 ### Userscript (Legacy)
 - `BonusVarsler.user.js` - Self-contained single file with all logic (Norwegian only)
@@ -44,7 +49,7 @@ The project has two versions that share most code:
 - **Adblock detection** with re-check button (refresh icon)
 - **Settings pane**: Theme, start minimized, default position, hidden sites
 - **Draggable**: Drag to any corner, position saved per-site
-- **i18n**: 7 languages (no, en, sv, da, fr, es, uk)
+- **i18n**: 6 languages (no, en, sv, da, fr, es)
 - **Per-site hiding**: Permanently hide notifications for specific sites
 - **Minimized mode**: Collapses to header with cashback badge
 - **Keyboard support**: ESC closes notification

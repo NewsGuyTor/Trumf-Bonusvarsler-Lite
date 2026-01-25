@@ -120,6 +120,10 @@
   const reminderShownKey = "BonusVarsler_ReminderShown";
   const languageKey = "BonusVarsler_Language";
 
+  // Logo icon as data URI (64px for 2x retina, displayed at 22px)
+  const LOGO_ICON_URL =
+    "data:image/png;base64,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";
+
   // SVG icons as data URIs
   const SETTINGS_ICON_URI =
     "data:image/svg+xml," +
@@ -250,10 +254,18 @@
             user-select: none;
         }
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 18px;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--text);
             letter-spacing: -0.5px;
+        }
+        .logo-icon {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
         }
         .close-btn {
             width: 22px;
@@ -618,8 +630,9 @@
     "fabel.no",
     "www.clickandboat.com",
     "www.elite.se",
-    "www.getyourguide.com",
+    "www.klokkegiganten.no",
     "www.myprotein.no",
+    "www.skyshowtime.com",
     "www.sportmann.no",
   ]);
 
@@ -935,7 +948,14 @@
 
     const logo = document.createElement("div");
     logo.className = "logo";
-    logo.textContent = "BonusVarsler";
+    const logoIcon = document.createElement("img");
+    logoIcon.className = "logo-icon";
+    logoIcon.src = LOGO_ICON_URL;
+    logoIcon.alt = "";
+    const logoText = document.createElement("span");
+    logoText.textContent = "BonusVarsler Lite";
+    logo.appendChild(logoIcon);
+    logo.appendChild(logoText);
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
@@ -1424,7 +1444,14 @@
 
     const logo = document.createElement("div");
     logo.className = "logo";
-    logo.textContent = "BonusVarsler";
+    const logoIcon = document.createElement("img");
+    logoIcon.className = "logo-icon";
+    logoIcon.src = LOGO_ICON_URL;
+    logoIcon.alt = "";
+    const logoText = document.createElement("span");
+    logoText.textContent = "BonusVarsler Lite";
+    logo.appendChild(logoIcon);
+    logo.appendChild(logoText);
 
     const headerRight = document.createElement("div");
     headerRight.className = "header-right";

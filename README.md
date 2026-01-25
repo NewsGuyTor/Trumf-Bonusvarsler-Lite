@@ -1,4 +1,4 @@
-<!-- <img src="icon.png" alt="BonusVarsler" width="64" align="left" style="margin-right: 16px;"> -->
+<img src="icon.png" alt="BonusVarsler" width="64" align="left" style="margin-right: 16px;">
 
 # BonusVarsler
 
