@@ -1,0 +1,18 @@
+{
+  "trumf": {
+    "id": "trumf",
+    "name": "Trumf",
+    "clickthroughUrl": "https://trumfnetthandel.no/cashback/{urlName}",
+    "reminderDomain": "trumfnetthandel.no",
+    "color": "#4D4DFF",
+    "defaultEnabled": true
+  },
+  "remember": {
+    "id": "remember",
+    "name": "re:member",
+    "clickthroughUrl": "https://www.remember.no/reward/rabatt/{urlName}",
+    "reminderDomain": "remember.no",
+    "color": "#f28d00",
+    "defaultEnabled": true
+  }
+}
