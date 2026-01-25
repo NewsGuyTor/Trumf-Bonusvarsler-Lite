@@ -1118,7 +1118,9 @@
 
       // Check for cashback path patterns
       const isCashbackPath =
-        pathname.startsWith("/cashback/") || pathname.startsWith("/shop/");
+        pathname.startsWith("/cashback/") ||
+        pathname.startsWith("/shop/") ||
+        pathname.startsWith("/reward/");
 
       if (isServiceDomain && isCashbackPath) {
         return { isOnPage: true, service };

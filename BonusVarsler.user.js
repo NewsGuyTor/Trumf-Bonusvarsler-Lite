@@ -1083,7 +1083,8 @@
         if (
           path.startsWith("/cashback/") ||
           path.startsWith("/shop/") ||
-          path.startsWith("/butikk/")
+          path.startsWith("/butikk/") ||
+          path.startsWith("/reward/")
         ) {
           return { isOnPage: true, service };
         }
