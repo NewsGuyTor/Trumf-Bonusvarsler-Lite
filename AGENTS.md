@@ -11,7 +11,9 @@ BonusVarsler Lite is a browser extension and userscript that displays notificati
 2. **Next**: Develop BonusVarsler (for Trumf, re:member, OBOS, SAS +++) with multi-program support
 3. **Future**: Transition extension users from BonusVarsler Lite to BonusVarsler (both will coexist during transition period)
 
-Note: The userscript is already named "BonusVarsler" (without "Lite") and will simply be updated in place when adding more services - no transition needed.
+Notes:
+- The userscript is already named "BonusVarsler" (without "Lite") and will simply be updated in place when adding more services - no transition needed.
+- The Firefox extension ID is `trumf-bonusvarsler-lite@kristofferR` on AMO. When creating the full BonusVarsler extension, register a new add-on with a new ID (e.g., `bonusvarsler@kristofferR`).
 
 ## Architecture
 

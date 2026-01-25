@@ -206,5 +206,18 @@
   },
   "thisStore": {
     "message": "denne butikken"
+  },
+
+  "migrationTitle": {
+    "message": "Oppgrader til BonusVarsler"
+  },
+  "migrationMessage": {
+    "message": "BonusVarsler støtter nå flere bonusprogrammer! Trumf, re:member, OBOS, SAS og flere. Installer den nye versjonen for å få alle fordelene."
+  },
+  "migrationButton": {
+    "message": "Installer ny versjon"
+  },
+  "migrationDontShow": {
+    "message": "Ikke vis igjen"
   }
 }

@@ -1,0 +1,17 @@
+{
+  "id": "lite",
+  "name": "BonusVarsler Lite (for Trumf)",
+  "shortName": "BonusVarsler Lite",
+  "firefoxId": "trumf-bonusvarsler-lite@kristofferR",
+  "description": {
+    "no": "Varsler deg når du besøker en nettbutikk som gir Trumf-bonus. Lett, rask og personvernvennlig.",
+    "en": "Alerts you when visiting an online store that offers Trumf bonus. Lightweight, fast, and privacy-friendly.",
+    "sv": "Meddelar dig när du besöker en nätbutik som ger Trumf-bonus. Lätt, snabb och integritetsvänlig.",
+    "da": "Giver dig besked, når du besøger en netbutik, der giver Trumf-bonus. Let, hurtig og privatlivsvenlig.",
+    "fr": "Vous alerte lorsque vous visitez une boutique en ligne offrant un bonus Trumf. Léger, rapide et respectueux de la vie privée.",
+    "es": "Te alerta cuando visitas una tienda online que ofrece bonificación Trumf. Ligero, rápido y respetuoso con la privacidad."
+  },
+  "feedUrls": ["https://wlp.tcb-cdn.com/trumf/notifierfeed.json"],
+  "showMigrationBanner": false,
+  "migrationUrl": null
+}

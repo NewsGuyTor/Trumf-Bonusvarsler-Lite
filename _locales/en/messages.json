@@ -206,5 +206,18 @@
   },
   "thisStore": {
     "message": "this store"
+  },
+
+  "migrationTitle": {
+    "message": "Upgrade to BonusVarsler"
+  },
+  "migrationMessage": {
+    "message": "BonusVarsler now supports multiple bonus programs! Trumf, re:member, OBOS, SAS and more. Install the new version to get all the benefits."
+  },
+  "migrationButton": {
+    "message": "Install new version"
+  },
+  "migrationDontShow": {
+    "message": "Don't show again"
   }
 }

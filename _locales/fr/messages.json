@@ -206,5 +206,18 @@
   },
   "thisStore": {
     "message": "cette boutique"
+  },
+
+  "migrationTitle": {
+    "message": "Passez à BonusVarsler"
+  },
+  "migrationMessage": {
+    "message": "BonusVarsler prend désormais en charge plusieurs programmes de bonus ! Trumf, re:member, OBOS, SAS et plus encore. Installez la nouvelle version pour profiter de tous les avantages."
+  },
+  "migrationButton": {
+    "message": "Installer la nouvelle version"
+  },
+  "migrationDontShow": {
+    "message": "Ne plus afficher"
   }
 }

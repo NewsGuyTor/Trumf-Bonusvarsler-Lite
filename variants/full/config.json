@@ -1,0 +1,19 @@
+{
+  "id": "full",
+  "name": "BonusVarsler (for Trumf, re:member, OBOS, SAS +++)",
+  "shortName": "BonusVarsler",
+  "firefoxId": "bonusvarsler@kristofferR",
+  "description": {
+    "no": "Varsler deg når du besøker en nettbutikk som gir cashback eller bonus. Støtter Trumf, re:member, OBOS, SAS og flere.",
+    "en": "Alerts you when visiting an online store that offers cashback or bonus. Supports Trumf, re:member, OBOS, SAS and more.",
+    "sv": "Meddelar dig när du besöker en nätbutik som ger cashback eller bonus. Stödjer Trumf, re:member, OBOS, SAS och fler.",
+    "da": "Giver dig besked, når du besøger en netbutik, der giver cashback eller bonus. Understøtter Trumf, re:member, OBOS, SAS og flere.",
+    "fr": "Vous alerte lorsque vous visitez une boutique en ligne offrant du cashback ou un bonus. Supporte Trumf, re:member, OBOS, SAS et plus.",
+    "es": "Te alerta cuando visitas una tienda online que ofrece cashback o bonificación. Soporta Trumf, re:member, OBOS, SAS y más."
+  },
+  "feedUrls": [
+    "https://wlp.tcb-cdn.com/trumf/notifierfeed.json"
+  ],
+  "showMigrationBanner": false,
+  "migrationUrl": null
+}
