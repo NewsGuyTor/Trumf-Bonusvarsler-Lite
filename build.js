@@ -32,8 +32,8 @@ const SERVICES = {
   remember: {
     id: "remember",
     name: "re:member",
-    feedUrl: "https://wlp.tcb-cdn.com/remember/notifierfeed.json",
-    clickthroughUrl: "https://remember.no/shop/{urlName}",
+    scrapeUrl: "https://www.remember.no/reward/rabatt",
+    clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
     reminderDomain: "remember.no",
     color: "#00A0D2",
     defaultEnabled: false,
@@ -186,15 +186,87 @@ function copyRecursive(src, dest) {
 // Main Build Steps
 // ===================
 
+/**
+ * Scrape re:member store data from their website
+ * The stores are embedded as JSON in a script tag
+ */
+async function scrapeRememberStores(url) {
+  const response = await fetch(url);
+  if (response.statusCode !== 200) {
+    throw new Error(`HTTP ${response.statusCode}`);
+  }
+
+  const html = response.data;
+
+  // Find the stores JSON in the page - it's in a __NEXT_DATA__ script tag
+  const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!nextDataMatch) {
+    throw new Error("Could not find __NEXT_DATA__ script tag");
+  }
+
+  const nextData = JSON.parse(nextDataMatch[1]);
+  const stores = nextData?.props?.pageProps?.stores;
+
+  if (!stores || !Array.isArray(stores)) {
+    throw new Error("Could not find stores array in page data");
+  }
+
+  // Convert to our feed format
+  const merchants = {};
+  for (const store of stores) {
+    if (!store.enabled || !store.name) continue;
+
+    // Get the merchant's website URL from affiliateUrl or construct from name
+    // The store doesn't include merchant domain, so we'll need to skip domain matching
+    // Instead, store by slug and rely on manual domain mapping or another source
+    const slug = store.slug;
+    if (!slug) continue;
+
+    // Build cashback description
+    let cashbackDescription = "";
+    if (store.maxPercentageValue > 0) {
+      cashbackDescription = `${store.maxPercentageValue}%`;
+    } else if (store.maxFixedValue > 0) {
+      cashbackDescription = `${store.maxFixedValue} kr`;
+    }
+
+    // Skip stores with no cashback
+    if (!cashbackDescription) continue;
+
+    // Store by slug since we don't have domain info
+    // We'll need to map these to actual domains separately
+    merchants[`_remember_${slug}`] = {
+      name: store.name,
+      urlName: slug,
+      cashbackDescription,
+      _slug: slug,
+    };
+  }
+
+  return { merchants };
+}
+
 async function downloadServiceFeed(service) {
   console.log(`   Fetching ${service.name} feed...`);
   try {
-    const response = await fetch(service.feedUrl);
-    if (response.statusCode !== 200) {
-      console.log(`   ⚠ Failed to download ${service.name} feed: ${response.statusCode}`);
+    let feed;
+
+    if (service.scrapeUrl) {
+      // Scrape HTML page (re:member)
+      feed = await scrapeRememberStores(service.scrapeUrl);
+    } else if (service.feedUrl) {
+      // Fetch JSON feed (Trumf)
+      const response = await fetch(service.feedUrl);
+      if (response.statusCode !== 200) {
+        console.log(`   ⚠ Failed to download ${service.name} feed: ${response.statusCode}`);
+        return null;
+      }
+      feed = JSON.parse(response.data);
+    } else {
+      console.log(`   ⚠ No feed URL or scrape URL for ${service.name}`);
       return null;
     }
-    const feed = JSON.parse(response.data);
+
     const merchantCount = Object.keys(feed.merchants || {}).length;
     console.log(`   ✓ ${service.name}: ${merchantCount} merchants`);
     return feed;
@@ -202,6 +274,23 @@ async function downloadServiceFeed(service) {
     console.log(`   ⚠ Error fetching ${service.name} feed: ${error.message}`);
     return null;
   }
+}
+
+/**
+ * Normalize a store name for matching across services
+ */
+function normalizeStoreName(name) {
+  return name
+    .toLowerCase()
+    // Remove "Direct Deals" suffix (re:member specific)
+    .replace(/\s*direct deals$/i, "")
+    // Remove common domain suffixes (handles both ".com" and "com")
+    .replace(/\.?(no|com|se|dk|eu|net|org)$/i, "")
+    // Remove punctuation
+    .replace(/[.,-]/g, "")
+    // Normalize whitespace
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function downloadSitelist() {
@@ -231,27 +320,60 @@ async function downloadSitelist() {
     };
   }
 
-  // Merge merchants from all feeds
-  for (const { service, feed } of results) {
-    if (!feed || !feed.merchants) continue;
+  // First pass: Add Trumf merchants (they have domain info)
+  const trumfResult = results.find((r) => r.service.id === "trumf");
+  const nameToHostMap = new Map(); // Map normalized name -> host
 
-    for (const [host, merchant] of Object.entries(feed.merchants)) {
-      // Create merchant entry if doesn't exist
-      if (!unifiedFeed.merchants[host]) {
-        unifiedFeed.merchants[host] = {
-          hostName: merchant.hostName || host,
-          name: merchant.name,
-          offers: [],
-        };
-      }
+  if (trumfResult?.feed?.merchants) {
+    for (const [host, merchant] of Object.entries(trumfResult.feed.merchants)) {
+      unifiedFeed.merchants[host] = {
+        hostName: merchant.hostName || host,
+        name: merchant.name,
+        offers: [
+          {
+            serviceId: "trumf",
+            urlName: merchant.urlName,
+            cashbackDescription: merchant.cashbackDescription,
+          },
+        ],
+      };
 
-      // Add offer for this service
-      unifiedFeed.merchants[host].offers.push({
-        serviceId: service.id,
-        urlName: merchant.urlName,
-        cashbackDescription: merchant.cashbackDescription,
-      });
+      // Build name -> host mapping for matching other services
+      const normalizedName = normalizeStoreName(merchant.name);
+      nameToHostMap.set(normalizedName, host);
     }
+  }
+
+  // Second pass: Add re:member offers to matching merchants
+  const rememberResult = results.find((r) => r.service.id === "remember");
+  let rememberMatched = 0;
+  let rememberUnmatched = 0;
+
+  if (rememberResult?.feed?.merchants) {
+    for (const [key, merchant] of Object.entries(rememberResult.feed.merchants)) {
+      // Skip internal keys (prefixed with _remember_)
+      if (!key.startsWith("_remember_")) continue;
+
+      const normalizedName = normalizeStoreName(merchant.name);
+      const matchedHost = nameToHostMap.get(normalizedName);
+
+      if (matchedHost && unifiedFeed.merchants[matchedHost]) {
+        // Add re:member offer to existing merchant
+        unifiedFeed.merchants[matchedHost].offers.push({
+          serviceId: "remember",
+          urlName: merchant.urlName,
+          cashbackDescription: merchant.cashbackDescription,
+        });
+        rememberMatched++;
+      } else {
+        // No matching Trumf merchant - we can't add without domain info
+        rememberUnmatched++;
+      }
+    }
+  }
+
+  if (rememberResult?.feed) {
+    console.log(`   ✓ re:member: ${rememberMatched} matched, ${rememberUnmatched} unmatched (no domain info)`);
   }
 
   // Save to both locations
