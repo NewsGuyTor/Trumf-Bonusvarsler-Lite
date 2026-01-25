@@ -15,7 +15,7 @@ const SERVICES_FALLBACK = {
     id: "remember",
     name: "re:member",
     color: "#f28d00",
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
 };
 

@@ -111,7 +111,7 @@
       clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
       reminderDomain: "remember.no",
       color: "#f28d00",
-      defaultEnabled: true,
+      defaultEnabled: false,
     },
   };
 
