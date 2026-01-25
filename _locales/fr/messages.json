@@ -139,12 +139,15 @@
   "settings": {
     "message": "Paramètres"
   },
+  "services": {
+    "message": "Services"
+  },
 
   "importantReminder": {
     "message": "Rappel important !"
   },
   "reminderMessage": {
-    "message": "Pour vous assurer que votre bonus Trumf est enregistré, vous devez cliquer sur le bouton « Obtenir le bonus Trumf ici » sur cette page."
+    "message": "Pour vous assurer que votre bonus est enregistré, vous devez vous connecter et cliquer sur le bouton qui vous emmène vers la boutique."
   },
   "reminderAdblockWarning": {
     "message": "Il est important que les extensions de blocage de publicités soient complètement désactivées, pas seulement en liste blanche."

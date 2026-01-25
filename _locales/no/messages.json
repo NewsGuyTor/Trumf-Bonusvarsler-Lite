@@ -139,12 +139,15 @@
   "settings": {
     "message": "Innstillinger"
   },
+  "services": {
+    "message": "Tjenester"
+  },
 
   "importantReminder": {
     "message": "Viktig påminnelse!"
   },
   "reminderMessage": {
-    "message": "For å være sikker på at Trumf-bonusen registreres, må du klikke på \"Få Trumf-bonus her\"-knappen på denne siden."
+    "message": "For å være sikker på at bonusen registreres, må du logge inn og klikke på knappen som tar deg til butikken."
   },
   "reminderAdblockWarning": {
     "message": "Det er viktig at adblocker-utvidelser er helt deaktivert, ikke bare hvitelistet."

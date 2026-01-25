@@ -2,21 +2,25 @@
 
 const browser = globalThis.browser || globalThis.chrome;
 
-// Service registry (must match content.js)
-const SERVICES = {
+// Fallback service definitions - canonical source is loaded from feed cache
+// These are used when feed is not yet cached.
+const SERVICES_FALLBACK = {
   trumf: {
     id: "trumf",
     name: "Trumf",
-    color: "#E31837",
+    color: "#4D4DFF",
     defaultEnabled: true,
   },
   remember: {
     id: "remember",
     name: "re:member",
-    color: "#00A0D2",
-    defaultEnabled: false,
+    color: "#f28d00",
+    defaultEnabled: true,
   },
 };
+
+// Will be populated from feed cache or fallback
+let SERVICES = { ...SERVICES_FALLBACK };
 
 // Storage keys
 const KEYS = {
@@ -363,11 +367,29 @@ function initVersion() {
   document.querySelector(".version").textContent = `v${manifest.version}`;
 }
 
+// Load services from feed cache (canonical source)
+async function loadServicesFromFeed() {
+  try {
+    const feedData = await getValue(KEYS.feedData, null);
+    if (feedData?.services && typeof feedData.services === "object") {
+      // Merge feed services with fallback (feed takes priority)
+      for (const [id, service] of Object.entries(feedData.services)) {
+        SERVICES[id] = { id, ...service };
+      }
+    }
+  } catch {
+    // Use fallback services
+  }
+}
+
 // Initialize everything
 document.addEventListener("DOMContentLoaded", async () => {
   // Load language preference and messages first
   currentLang = await getValue(KEYS.language, "no");
   messages = await loadMessages(currentLang);
+
+  // Load services from feed cache (canonical source)
+  await loadServicesFromFeed();
 
   translatePage();
   initVersion();

@@ -139,12 +139,15 @@
   "settings": {
     "message": "Configuración"
   },
+  "services": {
+    "message": "Servicios"
+  },
 
   "importantReminder": {
     "message": "¡Recordatorio importante!"
   },
   "reminderMessage": {
-    "message": "Para asegurarte de que tu bonificación Trumf se registre, debes hacer clic en el botón \"Obtener bonificación Trumf aquí\" en esta página."
+    "message": "Para asegurarte de que tu bonificación se registre, debes iniciar sesión y hacer clic en el botón que te lleva a la tienda."
   },
   "reminderAdblockWarning": {
     "message": "Es importante que las extensiones de bloqueo de anuncios estén completamente desactivadas, no solo en lista blanca."

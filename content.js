@@ -77,7 +77,8 @@
   // Configuration
   // ===================
   const CONFIG = {
-    feedUrl: "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
+    feedUrl:
+      "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
     fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
     cacheKey: "BonusVarsler_FeedData_v4",
     cacheTimeKey: "BonusVarsler_FeedTime_v4",
@@ -92,13 +93,16 @@
   // ===================
   // Service Registry
   // ===================
+  // Fallback service definitions - canonical source is data/services.json
+  // (embedded in feed.services). These are used when feed is not yet loaded
+  // or for legacy feeds without services metadata.
   const SERVICES = {
     trumf: {
       id: "trumf",
       name: "Trumf",
       clickthroughUrl: "https://trumfnetthandel.no/cashback/{urlName}",
       reminderDomain: "trumfnetthandel.no",
-      color: "#E31837",
+      color: "#4D4DFF",
       defaultEnabled: true,
     },
     remember: {
@@ -106,8 +110,8 @@
       name: "re:member",
       clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
       reminderDomain: "remember.no",
-      color: "#00A0D2",
-      defaultEnabled: false,
+      color: "#f28d00",
+      defaultEnabled: true,
     },
   };
 
@@ -154,9 +158,17 @@
     hostIndex: "BonusVarsler_HostIndex_v3",
   };
 
+  // Version tracking for migrations
+  const versionKey = "BonusVarsler_Version";
+  const CURRENT_VERSION = "6.0";
+
   // Logo icon as data URI (64px for 2x retina, displayed at 32px)
   const LOGO_ICON_URL =
     "data:image/png;base64,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";
+
+  // Logo icon for re:member (orange hue)
+  const LOGO_ICON_REMEMBER_URL =
+    "data:image/png;base64,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";
 
   // SVG icons as data URIs
   const SETTINGS_ICON_URI =
@@ -173,6 +185,7 @@
             font-size: 15px;
             line-height: 1.6;
             --bg: #fff;
+            --bg-transparent: rgba(255, 255, 255, 0.97);
             --bg-header: #f3f3f3;
             --border: #ececec;
             --text: #333;
@@ -187,6 +200,7 @@
         }
         :host(.tbvl-dark) {
             --bg: #1e1e1e;
+            --bg-transparent: rgba(30, 30, 30, 0.97);
             --bg-header: #2d2d2d;
             --border: #404040;
             --text: #e0e0e0;
@@ -201,6 +215,7 @@
         @media (prefers-color-scheme: dark) {
             :host(.tbvl-system) {
                 --bg: #1e1e1e;
+                --bg-transparent: rgba(30, 30, 30, 0.97);
                 --bg-header: #2d2d2d;
                 --border: #404040;
                 --text: #e0e0e0;
@@ -397,25 +412,20 @@
       .map((s) => s.id);
   }
 
-  // Migrate from v3 to v4 storage format
-  async function migrateFromV3() {
+  // Run version-based migrations
+  async function runMigrations() {
     try {
-      // Check if we have old v3 data
-      const oldFeedData = await getValue(LEGACY_KEYS.feedData, null);
-      if (!oldFeedData) return; // No migration needed
+      const storedVersion = await getValue(versionKey, null);
 
-      // Clear old v3 cache keys (they're incompatible with new format)
-      await browser.storage.local.remove([
-        LEGACY_KEYS.feedData,
-        LEGACY_KEYS.feedTime,
-        LEGACY_KEYS.hostIndex,
-      ]);
+      // Version 6.0 migration: Clear all cache to fix multi-service issues
+      if (storedVersion !== CURRENT_VERSION) {
+        // Clear all extension storage for a clean slate
+        await browser.storage.local.clear();
 
-      // For existing users, set enabled services to just Trumf
-      // to preserve their current experience
-      const existingEnabled = await getValue(enabledServicesKey, null);
-      if (!existingEnabled) {
-        await setValue(enabledServicesKey, ["trumf"]);
+        // Set version to prevent re-running migration
+        await setValue(versionKey, CURRENT_VERSION);
+
+        console.log("[BonusVarsler] Migrated to version", CURRENT_VERSION);
       }
     } catch {
       // Migration failed, continue anyway
@@ -423,8 +433,8 @@
   }
 
   async function loadSettings() {
-    // Run migration first
-    await migrateFromV3();
+    // Run migrations first
+    await runMigrations();
     const hiddenSitesArray = await getValue(hiddenSitesKey, []);
     settingsCache.hiddenSites = new Set(hiddenSitesArray);
     settingsCache.theme = await getValue(themeKey, "system");
@@ -434,7 +444,8 @@
 
     // Load enabled services (default to services marked as defaultEnabled)
     const storedServices = await getValue(enabledServicesKey, null);
-    settingsCache.enabledServices = storedServices || getDefaultEnabledServices();
+    settingsCache.enabledServices =
+      storedServices || getDefaultEnabledServices();
 
     // Load language preference and messages
     const lang = await getValue(languageKey, "no");
@@ -451,6 +462,20 @@
 
   function isServiceEnabled(serviceId) {
     return getEnabledServices().includes(serviceId);
+  }
+
+  async function setServiceEnabled(serviceId, enabled) {
+    const current = getEnabledServices();
+    let updated;
+    if (enabled && !current.includes(serviceId)) {
+      updated = [...current, serviceId];
+    } else if (!enabled && current.includes(serviceId)) {
+      updated = current.filter((s) => s !== serviceId);
+    } else {
+      return; // No change
+    }
+    settingsCache.enabledServices = updated;
+    await setValue(enabledServicesKey, updated);
   }
 
   // ===================
@@ -657,14 +682,22 @@
 
   /**
    * Parse a cashback description into a comparable value
-   * Handles: "5,4%", "Opptil 4,6%", "35kr", "Opptil 290kr"
+   * Handles: "5,4%", "Opptil 4,6%", "35kr", "Opptil 290kr", "up to 5%", "3-5%"
    * @returns {{ value: number, type: 'percent'|'fixed', isVariable: boolean }}
    */
   function parseCashbackRate(description) {
     if (!description) return { value: 0, type: "percent", isVariable: false };
 
-    const isVariable = description.toLowerCase().startsWith("opptil");
-    const cleanDesc = description.replace(/opptil\s*/i, "").trim();
+    const normalized = description.toLowerCase().trim();
+    // Variable rate detection: "opptil", "opp til", "up to", or hyphen range (e.g., "3-5%")
+    const isVariable =
+      normalized.startsWith("opptil") ||
+      normalized.startsWith("opp til") ||
+      normalized.startsWith("up to") ||
+      normalized.includes("-");
+    const cleanDesc = description
+      .replace(/^(opptil|opp til|up to)\s*/i, "")
+      .trim();
 
     // Check for percentage (e.g., "5,4%")
     const percentMatch = cleanDesc.match(/(\d+[,.]?\d*)\s*%/);
@@ -818,6 +851,7 @@
         name: merchant.name,
         urlName: bestOffer.urlName,
         cashbackDescription: bestOffer.cashbackDescription,
+        cashbackDetails: bestOffer.cashbackDetails || null,
       };
     }
 
@@ -1178,6 +1212,10 @@
                 --accent: ${serviceColor};
                 --accent-hover: ${serviceColor};
             }
+            .header-right {
+                display: flex;
+                align-items: center;
+            }
             .title {
                 display: block;
                 font-size: 16px;
@@ -1193,6 +1231,79 @@
                 font-size: 13px;
                 color: var(--text-muted);
                 margin: 0;
+            }
+
+            /* Minimize button */
+            .minimize-btn {
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+                opacity: 0.6;
+                transition: opacity 0.2s;
+                margin-right: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .minimize-btn:hover {
+                opacity: 1;
+            }
+            .minimize-btn::before {
+                content: '';
+                width: 12px;
+                height: 2px;
+                background: var(--text-muted);
+                border-radius: 1px;
+            }
+            .minimize-btn:hover::before {
+                background: var(--text);
+            }
+
+            /* Minimized state */
+            .container {
+                transition: width 0.3s ease, min-width 0.3s ease;
+            }
+            .body {
+                max-height: 500px;
+                opacity: 1;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+            }
+            .container.minimized {
+                width: auto;
+                min-width: 270px;
+                cursor: pointer;
+            }
+            .container.minimized .body {
+                max-height: 0;
+                opacity: 0;
+                padding: 0 16px;
+            }
+            .reminder-mini {
+                font-weight: 700;
+                font-size: 16px;
+                color: var(--accent);
+                margin-left: auto;
+                padding: 0 16px;
+                opacity: 0;
+                max-width: 0;
+                overflow: hidden;
+                text-align: center;
+                transition: opacity 0.2s ease, max-width 0.3s ease;
+            }
+            .container.minimized .reminder-mini {
+                opacity: 1;
+                max-width: 50px;
+            }
+            .minimize-btn {
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            .container.minimized .minimize-btn {
+                opacity: 0;
+                pointer-events: none;
+                width: 0;
+                margin: 0;
+                overflow: hidden;
             }
         `;
 
@@ -1217,19 +1328,36 @@
     logo.className = "logo";
     const logoIcon = document.createElement("img");
     logoIcon.className = "logo-icon";
-    logoIcon.src = LOGO_ICON_URL;
+    logoIcon.src =
+      service.id === "remember" ? LOGO_ICON_REMEMBER_URL : LOGO_ICON_URL;
     logoIcon.alt = "";
     const logoText = document.createElement("span");
     logoText.textContent = "BonusVarsler";
     logo.appendChild(logoIcon);
     logo.appendChild(logoText);
 
+    const headerRight = document.createElement("div");
+    headerRight.className = "header-right";
+
+    // Reminder badge for minimized state
+    const reminderMini = document.createElement("span");
+    reminderMini.className = "reminder-mini";
+    reminderMini.textContent = "!";
+
+    const minimizeBtn = document.createElement("button");
+    minimizeBtn.className = "minimize-btn";
+    minimizeBtn.setAttribute("aria-label", i18n("ariaMinimize"));
+
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
     closeBtn.setAttribute("aria-label", i18n("ariaClose"));
 
+    headerRight.appendChild(reminderMini);
+    headerRight.appendChild(minimizeBtn);
+    headerRight.appendChild(closeBtn);
+
     header.appendChild(logo);
-    header.appendChild(closeBtn);
+    header.appendChild(headerRight);
 
     // Body
     const body = document.createElement("div");
@@ -1281,6 +1409,21 @@
 
     closeBtn.addEventListener("click", closeNotification);
     document.addEventListener("keydown", handleKeydown);
+
+    // Minimize/expand toggle
+    minimizeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      container.classList.add("minimized");
+    });
+
+    // Click header to expand when minimized
+    container.addEventListener("click", (e) => {
+      if (container.classList.contains("minimized")) {
+        if (!e.target.closest(".close-btn")) {
+          container.classList.remove("minimized");
+        }
+      }
+    });
 
     // Make draggable to corners
     makeCornerDraggable(container, header);
@@ -1340,6 +1483,55 @@
                 font-weight: 700;
                 color: var(--accent);
                 margin-bottom: 6px;
+            }
+
+            .cashback.has-details {
+                cursor: pointer;
+                position: relative;
+            }
+
+            .cashback-tooltip {
+                display: none;
+                position: fixed;
+                width: 320px;
+                max-height: 70vh;
+                overflow-y: auto;
+                padding: 12px;
+                background: var(--bg-transparent, rgba(30, 30, 30, 0.97));
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                font-size: 13px;
+                font-weight: 400;
+                color: var(--text);
+                z-index: 10;
+                white-space: normal;
+                line-height: 1.4;
+            }
+
+            .cashback.has-details:hover .cashback-tooltip,
+            .cashback.has-details.tooltip-visible .cashback-tooltip {
+                display: block;
+            }
+
+            .cashback-tooltip-item {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .cashback-tooltip-item:last-child {
+                margin-bottom: 0;
+            }
+
+            .cashback-tooltip-value {
+                font-weight: 600;
+                color: var(--accent);
+                white-space: nowrap;
+                min-width: 45px;
+            }
+
+            .cashback-tooltip-desc {
+                flex: 1;
             }
 
             .subtitle {
@@ -1605,6 +1797,31 @@
                 background: #fff;
             }
 
+            .service-toggle-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 0;
+            }
+            .service-toggle-row:first-child {
+                padding-top: 0;
+            }
+            .service-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .service-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .service-name {
+                font-size: 14px;
+                color: var(--text);
+            }
+
             /* Minimize button */
             .minimize-btn {
                 width: 20px;
@@ -1733,7 +1950,8 @@
     logo.className = "logo";
     const logoIcon = document.createElement("img");
     logoIcon.className = "logo-icon";
-    logoIcon.src = LOGO_ICON_URL;
+    logoIcon.src =
+      service.id === "remember" ? LOGO_ICON_REMEMBER_URL : LOGO_ICON_URL;
     logoIcon.alt = "";
     const logoText = document.createElement("span");
     logoText.textContent = "BonusVarsler";
@@ -1779,6 +1997,77 @@
     const cashback = document.createElement("span");
     cashback.className = "cashback";
     cashback.textContent = match.cashbackDescription || "";
+
+    // Add tooltip for detailed cashback rates
+    if (match.cashbackDetails && match.cashbackDetails.length > 1) {
+      cashback.classList.add("has-details");
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "cashback-tooltip";
+
+      for (const detail of match.cashbackDetails) {
+        const item = document.createElement("div");
+        item.className = "cashback-tooltip-item";
+
+        const value = document.createElement("span");
+        value.className = "cashback-tooltip-value";
+        value.textContent =
+          detail.type === "PERCENTAGE"
+            ? `${detail.value}%`
+            : `${detail.value} kr`;
+
+        const desc = document.createElement("span");
+        desc.className = "cashback-tooltip-desc";
+        desc.textContent = detail.description || "";
+
+        item.appendChild(value);
+        item.appendChild(desc);
+        tooltip.appendChild(item);
+      }
+
+      cashback.appendChild(tooltip);
+
+      // Position tooltip on hover
+      const positionTooltip = () => {
+        const containerRect = container.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const isRightSide = container.classList.contains("bottom-right") || container.classList.contains("top-right");
+
+        // Align bottom of tooltip with bottom of container
+        const bottom = window.innerHeight - containerRect.bottom;
+        tooltip.style.bottom = `${bottom}px`;
+        tooltip.style.top = "auto";
+
+        // Position to the side
+        if (isRightSide) {
+          tooltip.style.right = `${window.innerWidth - containerRect.left + 12}px`;
+          tooltip.style.left = "auto";
+        } else {
+          tooltip.style.left = `${containerRect.right + 12}px`;
+          tooltip.style.right = "auto";
+        }
+
+        // Limit height to not exceed container top
+        const maxHeight = containerRect.bottom - 20;
+        tooltip.style.maxHeight = `${Math.min(maxHeight, window.innerHeight * 0.7)}px`;
+      };
+
+      cashback.addEventListener("mouseenter", positionTooltip);
+
+      // Touch support for mobile
+      cashback.addEventListener("click", (e) => {
+        e.stopPropagation();
+        cashback.classList.toggle("tooltip-visible");
+        if (cashback.classList.contains("tooltip-visible")) {
+          positionTooltip();
+        }
+      });
+
+      // Close tooltip when clicking outside
+      shadowRoot.addEventListener("click", () => {
+        cashback.classList.remove("tooltip-visible");
+      });
+    }
 
     const subtitle = document.createElement("span");
     subtitle.className = "subtitle";
@@ -1952,7 +2241,50 @@
     backLink.className = "settings-back";
     backLink.textContent = i18n("back");
 
+    // Services section
+    const servicesRow = document.createElement("div");
+    servicesRow.className = "setting-row";
+
+    const servicesLabel = document.createElement("span");
+    servicesLabel.className = "setting-label";
+    servicesLabel.textContent = i18n("services");
+
+    const servicesContainer = document.createElement("div");
+
+    const serviceToggles = [];
+    for (const svc of Object.values(SERVICES)) {
+      const row = document.createElement("div");
+      row.className = "service-toggle-row";
+
+      const info = document.createElement("div");
+      info.className = "service-info";
+
+      const dot = document.createElement("span");
+      dot.className = "service-dot";
+      dot.style.background = svc.color;
+
+      const name = document.createElement("span");
+      name.className = "service-name";
+      name.textContent = svc.name;
+
+      const toggle = document.createElement("span");
+      toggle.className =
+        "toggle-switch" + (isServiceEnabled(svc.id) ? " active" : "");
+      toggle.dataset.serviceId = svc.id;
+
+      info.appendChild(dot);
+      info.appendChild(name);
+      row.appendChild(info);
+      row.appendChild(toggle);
+      servicesContainer.appendChild(row);
+      serviceToggles.push(toggle);
+    }
+
+    servicesRow.appendChild(servicesLabel);
+    servicesRow.appendChild(servicesContainer);
+
     settings.appendChild(settingsTitle);
+    settings.appendChild(servicesRow);
     settings.appendChild(themeRow);
     settings.appendChild(minimizeRow);
     settings.appendChild(positionRow);
@@ -2031,6 +2363,15 @@
       const isActive = minimizeToggle.classList.toggle("active");
       setStartMinimized(isActive);
     });
+
+    // Service toggles
+    for (const toggle of serviceToggles) {
+      toggle.addEventListener("click", () => {
+        const serviceId = toggle.dataset.serviceId;
+        const isActive = toggle.classList.toggle("active");
+        setServiceEnabled(serviceId, isActive);
+      });
+    }
 
     // Position selection (sets default for all sites)
     positionButtons.addEventListener("click", (e) => {

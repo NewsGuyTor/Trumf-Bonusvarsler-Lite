@@ -139,12 +139,15 @@
   "settings": {
     "message": "Settings"
   },
+  "services": {
+    "message": "Services"
+  },
 
   "importantReminder": {
     "message": "Important reminder!"
   },
   "reminderMessage": {
-    "message": "To ensure your Trumf bonus is registered, you must click the \"Get Trumf bonus here\" button on this page."
+    "message": "To ensure your bonus is registered, you must log in and click the button that takes you to the store."
   },
   "reminderAdblockWarning": {
     "message": "It is important that adblocker extensions are completely disabled, not just whitelisted."
