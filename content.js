@@ -104,7 +104,7 @@
     remember: {
       id: "remember",
       name: "re:member",
-      clickthroughUrl: "https://remember.no/shop/{urlName}",
+      clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
       reminderDomain: "remember.no",
       color: "#00A0D2",
       defaultEnabled: false,
@@ -686,17 +686,30 @@
   /**
    * Compare two cashback rates for sorting (higher = better)
    * Rules:
-   * - Percentage beats fixed amount (percentage is more valuable at scale)
+   * - When types differ, compare monetary equivalents using avgPurchaseAmount
    * - Higher value wins
    * - Non-variable ("5%") preferred over variable ("Opptil 5%") at same value
+   * @param {Object} a - First parsed rate
+   * @param {Object} b - Second parsed rate
+   * @param {number} [avgPurchaseAmount=500] - Average purchase amount for comparing percent vs fixed
    * @returns -1 if a > b, 1 if b > a, 0 if equal
    */
-  function compareCashbackRates(a, b) {
-    // Percentage beats fixed
-    if (a.type === "percent" && b.type === "fixed") return -1;
-    if (a.type === "fixed" && b.type === "percent") return 1;
+  function compareCashbackRates(a, b, avgPurchaseAmount = 500) {
+    // When types differ, compare monetary equivalents
+    if (a.type !== b.type) {
+      const monetaryA =
+        a.type === "percent" ? (a.value / 100) * avgPurchaseAmount : a.value;
+      const monetaryB =
+        b.type === "percent" ? (b.value / 100) * avgPurchaseAmount : b.value;
 
-    // Higher value wins
+      if (monetaryA > monetaryB) return -1;
+      if (monetaryA < monetaryB) return 1;
+      // If equal monetary value, prefer percentage (more flexible)
+      if (a.type === "percent") return -1;
+      return 1;
+    }
+
+    // Same type: higher value wins
     if (a.value > b.value) return -1;
     if (a.value < b.value) return 1;
 
@@ -1150,6 +1163,8 @@
   }
 
   function createReminderNotification(service = SERVICES.trumf) {
+    const serviceColor = service?.color || SERVICES.trumf.color;
+
     const shadowHost = document.createElement("div");
     shadowHost.style.cssText =
       "all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;";
@@ -1159,6 +1174,10 @@
     const styles =
       BASE_CSS +
       `
+            :host {
+                --accent: ${serviceColor};
+                --accent-hover: ${serviceColor};
+            }
             .title {
                 display: block;
                 font-size: 16px;

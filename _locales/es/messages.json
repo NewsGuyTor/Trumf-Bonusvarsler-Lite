@@ -84,6 +84,9 @@
   "servicesSaved": {
     "message": "Configuración guardada"
   },
+  "cannotDisableAllServices": {
+    "message": "Al menos un servicio debe estar habilitado"
+  },
   "reportIssue": {
     "message": "Reportar problema"
   },

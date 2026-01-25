@@ -84,6 +84,9 @@
   "servicesSaved": {
     "message": "Paramètres enregistrés"
   },
+  "cannotDisableAllServices": {
+    "message": "Au moins un service doit être activé"
+  },
   "reportIssue": {
     "message": "Signaler un problème"
   },

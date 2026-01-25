@@ -84,6 +84,9 @@
   "servicesSaved": {
     "message": "Inställningar sparade"
   },
+  "cannotDisableAllServices": {
+    "message": "Minst en tjänst måste vara aktiverad"
+  },
   "reportIssue": {
     "message": "Rapportera problem"
   },

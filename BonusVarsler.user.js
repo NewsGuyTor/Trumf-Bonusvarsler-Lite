@@ -73,7 +73,7 @@
     remember: {
       id: "remember",
       name: "re:member",
-      clickthroughUrl: "https://remember.no/shop/{urlName}",
+      clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
       reminderDomain: "remember.no",
       color: "#00A0D2",
       defaultEnabled: false,
@@ -785,17 +785,34 @@
 
   /**
    * Compare two cashback rates
+   * @param {string} a - First cashback description
+   * @param {string} b - Second cashback description
+   * @param {number} [avgPurchaseAmount=500] - Average purchase for comparing percent vs fixed
    * @returns {number} -1 if a < b, 0 if equal, 1 if a > b
    */
-  function compareCashbackRates(a, b) {
+  function compareCashbackRates(a, b, avgPurchaseAmount = 500) {
     const rateA = parseCashbackRate(a);
     const rateB = parseCashbackRate(b);
 
-    // Percentage beats fixed amount
-    if (rateA.type === "percent" && rateB.type === "fixed") return 1;
-    if (rateA.type === "fixed" && rateB.type === "percent") return -1;
+    // When types differ, compare monetary equivalents
+    if (rateA.type !== rateB.type) {
+      const monetaryA =
+        rateA.type === "percent"
+          ? (rateA.value / 100) * avgPurchaseAmount
+          : rateA.value;
+      const monetaryB =
+        rateB.type === "percent"
+          ? (rateB.value / 100) * avgPurchaseAmount
+          : rateB.value;
 
-    // Higher value wins
+      if (monetaryA > monetaryB) return 1;
+      if (monetaryA < monetaryB) return -1;
+      // If equal, prefer percentage
+      if (rateA.type === "percent") return 1;
+      return -1;
+    }
+
+    // Same type: higher value wins
     if (rateA.value !== rateB.value) {
       return rateA.value > rateB.value ? 1 : -1;
     }

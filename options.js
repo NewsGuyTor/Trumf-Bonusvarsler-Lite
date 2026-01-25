@@ -332,6 +332,7 @@ async function initServices() {
       // Prevent disabling all services
       if (checkedCount === 0) {
         checkbox.checked = true;
+        showStatus(i18n("cannotDisableAllServices"));
         return;
       }
 

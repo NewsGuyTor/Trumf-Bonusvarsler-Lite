@@ -284,8 +284,8 @@ function normalizeStoreName(name) {
     .toLowerCase()
     // Remove "Direct Deals" suffix (re:member specific)
     .replace(/\s*direct deals$/i, "")
-    // Remove common domain suffixes (handles both ".com" and "com")
-    .replace(/\.?(no|com|se|dk|eu|net|org)$/i, "")
+    // Remove common domain suffixes (requires literal dot before TLD)
+    .replace(/\.(no|com|se|dk|eu|net|org)$/i, "")
     // Remove punctuation
     .replace(/[.,-]/g, "")
     // Normalize whitespace

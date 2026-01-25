@@ -84,6 +84,9 @@
   "servicesSaved": {
     "message": "Innstillinger lagret"
   },
+  "cannotDisableAllServices": {
+    "message": "Du må ha minst én tjeneste aktivert"
+  },
   "reportIssue": {
     "message": "Rapporter problem"
   },
