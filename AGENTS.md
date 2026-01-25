@@ -27,7 +27,7 @@ The project has two versions that share most code:
 ### Userscript (Legacy)
 - `BonusVarsler.user.js` - Self-contained single file with all logic (Norwegian only)
 - Note: Userscript is named "BonusVarsler" (without "Lite") since it's easy to update when adding more services
-- `Trumf-Bonusvarsler-Lite.user.js` - Symlink to BonusVarsler.user.js for backwards compatibility
+- `Trumf-Bonusvarsler-Lite.user.js` - Copy of userscript for backwards compatibility (one-time migration to new URL)
 
 ### Data
 - `sitelist.json` - Backup merchant feed (same structure as CDN feed)
