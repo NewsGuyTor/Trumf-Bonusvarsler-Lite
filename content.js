@@ -121,6 +121,24 @@
       defaultEnabled: false,
       type: "code",
     },
+    obos: {
+      id: "obos",
+      name: "OBOS",
+      color: "#0047ba",
+      comingSoon: true,
+    },
+    naf: {
+      id: "naf",
+      name: "NAF",
+      color: "#ffd816",
+      comingSoon: true,
+    },
+    lofavor: {
+      id: "lofavor",
+      name: "LOfavør",
+      color: "#ff0000",
+      comingSoon: true,
+    },
   };
 
   // Domain aliases: maps redirect targets to feed domains
@@ -158,6 +176,8 @@
   const reminderShownKey = "BonusVarsler_ReminderShown";
   const languageKey = "BonusVarsler_Language";
   const enabledServicesKey = "BonusVarsler_EnabledServices";
+  const setupCompleteKey = "BonusVarsler_SetupComplete";
+  const setupShowCountKey = "BonusVarsler_SetupShowCount";
 
   // Legacy v3 storage keys for migration
   const LEGACY_KEYS = {
@@ -415,6 +435,8 @@
     position: "bottom-right", // default position
     sitePositions: {}, // per-site position overrides
     enabledServices: null, // loaded from storage or defaults
+    setupComplete: false, // first-run flag
+    setupShowCount: 0, // how many times first-run selector has been shown
   };
 
   // Get default enabled services from SERVICES registry
@@ -437,6 +459,9 @@
         const legacyFeedTime = await getValue(LEGACY_KEYS.feedTime, null);
         const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null);
 
+        // Check if this is an existing user (has any stored data indicating prior use)
+        const isExistingUser = storedVersion !== null || existingEnabledServices !== null || isLegacyUser;
+
         // Only remove cache-related and legacy keys, preserving user preferences
         const keysToRemove = [
           // Current cache keys
@@ -456,6 +481,11 @@
         // Seed legacy users with Trumf-only (preserve their single-service experience)
         if (isLegacyUser) {
           await setValue(enabledServicesKey, ["trumf"]);
+        }
+
+        // Mark existing users as having completed setup (skip first-run selector)
+        if (isExistingUser) {
+          await setValue(setupCompleteKey, true);
         }
 
         // Set version to prevent re-running migration
@@ -482,6 +512,10 @@
     const storedServices = await getValue(enabledServicesKey, null);
     settingsCache.enabledServices =
       storedServices || getDefaultEnabledServices();
+
+    // Load first-run setup status
+    settingsCache.setupComplete = await getValue(setupCompleteKey, false);
+    settingsCache.setupShowCount = await getValue(setupShowCountKey, 0);
 
     // Load language preference and messages
     const lang = await getValue(languageKey, "no");
@@ -1486,6 +1520,254 @@
 
     // Make draggable to corners
     makeCornerDraggable(container, header);
+
+    return shadowHost;
+  }
+
+  // ===================
+  // First-Run Service Selector
+  // ===================
+
+  function createServiceSelector() {
+    const shadowHost = document.createElement("div");
+    shadowHost.style.cssText =
+      "all:initial !important;position:fixed !important;bottom:0 !important;right:0 !important;z-index:2147483647 !important;display:block !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;";
+    document.body.appendChild(shadowHost);
+    const shadowRoot = shadowHost.attachShadow({ mode: "open" });
+
+    // Use Trumf colors, light mode only
+    const styles =
+      BASE_CSS +
+      `
+            :host {
+                --accent: #4D4DFF;
+                --accent-hover: #3232ff;
+            }
+            .header {
+                cursor: default;
+            }
+            .settings-title {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 16px;
+            }
+            .service-toggle-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 0;
+            }
+            .service-toggle-row:first-child {
+                padding-top: 0;
+            }
+            .service-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .service-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .service-name {
+                font-size: 14px;
+                color: var(--text);
+            }
+            .coming-soon {
+                font-size: 12px;
+                color: var(--text-muted);
+                margin-left: 4px;
+            }
+            .toggle-switch {
+                position: relative;
+                width: 44px;
+                height: 24px;
+                background: var(--btn-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background 0.2s, border-color 0.2s;
+                flex-shrink: 0;
+            }
+            .toggle-switch::after {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 18px;
+                height: 18px;
+                background: var(--text-muted);
+                border-radius: 50%;
+                transition: transform 0.2s, background 0.2s;
+            }
+            .toggle-switch.active {
+                background: var(--btn-bg-active);
+                border-color: var(--btn-bg-active);
+            }
+            .toggle-switch.active::after {
+                transform: translateX(20px);
+                background: #fff;
+            }
+            .toggle-switch.disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+            .action-btn {
+                display: block;
+                margin: 20px auto 0;
+                padding: 12px 24px;
+                background: var(--accent);
+                color: #fff;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                text-align: center;
+                cursor: pointer;
+                transition: background 0.2s;
+                max-width: 200px;
+                border: none;
+            }
+            .action-btn:hover {
+                background: var(--accent-hover);
+            }
+        `;
+
+    const styleEl = document.createElement("style");
+    styleEl.textContent = styles;
+    shadowRoot.appendChild(styleEl);
+
+    const container = document.createElement("div");
+    container.className = `container animate-in ${getPosition()}`;
+    container.setAttribute("role", "dialog");
+    container.setAttribute("aria-label", "Velg bonusprogrammer");
+
+    // Force light theme for first-run selector
+    shadowHost.className = "tbvl-light";
+
+    // Header (simplified - no settings, minimize, or close buttons)
+    const header = document.createElement("div");
+    header.className = "header";
+
+    const logo = document.createElement("div");
+    logo.className = "logo";
+    const logoIcon = document.createElement("img");
+    logoIcon.className = "logo-icon";
+    logoIcon.src = LOGO_ICON_URL;
+    logoIcon.alt = "";
+    const logoText = document.createElement("span");
+    logoText.textContent = "BonusVarsler";
+    logo.appendChild(logoIcon);
+    logo.appendChild(logoText);
+
+    header.appendChild(logo);
+
+    // Body
+    const body = document.createElement("div");
+    body.className = "body";
+
+    const content = document.createElement("div");
+    content.className = "content";
+
+    const title = document.createElement("div");
+    title.className = "settings-title";
+    title.textContent = "Velg bonusprogrammer";
+
+    content.appendChild(title);
+
+    // Service order: active services first, then coming soon
+    const serviceOrder = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
+    const toggleStates = {};
+
+    // Initialize with Trumf enabled by default
+    serviceOrder.forEach((serviceId) => {
+      toggleStates[serviceId] = serviceId === "trumf";
+    });
+
+    // Create service rows
+    serviceOrder.forEach((serviceId) => {
+      const service = SERVICES[serviceId];
+      if (!service) return;
+
+      const row = document.createElement("div");
+      row.className = "service-toggle-row";
+
+      const info = document.createElement("div");
+      info.className = "service-info";
+
+      const dot = document.createElement("span");
+      dot.className = "service-dot";
+      dot.style.backgroundColor = service.color;
+
+      const name = document.createElement("span");
+      name.className = "service-name";
+      name.textContent = service.name;
+
+      info.appendChild(dot);
+      info.appendChild(name);
+
+      // Add "coming soon" text for placeholder services
+      if (service.comingSoon) {
+        const comingSoon = document.createElement("span");
+        comingSoon.className = "coming-soon";
+        comingSoon.textContent = "(kommer snart)";
+        info.appendChild(comingSoon);
+      }
+
+      const toggle = document.createElement("div");
+      toggle.className = "toggle-switch";
+      if (toggleStates[serviceId]) {
+        toggle.classList.add("active");
+      }
+      if (service.comingSoon) {
+        toggle.classList.add("disabled");
+      }
+
+      // Toggle click handler (skip for coming soon services)
+      if (!service.comingSoon) {
+        toggle.addEventListener("click", () => {
+          toggleStates[serviceId] = !toggleStates[serviceId];
+          toggle.classList.toggle("active", toggleStates[serviceId]);
+        });
+      }
+
+      row.appendChild(info);
+      row.appendChild(toggle);
+      content.appendChild(row);
+    });
+
+    // Save button
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "action-btn";
+    saveBtn.textContent = "Lagre tjenester";
+
+    saveBtn.addEventListener("click", async () => {
+      // Get enabled services (only non-coming-soon that are toggled on)
+      const enabledServices = serviceOrder.filter(
+        (serviceId) =>
+          toggleStates[serviceId] && !SERVICES[serviceId]?.comingSoon,
+      );
+
+      // Ensure at least one service is enabled
+      if (enabledServices.length === 0) {
+        enabledServices.push("trumf");
+      }
+
+      // Save to storage
+      await setValue(enabledServicesKey, enabledServices);
+      await setValue(setupCompleteKey, true);
+
+      // Reload page to show normal notification if applicable
+      window.location.reload();
+    });
+
+    content.appendChild(saveBtn);
+    body.appendChild(content);
+
+    container.appendChild(header);
+    container.appendChild(body);
+    shadowRoot.appendChild(container);
 
     return shadowHost;
   }
@@ -2649,8 +2931,53 @@
   // Main Initialization
   // ===================
 
+  // Get all active (non-comingSoon) service IDs
+  function getAllActiveServices() {
+    return Object.values(SERVICES)
+      .filter((s) => !s.comingSoon)
+      .map((s) => s.id);
+  }
+
   async function init() {
     await loadSettings();
+
+    // First-run setup flow
+    if (!settingsCache.setupComplete) {
+      const showCount = settingsCache.setupShowCount;
+
+      // Count 0: Show selector on any page
+      if (showCount === 0) {
+        await setValue(setupShowCountKey, 1);
+        createServiceSelector();
+        return;
+      }
+
+      // Count 1+: Only show on merchant pages
+      const mightBeMerchant = await isKnownMerchantHost();
+      if (mightBeMerchant === false) {
+        return; // Not a merchant, don't show
+      }
+
+      const feed = await getFeed();
+      const match = feed ? findBestOffer(feed) : null;
+      if (!match?.name) {
+        return; // No match on this page
+      }
+
+      // Count 1: Show selector on merchant page
+      if (showCount === 1) {
+        await setValue(setupShowCountKey, 2);
+        createServiceSelector();
+        return;
+      }
+
+      // Count 2+: Auto-enable all services and complete setup
+      await setValue(enabledServicesKey, getAllActiveServices());
+      await setValue(setupCompleteKey, true);
+      settingsCache.setupComplete = true;
+      settingsCache.enabledServices = getAllActiveServices();
+      // Fall through to show notification
+    }
 
     // Check if we should show the reminder on a cashback portal page
     const reminder = shouldShowReminder();

@@ -23,6 +23,24 @@ const SERVICES_FALLBACK = {
     color: "#007272",
     defaultEnabled: false,
   },
+  obos: {
+    id: "obos",
+    name: "OBOS",
+    color: "#0047ba",
+    comingSoon: true,
+  },
+  naf: {
+    id: "naf",
+    name: "NAF",
+    color: "#ffd816",
+    comingSoon: true,
+  },
+  lofavor: {
+    id: "lofavor",
+    name: "LOfavør",
+    color: "#ff0000",
+    comingSoon: true,
+  },
 };
 
 // Will be populated from feed cache or fallback
@@ -305,8 +323,10 @@ async function initServices() {
     enabledServices = defaultEnabled;
   }
 
-  // Create checkbox for each service
-  Object.values(SERVICES).forEach((service) => {
+  // Create checkbox for each service (skip comingSoon services)
+  Object.values(SERVICES)
+    .filter((s) => !s.comingSoon)
+    .forEach((service) => {
     const row = document.createElement("div");
     row.className = "service-row";
 

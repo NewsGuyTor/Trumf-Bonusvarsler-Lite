@@ -22,5 +22,23 @@
     "color": "#007272",
     "defaultEnabled": false,
     "type": "code"
+  },
+  "obos": {
+    "id": "obos",
+    "name": "OBOS",
+    "color": "#0047ba",
+    "comingSoon": true
+  },
+  "naf": {
+    "id": "naf",
+    "name": "NAF",
+    "color": "#ffd816",
+    "comingSoon": true
+  },
+  "lofavor": {
+    "id": "lofavor",
+    "name": "LOfavør",
+    "color": "#ff0000",
+    "comingSoon": true
   }
 }
