@@ -1,4 +1,4 @@
-name: Update Trumf Feed
+name: Update Merchant Feeds
 
 on:
   schedule:
@@ -26,12 +26,12 @@ jobs:
         run: cd scripts && bunx playwright install chromium --with-deps
 
       - name: Run scraper
-        run: bun scripts/scrape-trumf.ts
+        run: bun scripts/scrape-feeds.ts
 
       - name: Check for changes
         id: changes
         run: |
-          if git diff --quiet sitelist.json; then
+          if git diff --quiet data/sitelist.json; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -42,6 +42,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add sitelist.json
-          git commit -m "Update Trumf merchant feed"
+          git add data/sitelist.json
+          git commit -m "Update merchant feeds"
           git push

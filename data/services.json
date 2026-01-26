@@ -14,5 +14,13 @@
     "reminderDomain": "remember.no",
     "color": "#f28d00",
     "defaultEnabled": false
+  },
+  "dnb": {
+    "id": "dnb",
+    "name": "DNB",
+    "clickthroughUrl": "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter",
+    "color": "#007272",
+    "defaultEnabled": false,
+    "type": "code"
   }
 }

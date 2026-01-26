@@ -30,6 +30,10 @@ const SERVICES = {
     ...SERVICES_BASE.remember,
     scrapeUrl: "https://www.remember.no/reward/rabatt",
   },
+  dnb: {
+    ...SERVICES_BASE.dnb,
+    // DNB merchants are scraped by scripts/scrape-feeds.ts, not build.js
+  },
 };
 
 const FEED_URL = "https://wlp.tcb-cdn.com/trumf/notifierfeed.json";
@@ -701,8 +705,20 @@ async function main() {
   try {
     console.log("🚀 Building BonusVarsler\n");
 
-    // Download fresh sitelist
-    const sitelist = await downloadSitelist();
+    // Run the scraper script to get fresh merchant data from all services
+    console.log("📥 Running merchant scraper...\n");
+    try {
+      execSync("bun scripts/scrape-feeds.ts", { stdio: "inherit" });
+    } catch (error) {
+      console.error("   ⚠ Scraper failed, continuing with existing sitelist.json");
+    }
+
+    // Load the sitelist that was created/updated by the scraper
+    const sitelist = JSON.parse(fs.readFileSync("data/sitelist.json", "utf8"));
+    console.log(`\n   ✓ Loaded sitelist with ${Object.keys(sitelist.merchants || {}).length} merchants`);
+
+    // Copy to root sitelist.json (used for GitHub CDN fallback)
+    fs.writeFileSync("sitelist.json", JSON.stringify(sitelist));
 
     // Check CSP on all sites
     const restrictedSites = await checkAllSitesCSP(sitelist);

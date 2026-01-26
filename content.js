@@ -113,6 +113,14 @@
       color: "#f28d00",
       defaultEnabled: false,
     },
+    dnb: {
+      id: "dnb",
+      name: "DNB",
+      clickthroughUrl: "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter",
+      color: "#007272",
+      defaultEnabled: false,
+      type: "code",
+    },
   };
 
   // Domain aliases: maps redirect targets to feed domains
@@ -923,13 +931,7 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-    "fabel.no",
-    "www.clickandboat.com",
-    "www.elite.se",
-    "www.klokkegiganten.no",
-    "www.myprotein.no",
-    "www.skyshowtime.com",
-    "www.sportmann.no",
+
   ]);
 
   async function checkUrlBlocked(url) {
@@ -1642,6 +1644,27 @@
                 to { transform: translateY(-50%) rotate(360deg); }
             }
 
+            .action-btn.has-code {
+                position: relative;
+                padding-right: 40px;
+            }
+            .copy-icon {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 14px;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity 0.2s;
+            }
+            .copy-icon:hover {
+                opacity: 1;
+            }
+            .copy-icon.copied {
+                opacity: 1;
+            }
+
             .hide-site {
                 display: block;
                 margin-top: 12px;
@@ -2106,11 +2129,23 @@
 
     const checklist = document.createElement("ol");
     checklist.className = "checklist";
-    [
-      i18n("disableAdblockers"),
-      i18n("acceptAllCookies"),
-      i18n("emptyCart"),
-    ].forEach((text) => {
+    // Different instructions for different service types
+    let checklistItems;
+    if (service.id === "dnb") {
+      checklistItems = [
+        i18n("dnbInstruction1"),
+        i18n("dnbInstruction2"),
+        i18n("dnbInstruction3"),
+      ];
+    } else {
+      // Default tracking-based services (Trumf, re:member, etc.)
+      checklistItems = [
+        i18n("disableAdblockers"),
+        i18n("acceptAllCookies"),
+        i18n("emptyCart"),
+      ];
+    }
+    checklistItems.forEach((text) => {
       const li = document.createElement("li");
       li.textContent = text;
       checklist.appendChild(li);
@@ -2118,15 +2153,29 @@
 
     const actionBtn = document.createElement("a");
     actionBtn.className = "action-btn";
-    // Build clickthrough URL from service template
-    const clickthroughUrl = service.clickthroughUrl.replace(
-      "{urlName}",
-      match.urlName || "",
-    );
-    actionBtn.href = clickthroughUrl;
+    // Build clickthrough URL from service template (handle static URLs without {urlName})
+    const clickthroughUrl = service.clickthroughUrl.includes("{urlName}")
+      ? service.clickthroughUrl.replace("{urlName}", match.urlName || "")
+      : service.clickthroughUrl;
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
-    actionBtn.textContent = i18n("getServiceBonus", service.name);
+    // For code-based services, show the rebate code in the button with copy icon
+    // First click copies code, second click opens link
+    if (service.type === "code" && match.offer?.code) {
+      actionBtn.classList.add("has-code");
+      // Don't set href yet - require copy first
+      actionBtn.dataset.pendingHref = clickthroughUrl;
+      const codeText = document.createTextNode(match.offer.code);
+      actionBtn.appendChild(codeText);
+      const copyIcon = document.createElement("span");
+      copyIcon.className = "copy-icon";
+      copyIcon.innerHTML = "&#x1F4CB;"; // 📋 clipboard icon
+      copyIcon.title = "Kopier kode";
+      actionBtn.appendChild(copyIcon);
+    } else {
+      actionBtn.href = clickthroughUrl;
+      actionBtn.textContent = i18n("getServiceBonus", service.name);
+    }
 
     const hideSiteLink = document.createElement("span");
     hideSiteLink.className = "hide-site";
@@ -2437,11 +2486,29 @@
       document.removeEventListener("keydown", handleKeydown);
     });
 
-    actionBtn.addEventListener("click", () => {
+    actionBtn.addEventListener("click", (e) => {
       try {
         localStorage.setItem(messageShownKey, Date.now().toString());
       } catch {
         // Storage blocked on this site
+      }
+      // For code-based services: first click copies code, second click opens link
+      if (service.type === "code" && match.offer?.code) {
+        const copyIcon = actionBtn.querySelector(".copy-icon");
+        if (!actionBtn.href && actionBtn.dataset.pendingHref) {
+          // First click: copy code and enable link
+          e.preventDefault();
+          navigator.clipboard.writeText(match.offer.code).then(() => {
+            if (copyIcon) {
+              copyIcon.innerHTML = "&#x2713;"; // ✓ checkmark
+            }
+            // Enable the link for second click
+            actionBtn.href = actionBtn.dataset.pendingHref;
+            delete actionBtn.dataset.pendingHref;
+          });
+        }
+        // Second click: link is now set, will navigate normally
+        return;
       }
       content.innerHTML = "";
       const confirmation = document.createElement("div");
@@ -2511,9 +2578,12 @@
       recheckIcon.classList.remove("spinning");
     });
 
-    checkAndUpdateButton().catch(() => {
-      // Silently ignore detection failures
-    });
+    // Skip adblock detection for code-based services (codes work regardless)
+    if (service.type !== "code") {
+      checkAndUpdateButton().catch(() => {
+        // Silently ignore detection failures
+      });
+    }
 
     // Make draggable to corners
     makeCornerDraggable(container, header);
@@ -2553,7 +2623,7 @@
     }
 
     const match = findBestOffer(feed);
-    if (!match?.urlName || !match?.name) {
+    if (!match?.name) {
       return;
     }
 

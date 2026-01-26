@@ -17,6 +17,12 @@ const SERVICES_FALLBACK = {
     color: "#f28d00",
     defaultEnabled: false,
   },
+  dnb: {
+    id: "dnb",
+    name: "DNB",
+    color: "#007272",
+    defaultEnabled: false,
+  },
 };
 
 // Will be populated from feed cache or fallback

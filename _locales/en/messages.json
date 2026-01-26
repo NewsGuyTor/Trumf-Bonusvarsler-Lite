@@ -240,5 +240,15 @@
   },
   "thisStore": {
     "message": "this store"
+  },
+
+  "dnbInstruction1": {
+    "message": "Enter the rebate code in your cart"
+  },
+  "dnbInstruction2": {
+    "message": "Verify the discount is applied before paying"
+  },
+  "dnbInstruction3": {
+    "message": "Pay with your DNB card (Visa or Mastercard)"
   }
 }

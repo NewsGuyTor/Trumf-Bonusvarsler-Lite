@@ -240,5 +240,15 @@
   },
   "thisStore": {
     "message": "esta tienda"
+  },
+
+  "dnbInstruction1": {
+    "message": "Ingresa el código de descuento en tu carrito"
+  },
+  "dnbInstruction2": {
+    "message": "Verifica que el descuento se aplique antes de pagar"
+  },
+  "dnbInstruction3": {
+    "message": "Paga con tu tarjeta DNB (Visa o Mastercard)"
   }
 }

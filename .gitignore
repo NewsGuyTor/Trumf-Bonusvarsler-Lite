@@ -10,3 +10,4 @@ Thumbs.db
 *.swo
 *~
 .csp-cache.json
+.scraper-cache.json

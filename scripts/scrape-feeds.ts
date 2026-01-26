@@ -1,0 +1,869 @@
+/**
+ * Multi-Service Merchant Scraper
+ *
+ * Uses Playwright to scrape all merchants from:
+ * - trumfnetthandel.no/kategori (Trumf - tracking-based cashback)
+ * - dnb.no/kundeprogram/fordeler/faste-rabatter (DNB - code-based rebates)
+ *
+ * Strategy:
+ * 1. Fetch the official CDN feed to get hostname -> urlName mappings for Trumf
+ * 2. Use Playwright to load pages and scroll until all merchants are loaded
+ * 3. Use manual hostname mappings for merchants not in CDN feed
+ * 4. Merge all services into unified sitelist.json format
+ */
+
+import { chromium, type Page, type Browser } from "playwright";
+import { readFile, writeFile } from "fs/promises";
+import { join } from "path";
+
+// ===================
+// Configuration
+// ===================
+
+const TRUMF_BASE_URL = "https://trumfnetthandel.no";
+const TRUMF_CDN_FEED_URL = "https://wlp.tcb-cdn.com/trumf/notifierfeed.json";
+const DNB_URL = "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter";
+
+// Cache configuration
+const CACHE_FILE = join(import.meta.dir, "..", ".scraper-cache.json");
+const CACHE_MAX_AGE = 5 * 60 * 60 * 1000; // 5 hours in ms
+
+interface ScraperCache {
+  timestamp: number;
+  trumfMerchants: ScrapedMerchant[];
+  rememberMerchants: ScrapedMerchant[];
+  dnbMerchants: ScrapedMerchant[];
+  urlNameToHostname: Record<string, string>;
+}
+
+async function loadCache(): Promise<ScraperCache | null> {
+  try {
+    const content = await readFile(CACHE_FILE, "utf-8");
+    const cache: ScraperCache = JSON.parse(content);
+    const age = Date.now() - cache.timestamp;
+    if (age < CACHE_MAX_AGE) {
+      return cache;
+    }
+  } catch {
+    // No cache or invalid
+  }
+  return null;
+}
+
+async function saveCache(data: Omit<ScraperCache, "timestamp">): Promise<void> {
+  const cache: ScraperCache = {
+    ...data,
+    timestamp: Date.now(),
+  };
+  await writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
+}
+
+// Manual hostname mappings for Trumf merchants not in CDN feed
+const TRUMF_MANUAL_HOSTNAME_MAPPINGS: Record<string, string> = {
+  // Travel
+  "trumfhotels-no": "www.hotels.com",
+  "expedia-trumf": "www.expedia.no",
+  "vrbo-trumf": "www.vrbo.com",
+  // Electronics
+  "apple-trumf": "www.apple.com",
+  // Opticians
+  "brilleland-trumf": "www.brilleland.no",
+  "interoptik-trumf": "www.interoptik.no",
+  // Health
+  "dentway-trumfs": "www.dentway.no",
+};
+
+// Hostname aliases (alternative domains that should map to same merchant)
+const HOSTNAME_ALIASES: Record<string, string> = {
+  "no.hotels.com": "www.hotels.com",
+  "hotels.com": "www.hotels.com",
+  "expedia.com": "www.expedia.no",
+  "expedia.no": "www.expedia.no",
+  "vrbo.no": "www.vrbo.com",
+  "apple.com": "www.apple.com",
+};
+
+// ===================
+// Types
+// ===================
+
+interface ServiceOffer {
+  serviceId: string;
+  urlName: string;
+  cashbackDescription: string;
+  code?: string; // For code-based services like DNB
+  cashbackDetails?: Array<{
+    value: number;
+    type: "PERCENTAGE" | "NOK";
+    description: string;
+  }>;
+}
+
+interface MerchantEntry {
+  hostName: string;
+  name: string;
+  offers: ServiceOffer[];
+}
+
+interface ServiceDefinition {
+  name: string;
+  clickthroughUrl: string;
+  reminderDomain?: string;
+  color: string;
+  defaultEnabled: boolean;
+  type?: "code"; // code-based services
+}
+
+interface SiteList {
+  services: Record<string, ServiceDefinition>;
+  merchants: Record<string, MerchantEntry>;
+}
+
+interface CDNFeed {
+  settings: Record<string, unknown>;
+  merchants: Record<
+    string,
+    {
+      hostName: string;
+      urlName: string;
+      name: string;
+      cashbackDescription: string;
+      basicRate?: string;
+      headerId?: number;
+      programId?: number;
+    }
+  >;
+}
+
+interface ScrapedMerchant {
+  name: string;
+  cashbackDescription: string;
+  slug: string;
+  code?: string; // For code-based services
+  storeUrl?: string; // For DNB merchants
+}
+
+// ===================
+// Utility Functions
+// ===================
+
+function inferHostname(name: string): string | null {
+  const cleanName = name.toLowerCase().trim();
+
+  // If name looks like a domain already
+  if (
+    cleanName.includes(".com") ||
+    cleanName.includes(".no") ||
+    cleanName.includes(".se")
+  ) {
+    const domainMatch = cleanName.match(/([a-z0-9-]+\.[a-z]{2,})/);
+    if (domainMatch) {
+      return `www.${domainMatch[1]}`;
+    }
+  }
+
+  // Check well-known brands
+  const normalized = cleanName.replace(/[^a-z0-9]/g, "").toLowerCase();
+  const wellKnownBrands: Record<string, string> = {
+    hotelscom: "www.hotels.com",
+    expedia: "www.expedia.no",
+    vrbo: "www.vrbo.com",
+    apple: "www.apple.com",
+    ebay: "www.ebay.com",
+  };
+
+  return wellKnownBrands[normalized] || null;
+}
+
+function normalizeHostname(hostname: string): string {
+  return HOSTNAME_ALIASES[hostname] || hostname;
+}
+
+/**
+ * Normalize a store name for matching across services
+ */
+function normalizeStoreName(name: string): string {
+  return name
+    .toLowerCase()
+    // Remove "Direct Deals" suffix (re:member specific)
+    .replace(/\s*direct deals$/i, "")
+    // Remove common domain suffixes (requires literal dot before TLD)
+    .replace(/\.(no|com|se|dk|eu|net|org)$/i, "")
+    // Remove punctuation
+    .replace(/[.,-]/g, "")
+    // Normalize whitespace
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ===================
+// Trumf Scraping
+// ===================
+
+async function fetchTrumfCDNFeed(): Promise<{
+  feed: CDNFeed;
+  urlNameToHostname: Map<string, string>;
+}> {
+  const response = await fetch(TRUMF_CDN_FEED_URL);
+  const feed: CDNFeed = await response.json();
+
+  const urlNameToHostname = new Map<string, string>();
+  for (const [hostname, merchant] of Object.entries(feed.merchants)) {
+    urlNameToHostname.set(merchant.urlName, hostname);
+  }
+
+  return { feed, urlNameToHostname };
+}
+
+async function scrapeTrumf(page: Page): Promise<ScrapedMerchant[]> {
+  console.log("\n=== Scraping Trumf ===");
+  console.log("Loading /kategori page...");
+  await page.goto(`${TRUMF_BASE_URL}/kategori`, {
+    waitUntil: "domcontentloaded",
+  });
+
+  // Wait for initial content
+  await page.waitForSelector('a[href^="/cashback/"]', { timeout: 10000 });
+
+  // Scroll to load all lazy-loaded content
+  console.log("Scrolling to load all merchants...");
+  let previousCount = 0;
+  let currentCount = 0;
+  let stableCount = 0;
+  let scrollAttempts = 0;
+  const maxScrollAttempts = 100;
+
+  do {
+    previousCount = currentCount;
+
+    // Scroll down incrementally
+    await page.evaluate(() => {
+      window.scrollBy(0, window.innerHeight);
+    });
+
+    // Wait for potential new content to load
+    await page.waitForTimeout(300);
+
+    // Also try waiting for network to settle
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 1000 });
+    } catch {
+      // Timeout is fine, continue scrolling
+    }
+
+    // Count current merchants
+    currentCount = await page.locator('a[href^="/cashback/"]').count();
+
+    // Track how many times count has been stable
+    if (currentCount === previousCount) {
+      stableCount++;
+    } else {
+      stableCount = 0;
+    }
+
+    scrollAttempts++;
+    process.stdout.write(
+      `\r  Found ${currentCount} merchants (scroll ${scrollAttempts}, stable: ${stableCount})...`
+    );
+
+    // Stop if count has been stable for 5 scrolls at the bottom
+  } while (stableCount < 5 && scrollAttempts < maxScrollAttempts);
+
+  console.log(`\n  Finished scrolling. Total: ${currentCount} merchants`);
+
+  // Extract merchant data
+  console.log("Extracting merchant data...");
+  const merchants = await page.evaluate(() => {
+    const results: { name: string; cashbackDescription: string; slug: string }[] =
+      [];
+    const seen = new Set<string>();
+
+    document.querySelectorAll('a[href^="/cashback/"]').forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      const slug = decodeURIComponent(href.replace("/cashback/", "").split("?")[0]);
+
+      if (!slug || seen.has(slug)) return;
+      seen.add(slug);
+
+      // Get merchant name - look for heading or image alt
+      const name =
+        link.querySelector("h3, h4, h5")?.textContent?.trim() ||
+        link.querySelector("img")?.getAttribute("alt")?.trim() ||
+        "";
+
+      // Get cashback rate - look for text containing %
+      const allText = link.textContent || "";
+      const cashbackMatch = allText.match(
+        /(\d+[,.]?\d*\s*%|Opptil\s+\d+[,.]?\d*\s*%|\d+\s*kr)/i
+      );
+      const cashbackDescription = cashbackMatch ? cashbackMatch[0].trim() : "";
+
+      if (name) {
+        results.push({ name, cashbackDescription, slug });
+      }
+    });
+
+    return results;
+  });
+
+  return merchants;
+}
+
+// ===================
+// re:member Scraping
+// ===================
+
+const REMEMBER_URL = "https://www.remember.no/reward/rabatt";
+
+interface RememberStore {
+  slug: string;
+  name: string;
+  enabled: boolean;
+  maxPercentageValue?: number;
+  maxFixedValue?: number;
+  commission?: Array<{
+    value: number;
+    type: "PERCENTAGE" | "NOK";
+    description: string;
+  }>;
+}
+
+interface RememberMerchant extends ScrapedMerchant {
+  cashbackDetails?: Array<{
+    value: number;
+    type: "PERCENTAGE" | "NOK";
+    description: string;
+  }>;
+}
+
+async function scrapeRemember(): Promise<RememberMerchant[]> {
+  console.log("\n=== Scraping re:member ===");
+  console.log("Fetching re:member stores page...");
+
+  try {
+    const response = await fetch(REMEMBER_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const html = await response.text();
+
+    // Find the stores JSON in the page - it's in a __NEXT_DATA__ script tag
+    const nextDataMatch = html.match(
+      /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
+    );
+    if (!nextDataMatch) {
+      throw new Error("Could not find __NEXT_DATA__ script tag");
+    }
+
+    const nextData = JSON.parse(nextDataMatch[1]);
+    const stores: RememberStore[] = nextData?.props?.pageProps?.stores;
+
+    if (!stores || !Array.isArray(stores)) {
+      throw new Error("Could not find stores array in page data");
+    }
+
+    const merchants: RememberMerchant[] = [];
+
+    for (const store of stores) {
+      if (!store.enabled || !store.name) continue;
+
+      // Skip "Direct Deals" stores - they offer discounts on specific products only
+      if (store.name.toLowerCase().includes("direct deals")) continue;
+
+      const slug = store.slug;
+      if (!slug) continue;
+
+      // Build cashback description
+      let cashbackDescription = "";
+      let cashbackDetails: RememberMerchant["cashbackDetails"] = undefined;
+
+      // Check for multiple commission rates
+      if (store.commission && store.commission.length > 1) {
+        const percentageRates = store.commission.filter(
+          (c) => c.type === "PERCENTAGE"
+        );
+        if (percentageRates.length > 1) {
+          const values = percentageRates.map((c) => c.value);
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          // Only show range if min != max
+          if (min !== max) {
+            cashbackDescription = `${min}-${max}%*`;
+            cashbackDetails = store.commission.map((c) => ({
+              value: c.value,
+              type: c.type,
+              description: c.description,
+            }));
+          } else {
+            cashbackDescription = `${max}%`;
+          }
+        }
+      }
+
+      // Fallback to simple description
+      if (!cashbackDescription) {
+        if (store.maxPercentageValue && store.maxPercentageValue > 0) {
+          cashbackDescription = `${store.maxPercentageValue}%`;
+        } else if (store.maxFixedValue && store.maxFixedValue > 0) {
+          cashbackDescription = `${store.maxFixedValue} kr`;
+        }
+      }
+
+      // Skip stores with no cashback
+      if (!cashbackDescription) continue;
+
+      merchants.push({
+        name: store.name,
+        slug,
+        cashbackDescription,
+        ...(cashbackDetails && { cashbackDetails }),
+      });
+    }
+
+    console.log(`  Found ${merchants.length} re:member merchants`);
+    return merchants;
+  } catch (error) {
+    console.error("  Error scraping re:member:", error);
+    return [];
+  }
+}
+
+// ===================
+// DNB Scraping
+// ===================
+
+async function scrapeDNB(page: Page): Promise<ScrapedMerchant[]> {
+  console.log("\n=== Scraping DNB ===");
+  console.log("Loading DNB rebates page...");
+
+  try {
+    await page.goto(DNB_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+
+    // Wait for content to load (DNB uses Gatsby/React)
+    await page.waitForTimeout(8000);
+
+    // Scroll to load all lazy content
+    console.log("Scrolling to load all content...");
+    for (let i = 0; i < 30; i++) {
+      await page.evaluate(() => window.scrollBy(0, 500));
+      await page.waitForTimeout(200);
+    }
+    await page.waitForTimeout(3000);
+
+    // Extract merchant data
+    console.log("Extracting DNB merchant data...");
+    const data = await page.evaluate(() => {
+      const results: Array<{
+        name: string;
+        cashbackDescription: string;
+        slug: string;
+        code?: string;
+        storeUrl?: string;
+      }> = [];
+      const seen = new Set<string>();
+
+      // Find the universal rebate code (format: "rabattkode: XXXX")
+      const bodyText = document.body.textContent || "";
+      const codeMatch = bodyText.match(/rabattkode[:\s]+([A-Z0-9]+)/i);
+      const universalCode = codeMatch ? codeMatch[1] : undefined;
+
+      // Strategy: Find text nodes containing exact "XX %" pattern (discount badges)
+      // Then walk up to find the card container (an anchor with store URL)
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+
+      while ((node = walker.nextNode())) {
+        const text = node.textContent?.trim();
+        // Match exact discount badge pattern like "10 %" or "10%"
+        if (!text || !text.match(/^\d+\s*%$/)) continue;
+
+        // Walk up the DOM to find the card container
+        let el = node.parentElement;
+        let card: HTMLAnchorElement | null = null;
+
+        for (let i = 0; i < 10 && el; i++) {
+          // Look for an anchor element that links to an external store
+          if (el.tagName === "A") {
+            const href = el.getAttribute("href") || "";
+            if (href.startsWith("http") && !href.includes("dnb.no")) {
+              card = el as HTMLAnchorElement;
+              break;
+            }
+          }
+          el = el.parentElement;
+        }
+
+        if (!card) continue;
+
+        // Extract store name from heading inside the card
+        const heading = card.querySelector("h2, h3, h4");
+        const name = heading?.textContent?.trim() || "";
+        if (!name || seen.has(name)) continue;
+        seen.add(name);
+
+        // Get store URL and clean it up
+        const storeUrl = (card.getAttribute("href") || "").trim().replace(/[.\s]+$/, "");
+
+        // Clean up discount text
+        const cashbackDescription = text.replace(/\s+/g, "");
+
+        results.push({
+          name,
+          cashbackDescription,
+          slug: "", // DNB doesn't use slugs
+          code: universalCode,
+          storeUrl,
+        });
+      }
+
+      return { merchants: results, universalCode };
+    });
+
+    if (data.universalCode) {
+      console.log(`  Found universal code: ${data.universalCode}`);
+    }
+    console.log(`  Found ${data.merchants.length} DNB merchants`);
+    return data.merchants;
+  } catch (error) {
+    console.error("  Error scraping DNB:", error);
+    return [];
+  }
+}
+
+// ===================
+// Main Logic
+// ===================
+
+async function main() {
+  console.log("Starting multi-service merchant scraper...\n");
+
+  // Read existing sitelist.json
+  const sitelistPath = join(import.meta.dir, "..", "data", "sitelist.json");
+  let existingSitelist: SiteList;
+
+  try {
+    const content = await readFile(sitelistPath, "utf-8");
+    existingSitelist = JSON.parse(content);
+  } catch (error) {
+    console.error("Failed to read sitelist.json:", error);
+    process.exit(1);
+  }
+
+  // Check cache first
+  const cache = await loadCache();
+  let trumfMerchants: ScrapedMerchant[];
+  let rememberMerchants: ScrapedMerchant[];
+  let dnbMerchants: ScrapedMerchant[];
+  let urlNameToHostname: Map<string, string>;
+
+  if (cache) {
+    const ageHours = Math.round((Date.now() - cache.timestamp) / (60 * 60 * 1000));
+    console.log(`Using cached scraper data (${ageHours}h old)\n`);
+    trumfMerchants = cache.trumfMerchants;
+    rememberMerchants = cache.rememberMerchants;
+    dnbMerchants = cache.dnbMerchants;
+    urlNameToHostname = new Map(Object.entries(cache.urlNameToHostname));
+    console.log(`  Trumf: ${trumfMerchants.length} merchants`);
+    console.log(`  re:member: ${rememberMerchants.length} merchants`);
+    console.log(`  DNB: ${dnbMerchants.length} merchants`);
+  } else {
+    // Launch browser for scraping
+    console.log("Launching browser...");
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+
+    try {
+      // ===================
+      // Step 1: Fetch Trumf CDN feed for hostname mappings
+      // ===================
+      console.log("Fetching Trumf CDN feed for hostname mappings...");
+      urlNameToHostname = new Map<string, string>();
+
+      try {
+        const result = await fetchTrumfCDNFeed();
+        urlNameToHostname = result.urlNameToHostname;
+        console.log(
+          `  Found ${urlNameToHostname.size} hostname mappings in CDN feed\n`
+        );
+      } catch (error) {
+        console.error("  Failed to fetch CDN feed, continuing without it\n");
+      }
+
+      // ===================
+      // Step 2: Scrape Trumf merchants
+      // ===================
+      trumfMerchants = await scrapeTrumf(page);
+      console.log(`Scraped ${trumfMerchants.length} Trumf merchants`);
+
+      // ===================
+      // Step 3: Scrape re:member merchants (no browser needed)
+      // ===================
+      rememberMerchants = await scrapeRemember();
+      console.log(`Scraped ${rememberMerchants.length} re:member merchants`);
+
+      // ===================
+      // Step 4: Scrape DNB merchants
+      // ===================
+      dnbMerchants = await scrapeDNB(page);
+      console.log(`Scraped ${dnbMerchants.length} DNB merchants`);
+
+      // Save to cache
+      await saveCache({
+        trumfMerchants,
+        rememberMerchants,
+        dnbMerchants,
+        urlNameToHostname: Object.fromEntries(urlNameToHostname),
+      });
+    } finally {
+      await browser.close();
+    }
+  }
+
+  // ===================
+  // Step 5: Build unified merchant list
+  // ===================
+  console.log("\n=== Building unified merchant list ===");
+  const merchants: Record<string, MerchantEntry> = {};
+  const unmappedTrumf: string[] = [];
+  const unmappedRemember: string[] = [];
+  const unmappedDnb: string[] = [];
+
+  // Build name -> hostname map for matching re:member to existing merchants
+  const nameToHostMap = new Map<string, string>();
+
+  // Process Trumf merchants
+  for (const merchant of trumfMerchants) {
+    const slug = merchant.slug;
+    let hostname: string | null = null;
+
+    // 1. Check CDN feed
+    if (urlNameToHostname.has(slug)) {
+      hostname = urlNameToHostname.get(slug)!;
+    }
+    // 2. Check manual mappings
+    else if (TRUMF_MANUAL_HOSTNAME_MAPPINGS[slug]) {
+      hostname = TRUMF_MANUAL_HOSTNAME_MAPPINGS[slug];
+    }
+    // 3. Try to infer from name
+    else {
+      hostname = inferHostname(merchant.name);
+    }
+
+    if (!hostname || hostname.length < 4) {
+      unmappedTrumf.push(`${merchant.name} (slug: ${slug})`);
+      continue;
+    }
+
+    hostname = normalizeHostname(hostname);
+
+    // Add or update merchant entry
+    if (!merchants[hostname]) {
+      merchants[hostname] = {
+        hostName: hostname,
+        name: merchant.name,
+        offers: [],
+      };
+    }
+
+    // Add Trumf offer
+    merchants[hostname].offers.push({
+      serviceId: "trumf",
+      urlName: slug,
+      cashbackDescription: merchant.cashbackDescription,
+    });
+
+    // Build name -> host mapping for matching re:member
+    const normalizedName = normalizeStoreName(merchant.name);
+    nameToHostMap.set(normalizedName, hostname);
+  }
+
+  // Process re:member merchants
+  // Load manual domain mappings for re:member-only stores
+  let rememberDomainMappings: Record<string, string> = {};
+  try {
+    const mappingContent = await readFile(
+      join(import.meta.dir, "..", "data", "remember-domains.json"),
+      "utf-8"
+    );
+    rememberDomainMappings = JSON.parse(mappingContent);
+  } catch {
+    console.log("  Note: Could not load data/remember-domains.json");
+  }
+
+  let rememberMatched = 0;
+  let rememberMappedOnly = 0;
+
+  for (const merchant of rememberMerchants as RememberMerchant[]) {
+    const normalizedName = normalizeStoreName(merchant.name);
+    let matchedHost = nameToHostMap.get(normalizedName);
+
+    // If no match by name, check manual domain mapping
+    if (!matchedHost && rememberDomainMappings[merchant.slug]) {
+      matchedHost = rememberDomainMappings[merchant.slug];
+      if (!merchants[matchedHost]) {
+        // Create new merchant entry for re:member-only store
+        merchants[matchedHost] = {
+          hostName: matchedHost,
+          name: merchant.name,
+          offers: [],
+        };
+      }
+      rememberMappedOnly++;
+    }
+
+    if (matchedHost && merchants[matchedHost]) {
+      // Check if re:member offer already exists
+      const hasRememberOffer = merchants[matchedHost].offers.some(
+        (o) => o.serviceId === "remember"
+      );
+      if (!hasRememberOffer) {
+        const offer: ServiceOffer = {
+          serviceId: "remember",
+          urlName: merchant.slug,
+          cashbackDescription: merchant.cashbackDescription,
+        };
+        if (merchant.cashbackDetails) {
+          offer.cashbackDetails = merchant.cashbackDetails;
+        }
+        merchants[matchedHost].offers.push(offer);
+        rememberMatched++;
+      }
+    } else {
+      unmappedRemember.push(`${merchant.name} (slug: ${merchant.slug})`);
+    }
+  }
+
+  console.log(`  re:member: ${rememberMatched} matched, ${rememberMappedOnly} from manual mapping`);
+
+  // Helper to find existing merchant by hostname (checks www variants)
+  function findMerchantKey(hostname: string): string | null {
+    if (merchants[hostname]) return hostname;
+    // Check www variant
+    if (hostname.startsWith("www.")) {
+      const withoutWww = hostname.slice(4);
+      if (merchants[withoutWww]) return withoutWww;
+    } else {
+      const withWww = "www." + hostname;
+      if (merchants[withWww]) return withWww;
+    }
+    return null;
+  }
+
+  // Process DNB merchants
+  for (const merchant of dnbMerchants) {
+    let hostname: string | null = null;
+
+    // Try to extract hostname from store URL
+    if (merchant.storeUrl) {
+      try {
+        const url = new URL(merchant.storeUrl);
+        hostname = url.hostname;
+      } catch {
+        // Invalid URL
+      }
+    }
+
+    // Try to infer from name
+    if (!hostname) {
+      hostname = inferHostname(merchant.name);
+    }
+
+    if (!hostname || hostname.length < 4) {
+      unmappedDnb.push(`${merchant.name}`);
+      continue;
+    }
+
+    hostname = normalizeHostname(hostname);
+
+    // Find existing merchant (checking www variants) or create new
+    const existingKey = findMerchantKey(hostname);
+    const merchantKey = existingKey || hostname;
+
+    if (!merchants[merchantKey]) {
+      merchants[merchantKey] = {
+        hostName: merchantKey,
+        name: merchant.name,
+        offers: [],
+      };
+    }
+
+    // Add DNB offer
+    merchants[merchantKey].offers.push({
+      serviceId: "dnb",
+      urlName: "", // DNB uses static URL
+      cashbackDescription: merchant.cashbackDescription,
+      ...(merchant.code && { code: merchant.code }),
+    });
+  }
+
+  // ===================
+  // Step 6: Write updated sitelist.json
+  // ===================
+  const updatedSitelist: SiteList = {
+    services: existingSitelist.services,
+    merchants,
+  };
+
+  await writeFile(
+    sitelistPath,
+    JSON.stringify(updatedSitelist, null, 2) + "\n"
+  );
+
+  // ===================
+  // Step 7: Summary
+  // ===================
+  console.log("\n=== Summary ===");
+  console.log(`Total merchants in output: ${Object.keys(merchants).length}`);
+
+  const trumfCount = Object.values(merchants).filter((m) =>
+    m.offers.some((o) => o.serviceId === "trumf")
+  ).length;
+  const rememberCount = Object.values(merchants).filter((m) =>
+    m.offers.some((o) => o.serviceId === "remember")
+  ).length;
+  const dnbCount = Object.values(merchants).filter((m) =>
+    m.offers.some((o) => o.serviceId === "dnb")
+  ).length;
+
+  console.log(`  - With Trumf offers: ${trumfCount}`);
+  console.log(`  - With re:member offers: ${rememberCount}`);
+  console.log(`  - With DNB offers: ${dnbCount}`);
+  console.log(`  - Unmapped Trumf: ${unmappedTrumf.length}`);
+  console.log(`  - Unmapped re:member: ${unmappedRemember.length}`);
+  console.log(`  - Unmapped DNB: ${unmappedDnb.length}`);
+
+  if (unmappedTrumf.length > 0) {
+    console.log("\nUnmapped Trumf merchants (need manual hostname mapping):");
+    for (const m of unmappedTrumf.slice(0, 10)) {
+      console.log(`  - ${m}`);
+    }
+    if (unmappedTrumf.length > 10) {
+      console.log(`  ... and ${unmappedTrumf.length - 10} more`);
+    }
+  }
+
+  if (unmappedRemember.length > 0) {
+    console.log("\nUnmapped re:member merchants (add to data/remember-domains.json):");
+    for (const m of unmappedRemember.slice(0, 10)) {
+      console.log(`  - ${m}`);
+    }
+    if (unmappedRemember.length > 10) {
+      console.log(`  ... and ${unmappedRemember.length - 10} more`);
+    }
+  }
+
+  if (unmappedDnb.length > 0) {
+    console.log("\nUnmapped DNB merchants:");
+    for (const m of unmappedDnb.slice(0, 10)) {
+      console.log(`  - ${m}`);
+    }
+    if (unmappedDnb.length > 10) {
+      console.log(`  ... and ${unmappedDnb.length - 10} more`);
+    }
+  }
+
+  console.log("\nDone! Updated data/sitelist.json");
+}
+
+main().catch(console.error);

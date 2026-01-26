@@ -240,5 +240,15 @@
   },
   "thisStore": {
     "message": "denna butik"
+  },
+
+  "dnbInstruction1": {
+    "message": "Registrera rabattkoden i varukorgen"
+  },
+  "dnbInstruction2": {
+    "message": "Kontrollera att rabatten dras av innan du betalar"
+  },
+  "dnbInstruction3": {
+    "message": "Betala med ditt DNB-kort (Visa eller Mastercard)"
   }
 }

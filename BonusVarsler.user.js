@@ -79,6 +79,14 @@
       color: "#f28d00",
       defaultEnabled: false,
     },
+    dnb: {
+      id: "dnb",
+      name: "DNB",
+      clickthroughUrl: "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter",
+      color: "#007272",
+      defaultEnabled: false,
+      type: "code",
+    },
   };
 
   // Domain aliases: maps redirect targets to feed domains
@@ -901,13 +909,7 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-    "fabel.no",
-    "www.clickandboat.com",
-    "www.elite.se",
-    "www.klokkegiganten.no",
-    "www.myprotein.no",
-    "www.skyshowtime.com",
-    "www.sportmann.no",
+
   ]);
 
   async function checkUrlBlocked(url) {
@@ -1446,10 +1448,10 @@
     const serviceColor = service.color;
     const cashbackDescription = offer.cashbackDescription || "";
     const urlName = offer.urlName || "";
-    const clickthroughUrl = service.clickthroughUrl.replace(
-      "{urlName}",
-      urlName,
-    );
+    // Build clickthrough URL from service template (handle static URLs without {urlName})
+    const clickthroughUrl = service.clickthroughUrl.includes("{urlName}")
+      ? service.clickthroughUrl.replace("{urlName}", urlName)
+      : service.clickthroughUrl;
 
     const shadowHost = document.createElement("div");
     shadowHost.style.cssText =
@@ -1985,11 +1987,23 @@
 
     const checklist = document.createElement("ol");
     checklist.className = "checklist";
-    [
-      "Deaktivere uBlock/AdGuard Home/Pi-Hole",
-      "Akseptere alle cookies",
-      "Tømme handlevognen",
-    ].forEach((text) => {
+    // Different instructions for different service types
+    let checklistItems;
+    if (service.id === "dnb") {
+      checklistItems = [
+        "Registrer rabattkoden i handlekurven",
+        "Sjekk at rabatten trekkes fra før du betaler",
+        "Betal med ditt DNB-kort (Visa eller Mastercard)",
+      ];
+    } else {
+      // Default tracking-based services (Trumf, re:member, etc.)
+      checklistItems = [
+        "Deaktivere uBlock/AdGuard Home/Pi-Hole",
+        "Akseptere alle cookies",
+        "Tømme handlevognen",
+      ];
+    }
+    checklistItems.forEach((text) => {
       const li = document.createElement("li");
       li.textContent = text;
       checklist.appendChild(li);
@@ -2000,7 +2014,12 @@
     actionBtn.href = clickthroughUrl;
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
-    actionBtn.textContent = `Få ${serviceName}-bonus`;
+    // For code-based services, show the rebate code in the button
+    if (service.type === "code" && offer?.code) {
+      actionBtn.textContent = offer.code;
+    } else {
+      actionBtn.textContent = `Få ${serviceName}-bonus`;
+    }
 
     const hideSiteLink = document.createElement("span");
     hideSiteLink.className = "hide-site";
@@ -2328,9 +2347,12 @@
       recheckIcon.classList.remove("spinning");
     });
 
-    checkAndUpdateButton().catch(() => {
-      // Silently ignore detection failures
-    });
+    // Skip adblock detection for code-based services (codes work regardless)
+    if (service.type !== "code") {
+      checkAndUpdateButton().catch(() => {
+        // Silently ignore detection failures
+      });
+    }
 
     // Make draggable to corners
     makeCornerDraggable(container, header);
