@@ -14,6 +14,7 @@
 // @grant        GM_setValue
 // @grant        GM.registerMenuCommand
 // @grant        GM_registerMenuCommand
+// @grant        GM_setClipboard
 // @connect      wlp.tcb-cdn.com
 // @connect      raw.githubusercontent.com
 // @homepageURL  https://github.com/kristofferR/BonusVarsler
@@ -2048,12 +2049,21 @@
 
     const actionBtn = document.createElement("a");
     actionBtn.className = "action-btn";
-    actionBtn.href = clickthroughUrl;
+    actionBtn.href = clickthroughUrl; // Always set href for keyboard focusability
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
-    // For code-based services, show the rebate code in the button
+    // For code-based services, show the rebate code in the button with copy icon
+    // First click copies code, second click opens link
     if (service.type === "code" && offer?.code) {
-      actionBtn.textContent = offer.code;
+      actionBtn.classList.add("has-code");
+      actionBtn.dataset.copied = "false";
+      const codeText = document.createTextNode(offer.code);
+      actionBtn.appendChild(codeText);
+      const copyIcon = document.createElement("span");
+      copyIcon.className = "copy-icon";
+      copyIcon.innerHTML = "&#x1F4CB;"; // 📋 clipboard icon
+      copyIcon.title = "Kopier kode";
+      actionBtn.appendChild(copyIcon);
     } else {
       actionBtn.textContent = `Få ${serviceName}-bonus`;
     }
@@ -2313,14 +2323,65 @@
       document.removeEventListener("keydown", handleKeydown);
     });
 
-    actionBtn.addEventListener("click", () => {
-      localStorage.setItem(messageShownKey, Date.now().toString());
+    actionBtn.addEventListener("click", (e) => {
+      try {
+        localStorage.setItem(messageShownKey, Date.now().toString());
+      } catch {
+        // Storage blocked on this site
+      }
+      // For code-based services: first click copies code, second click opens link
+      if (service.type === "code" && offer?.code) {
+        const copyIcon = actionBtn.querySelector(".copy-icon");
+        if (actionBtn.dataset.copied !== "true") {
+          e.preventDefault();
+          // Copy to clipboard using GM_setClipboard (primary) or navigator.clipboard (fallback)
+          const onSuccess = () => {
+            if (copyIcon) {
+              copyIcon.innerHTML = "&#x2713;"; // ✓ checkmark
+            }
+            actionBtn.dataset.copied = "true";
+          };
+          const onError = () => {
+            // Clipboard failed - mark as copied anyway and allow navigation
+            if (copyIcon) {
+              copyIcon.innerHTML = "&#x26A0;"; // ⚠ warning
+              copyIcon.title = "Kopiering feilet";
+            }
+            actionBtn.dataset.copied = "true";
+          };
+          if (typeof GM_setClipboard === "function") {
+            try {
+              GM_setClipboard(offer.code, "text/plain");
+              onSuccess();
+            } catch {
+              onError();
+            }
+          } else if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(offer.code).then(onSuccess).catch(onError);
+          } else {
+            onError();
+          }
+          return;
+        }
+        // Second click (or after copy): navigate normally
+        return;
+      }
       content.innerHTML = "";
       const confirmation = document.createElement("div");
       confirmation.className = "confirmation";
       confirmation.textContent =
         "Hvis alt ble gjort riktig, skal kjøpet ha blitt registrert.";
       content.appendChild(confirmation);
+    });
+
+    // Keyboard support for code-based services (Enter/Space)
+    actionBtn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (service.type === "code" && offer?.code && actionBtn.dataset.copied !== "true") {
+          e.preventDefault();
+          actionBtn.click();
+        }
+      }
     });
 
     // Minimize/expand toggle
