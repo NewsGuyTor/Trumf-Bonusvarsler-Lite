@@ -4,13 +4,8 @@
 
 import type { FetchAdapter } from "./types.js";
 
-// Cross-browser compatibility
-declare const globalThis: {
-  browser?: typeof chrome;
-  chrome?: typeof chrome;
-};
-
-const browser = globalThis.browser || globalThis.chrome!;
+// Use browser API (Firefox) or chrome API (Chrome/Edge)
+const browserAPI = (typeof browser !== "undefined" ? browser : chrome);
 
 export class ExtensionFetch implements FetchAdapter {
   async fetchJSON<T>(url: string): Promise<T | null> {
@@ -28,7 +23,7 @@ export class ExtensionFetch implements FetchAdapter {
   async fetchFeed<T>(_primaryUrl: string, _fallbackUrl?: string): Promise<T | null> {
     try {
       // Request feed from background script (handles CORS and fallback)
-      const response = (await browser.runtime.sendMessage({ type: "fetchFeed" })) as {
+      const response = (await browserAPI.runtime.sendMessage({ type: "fetchFeed" })) as {
         feed?: T;
       } | null;
       return response?.feed || null;

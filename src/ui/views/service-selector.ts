@@ -6,6 +6,7 @@
 import type { I18nAdapter } from "../../i18n/types.js";
 import type { Settings } from "../../core/settings.js";
 import type { ServiceRegistry } from "../../config/services.js";
+import { SERVICE_ORDER } from "../../config/services.js";
 import { getServiceSelectorStyles } from "../styles/index.js";
 import { createShadowHost, injectStyles } from "../components/shadow-host.js";
 import { LOGO_ICON_URL } from "../components/icons.js";
@@ -23,9 +24,8 @@ export interface ServiceSelectorOptions {
 export function createServiceSelector(options: ServiceSelectorOptions): HTMLElement {
   const { settings, services, i18n, onSave } = options;
 
-  // Create shadow host
+  // Create shadow host (append to body after content is ready)
   const shadowHost = createShadowHost();
-  document.body.appendChild(shadowHost);
   const shadowRoot = shadowHost.attachShadow({ mode: "open" });
 
   // Inject styles
@@ -72,17 +72,16 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
 
   content.appendChild(title);
 
-  // Service order: active services first, then coming soon
-  const serviceOrder = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
+  // Use canonical service order from config
   const toggleStates: Record<string, boolean> = {};
 
   // Initialize with Trumf enabled by default
-  serviceOrder.forEach((serviceId) => {
+  SERVICE_ORDER.forEach((serviceId) => {
     toggleStates[serviceId] = serviceId === "trumf";
   });
 
   // Create service rows
-  serviceOrder.forEach((serviceId) => {
+  SERVICE_ORDER.forEach((serviceId) => {
     const service = services[serviceId];
     if (!service) return;
 
@@ -113,14 +112,26 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
 
     const toggle = document.createElement("div");
     toggle.className = "toggle-switch";
+    toggle.setAttribute("role", "switch");
+    toggle.setAttribute("tabindex", "0");
+    toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
     if (toggleStates[serviceId]) {
       toggle.classList.add("active");
     }
 
-    // Toggle click handler
-    toggle.addEventListener("click", () => {
+    // Toggle handler (click and keyboard)
+    const handleToggle = () => {
       toggleStates[serviceId] = !toggleStates[serviceId];
       toggle.classList.toggle("active", toggleStates[serviceId]);
+      toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
+    };
+
+    toggle.addEventListener("click", handleToggle);
+    toggle.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleToggle();
+      }
     });
 
     row.appendChild(info);
@@ -135,7 +146,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
 
   saveBtn.addEventListener("click", async () => {
     // Get enabled services
-    const enabledServices = serviceOrder.filter((serviceId) => toggleStates[serviceId]);
+    const enabledServices = SERVICE_ORDER.filter((serviceId) => toggleStates[serviceId]);
 
     // Ensure at least one active (non-coming-soon) service is enabled
     const hasActiveService = enabledServices.some((id) => !services[id]?.comingSoon);
@@ -143,15 +154,25 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
       enabledServices.push("trumf");
     }
 
-    // Save to storage
-    await settings.setEnabledServices(enabledServices);
-    await settings.setSetupComplete(true);
+    try {
+      // Save to storage
+      await settings.setEnabledServices(enabledServices);
+      await settings.setSetupComplete(true);
 
-    // Call onSave callback or reload page
-    if (onSave) {
-      onSave(enabledServices);
-    } else {
-      window.location.reload();
+      // Call onSave callback or reload page
+      if (onSave) {
+        onSave(enabledServices);
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("[BonusVarsler] Failed to save service selection:", error);
+      // Still try to proceed with callback/reload
+      if (onSave) {
+        onSave(enabledServices);
+      } else {
+        window.location.reload();
+      }
     }
   });
 
@@ -161,6 +182,9 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
   container.appendChild(header);
   container.appendChild(body);
   shadowRoot.appendChild(container);
+
+  // Append to body after content is ready
+  document.body.appendChild(shadowHost);
 
   return shadowHost;
 }

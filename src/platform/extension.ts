@@ -96,11 +96,10 @@ import { STORAGE_KEYS } from "../config/constants.js";
     );
 
     // Check if reminder already shown this session
-    const reminderShownKey = `BonusVarsler_ReminderShown`;
-    const reminderShown = sessionStorage.get(reminderShownKey);
+    const reminderShown = sessionStorage.get(STORAGE_KEYS.reminderShown);
 
     if (reminderResult.isOnPage && reminderResult.service && !reminderShown) {
-      sessionStorage.set(reminderShownKey, "true");
+      sessionStorage.set(STORAGE_KEYS.reminderShown, "true");
       createReminderNotification({
         service: reminderResult.service,
         settings: result.settings,

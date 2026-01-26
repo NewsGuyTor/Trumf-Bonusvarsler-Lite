@@ -2,7 +2,8 @@
  * Greasemonkey/Tampermonkey storage adapter using GM.getValue/setValue
  */
 
-import type { StorageAdapter, SessionStorageAdapter } from "./types.js";
+import type { StorageAdapter } from "./types.js";
+import { LocalSessionStorage, getLocalSessionStorage } from "./local-session-storage.js";
 
 // GM API declarations
 declare function GM_getValue<T>(key: string, defaultValue: T): T;
@@ -44,10 +45,12 @@ export class GMStorage implements StorageAdapter {
 
   async remove(keys: string[]): Promise<void> {
     try {
-      for (const key of keys) {
-        if (typeof GM !== "undefined" && GM.deleteValue) {
-          await GM.deleteValue(key);
-        } else if (typeof GM_deleteValue === "function") {
+      if (typeof GM !== "undefined" && GM.deleteValue) {
+        // Parallel delete using async API
+        await Promise.all(keys.map((key) => GM.deleteValue(key)));
+      } else if (typeof GM_deleteValue === "function") {
+        // Sync API - sequential delete
+        for (const key of keys) {
           GM_deleteValue(key);
         }
       }
@@ -57,44 +60,21 @@ export class GMStorage implements StorageAdapter {
   }
 }
 
-/**
- * Session storage using localStorage (same for userscript)
- * Used for per-site session data
- */
-export class LocalSessionStorage implements SessionStorageAdapter {
-  get(key: string): string | null {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
+// Re-export LocalSessionStorage for backwards compatibility
+export { LocalSessionStorage };
 
-  set(key: string, value: string): void {
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      // Storage blocked on this site, fail silently
-    }
-  }
-}
-
-// Singleton instances
-let gmStorage: GMStorage | null = null;
-let sessionStorage: LocalSessionStorage | null = null;
+// Singleton instance
+let gmStorageInstance: GMStorage | null = null;
 
 export function getGMStorage(): GMStorage {
-  if (!gmStorage) {
-    gmStorage = new GMStorage();
+  if (!gmStorageInstance) {
+    gmStorageInstance = new GMStorage();
   }
-  return gmStorage;
+  return gmStorageInstance;
 }
 
 export function getSessionStorage(): LocalSessionStorage {
-  if (!sessionStorage) {
-    sessionStorage = new LocalSessionStorage();
-  }
-  return sessionStorage;
+  return getLocalSessionStorage();
 }
 
 // Alias for GM-specific naming

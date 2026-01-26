@@ -2,20 +2,16 @@
  * Extension storage adapter using browser.storage.local
  */
 
-import type { StorageAdapter, SessionStorageAdapter } from "./types.js";
+import type { StorageAdapter } from "./types.js";
+import { LocalSessionStorage, getLocalSessionStorage } from "./local-session-storage.js";
 
-// Cross-browser compatibility
-declare const globalThis: {
-  browser?: typeof chrome;
-  chrome?: typeof chrome;
-};
-
-const browser = globalThis.browser || globalThis.chrome!;
+// Use browser API (Firefox) or chrome API (Chrome/Edge)
+const browserAPI = (typeof browser !== "undefined" ? browser : chrome);
 
 export class ExtensionStorage implements StorageAdapter {
   async get<T>(key: string, defaultValue: T): Promise<T> {
     try {
-      const result = await browser.storage.local.get(key);
+      const result = await browserAPI.storage.local.get(key);
       return result[key] !== undefined ? (result[key] as T) : defaultValue;
     } catch {
       return defaultValue;
@@ -24,7 +20,7 @@ export class ExtensionStorage implements StorageAdapter {
 
   async set(key: string, value: unknown): Promise<void> {
     try {
-      await browser.storage.local.set({ [key]: value });
+      await browserAPI.storage.local.set({ [key]: value });
     } catch {
       // Storage unavailable or full, fail silently
     }
@@ -32,51 +28,28 @@ export class ExtensionStorage implements StorageAdapter {
 
   async remove(keys: string[]): Promise<void> {
     try {
-      await browser.storage.local.remove(keys);
+      await browserAPI.storage.local.remove(keys);
     } catch {
       // Fail silently
     }
   }
 }
 
-/**
- * Session storage using localStorage
- * Used for per-site session data
- */
-export class LocalSessionStorage implements SessionStorageAdapter {
-  get(key: string): string | null {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
+// Re-export LocalSessionStorage for backwards compatibility
+export { LocalSessionStorage };
 
-  set(key: string, value: string): void {
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      // Storage blocked on this site, fail silently
-    }
-  }
-}
-
-// Singleton instances
-let extensionStorage: ExtensionStorage | null = null;
-let sessionStorage: LocalSessionStorage | null = null;
+// Singleton instance
+let extensionStorageInstance: ExtensionStorage | null = null;
 
 export function getExtensionStorage(): ExtensionStorage {
-  if (!extensionStorage) {
-    extensionStorage = new ExtensionStorage();
+  if (!extensionStorageInstance) {
+    extensionStorageInstance = new ExtensionStorage();
   }
-  return extensionStorage;
+  return extensionStorageInstance;
 }
 
 export function getSessionStorage(): LocalSessionStorage {
-  if (!sessionStorage) {
-    sessionStorage = new LocalSessionStorage();
-  }
-  return sessionStorage;
+  return getLocalSessionStorage();
 }
 
 // Alias for extension-specific naming

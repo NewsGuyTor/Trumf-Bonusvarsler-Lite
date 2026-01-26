@@ -14,7 +14,7 @@ import {
   injectStyles,
 } from "../components/shadow-host.js";
 import { getLogoIconForService } from "../components/icons.js";
-import { makeCornerDraggable } from "../components/draggable.js";
+import { makeCornerDraggable, type CleanupFunction } from "../components/draggable.js";
 
 export interface ReminderOptions {
   service: Service;
@@ -123,7 +123,10 @@ export function createReminderNotification(options: ReminderOptions): HTMLElemen
   shadowRoot.appendChild(container);
 
   // Event handlers
+  let draggableCleanup: CleanupFunction | null = null;
+
   function closeNotification() {
+    draggableCleanup?.();
     shadowHost.remove();
     document.removeEventListener("keydown", handleKeydown);
     onClose?.();
@@ -153,7 +156,7 @@ export function createReminderNotification(options: ReminderOptions): HTMLElemen
   });
 
   // Make draggable
-  makeCornerDraggable(container, header, async (position: Position) => {
+  draggableCleanup = makeCornerDraggable(container, async (position: Position) => {
     await settings.setPositionForSite(position);
   });
 

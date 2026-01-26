@@ -19,7 +19,7 @@ import {
   injectStyles,
 } from "../components/shadow-host.js";
 import { getLogoIconForService, SETTINGS_ICON_URI } from "../components/icons.js";
-import { makeCornerDraggable } from "../components/draggable.js";
+import { makeCornerDraggable, type CleanupFunction } from "../components/draggable.js";
 import { detectAdblock } from "../../core/adblock-detection.js";
 
 export interface NotificationOptions {
@@ -136,7 +136,10 @@ export function createNotification(options: NotificationOptions): HTMLElement {
   }
 
   // Event handlers
+  let draggableCleanup: CleanupFunction | null = null;
+
   function closeNotification() {
+    draggableCleanup?.();
     shadowHost.remove();
     document.removeEventListener("keydown", handleKeydown);
     onClose?.();
@@ -230,7 +233,7 @@ export function createNotification(options: NotificationOptions): HTMLElement {
   }
 
   // Make draggable
-  makeCornerDraggable(container, header, async (position: Position) => {
+  draggableCleanup = makeCornerDraggable(container, async (position: Position) => {
     await settings.setPositionForSite(position);
   });
 
@@ -457,7 +460,7 @@ function createActionButton(
     }
 
     // Show confirmation for tracking-based services
-    content.innerHTML = "";
+    content.replaceChildren();
     const confirmation = document.createElement("div");
     confirmation.className = "confirmation";
     confirmation.textContent = i18n.getMessage("purchaseRegistered");
@@ -603,7 +606,7 @@ function createThemeRow(
 
     const newTheme = btn.dataset.theme as "light" | "dark" | "system";
     await settings.setTheme(newTheme);
-    shadowHost.className = `tbvl-${newTheme}`;
+    applyThemeClass(shadowHost, newTheme);
 
     themeButtons.querySelectorAll(".theme-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");

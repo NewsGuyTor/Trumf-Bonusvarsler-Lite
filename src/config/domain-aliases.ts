@@ -39,7 +39,7 @@ export function getAliasedHost(hostname: string): string {
 
 /**
  * Try to find a match in the aliases for a given host
- * Checks both with and without www prefix
+ * Checks with and without www prefix
  */
 export function resolveHostAlias(hostname: string): string | null {
   // Direct alias check
@@ -51,6 +51,14 @@ export function resolveHostAlias(hostname: string): string | null {
   const noWww = hostname.replace(/^www\./, "");
   if (noWww !== hostname && DOMAIN_ALIASES[noWww]) {
     return DOMAIN_ALIASES[noWww];
+  }
+
+  // Check with www prefix (if not already starting with www)
+  if (!hostname.startsWith("www.")) {
+    const withWww = "www." + hostname;
+    if (DOMAIN_ALIASES[withWww]) {
+      return DOMAIN_ALIASES[withWww];
+    }
   }
 
   return null;

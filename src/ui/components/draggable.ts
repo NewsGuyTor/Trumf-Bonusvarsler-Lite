@@ -5,17 +5,20 @@
 import type { Position } from "../../config/constants.js";
 
 export type PositionSaveCallback = (position: Position) => Promise<void>;
+export type CleanupFunction = () => void;
 
 const DRAG_THRESHOLD = 5; // Minimum pixels to move before considered a drag
+// Keep in sync with CSS transition duration
+const SNAPPING_DURATION_MS = 350;
 
 /**
  * Make a container draggable to corners
+ * Returns a cleanup function to remove event listeners
  */
 export function makeCornerDraggable(
   container: HTMLElement,
-  _handle: HTMLElement,
   onPositionChange: PositionSaveCallback
-): void {
+): CleanupFunction {
   let isDragging = false;
   let hasMoved = false;
   let startX: number;
@@ -148,7 +151,7 @@ export function makeCornerDraggable(
       container.style.right = "";
       container.style.bottom = "";
       container.classList.add(position);
-    }, 350);
+    }, SNAPPING_DURATION_MS);
 
     // Save position
     onPositionChange(position);
@@ -172,4 +175,15 @@ export function makeCornerDraggable(
   container.addEventListener("touchstart", onDragStart, { passive: true });
   document.addEventListener("touchmove", onDragMove, { passive: false });
   document.addEventListener("touchend", onDragEnd);
+
+  // Return cleanup function
+  return function cleanup(): void {
+    container.removeEventListener("mousedown", onDragStart);
+    document.removeEventListener("mousemove", onDragMove);
+    document.removeEventListener("mouseup", onDragEnd);
+    container.removeEventListener("click", onClickCapture, true);
+    container.removeEventListener("touchstart", onDragStart);
+    document.removeEventListener("touchmove", onDragMove);
+    document.removeEventListener("touchend", onDragEnd);
+  };
 }

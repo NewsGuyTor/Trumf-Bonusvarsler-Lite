@@ -43,12 +43,12 @@ export function parseCashbackRate(description: string | undefined): ParsedCashba
   if (!description) return { value: 0, type: "percent", isVariable: false };
 
   const normalized = description.toLowerCase().trim();
-  // Variable rate detection: "opptil", "opp til", "up to", or hyphen range
+  // Variable rate detection: "opptil", "opp til", "up to", or numeric range (e.g., "3-5%")
   const isVariable =
     normalized.startsWith("opptil") ||
     normalized.startsWith("opp til") ||
     normalized.startsWith("up to") ||
-    normalized.includes("-");
+    /\d+\s*[-\u2013]\s*\d+/.test(normalized); // Match numeric ranges like "3-5" or "3 - 5"
   const cleanDesc = description.replace(/^(opptil|opp til|up to)\s*/i, "").trim();
 
   // Check for percentage (e.g., "5,4%")

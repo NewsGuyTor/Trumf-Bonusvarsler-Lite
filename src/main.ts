@@ -109,6 +109,9 @@ export async function initialize(
   return { settings, feedManager, match };
 }
 
+// Default cashback path patterns if service doesn't specify its own
+const DEFAULT_CASHBACK_PATHS = ["/cashback/", "/shop/", "/reward/"];
+
 /**
  * Check if we're on a cashback portal page for any enabled service
  */
@@ -126,11 +129,9 @@ export function isOnCashbackPage(
       currentHost === service.reminderDomain ||
       currentHost === "www." + service.reminderDomain;
 
-    // Check for cashback path patterns
-    const isCashbackPath =
-      pathname.startsWith("/cashback/") ||
-      pathname.startsWith("/shop/") ||
-      pathname.startsWith("/reward/");
+    // Check for cashback path patterns (service-specific or defaults)
+    const patterns = service.cashbackPathPatterns ?? DEFAULT_CASHBACK_PATHS;
+    const isCashbackPath = patterns.some((pattern) => pathname.startsWith(pattern));
 
     if (isServiceDomain && isCashbackPath) {
       return { isOnPage: true, service };

@@ -9,6 +9,7 @@ export interface Service {
   name: string;
   clickthroughUrl?: string;
   reminderDomain?: string;
+  cashbackPathPatterns?: string[]; // Path prefixes that indicate cashback pages (e.g., ["/cashback/", "/shop/"])
   color: string;
   defaultEnabled?: boolean;
   type?: "code"; // Only set for code-based services like DNB
@@ -81,6 +82,18 @@ export function getDefaultEnabledServices(services: ServiceRegistry = SERVICES_F
 }
 
 /**
+ * Validate that a service has all required fields
+ */
+function isValidService(service: Partial<Service>): service is Service {
+  return (
+    typeof service.name === "string" &&
+    service.name.length > 0 &&
+    typeof service.color === "string" &&
+    service.color.length > 0
+  );
+}
+
+/**
  * Merge feed services with fallback (feed overrides, but missing fields preserved)
  */
 export function mergeServices(
@@ -94,7 +107,12 @@ export function mergeServices(
   const merged: ServiceRegistry = { ...fallback };
   for (const [id, service] of Object.entries(feedServices)) {
     const existing = merged[id] || {};
-    merged[id] = { ...existing, ...service, id } as Service;
+    const candidate = { ...existing, ...service, id };
+    if (isValidService(candidate)) {
+      merged[id] = candidate;
+    } else {
+      console.warn(`BonusVarsler: Skipping invalid service "${id}" - missing required fields`);
+    }
   }
   return merged;
 }

@@ -94,6 +94,9 @@
   function getDefaultEnabledServices(services = SERVICES_FALLBACK) {
     return Object.values(services).filter((s) => s.defaultEnabled).map((s) => s.id);
   }
+  function isValidService(service) {
+    return typeof service.name === "string" && service.name.length > 0 && typeof service.color === "string" && service.color.length > 0;
+  }
   function mergeServices(feedServices, fallback = SERVICES_FALLBACK) {
     if (!feedServices) {
       return { ...fallback };
@@ -101,11 +104,16 @@
     const merged = { ...fallback };
     for (const [id, service] of Object.entries(feedServices)) {
       const existing = merged[id] || {};
-      merged[id] = { ...existing, ...service, id };
+      const candidate = { ...existing, ...service, id };
+      if (isValidService(candidate)) {
+        merged[id] = candidate;
+      } else {
+        console.warn(`BonusVarsler: Skipping invalid service "${id}" - missing required fields`);
+      }
     }
     return merged;
   }
-  var SERVICES_FALLBACK;
+  var SERVICES_FALLBACK, SERVICE_ORDER;
   var init_services = __esm({
     "src/config/services.ts"() {
       "use strict";
@@ -153,6 +161,7 @@
           comingSoon: true
         }
       };
+      SERVICE_ORDER = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
     }
   });
 
@@ -174,12 +183,13 @@
       setupShowCount: 0
     };
   }
-  var Settings;
+  var MAX_SITE_POSITIONS, Settings;
   var init_settings = __esm({
     "src/core/settings.ts"() {
       "use strict";
       init_constants();
       init_services();
+      MAX_SITE_POSITIONS = 100;
       Settings = class {
         cache;
         storage;
@@ -302,6 +312,13 @@
         }
         async setPositionForSite(position) {
           this.cache.sitePositions[this.currentHost] = position;
+          const hosts = Object.keys(this.cache.sitePositions);
+          if (hosts.length > MAX_SITE_POSITIONS) {
+            const toRemove = hosts.slice(0, hosts.length - MAX_SITE_POSITIONS);
+            for (const host of toRemove) {
+              delete this.cache.sitePositions[host];
+            }
+          }
           await this.storage.set(STORAGE_KEYS.sitePositions, this.cache.sitePositions);
         }
         // ==================
@@ -351,30 +368,7 @@
     }
   });
 
-  // src/storage/extension-storage.ts
-  var browser = globalThis.browser || globalThis.chrome;
-  var ExtensionStorage = class {
-    async get(key, defaultValue) {
-      try {
-        const result = await browser.storage.local.get(key);
-        return result[key] !== void 0 ? result[key] : defaultValue;
-      } catch {
-        return defaultValue;
-      }
-    }
-    async set(key, value) {
-      try {
-        await browser.storage.local.set({ [key]: value });
-      } catch {
-      }
-    }
-    async remove(keys) {
-      try {
-        await browser.storage.local.remove(keys);
-      } catch {
-      }
-    }
-  };
+  // src/storage/local-session-storage.ts
   var LocalSessionStorage = class {
     get(key) {
       try {
@@ -390,24 +384,52 @@
       }
     }
   };
-  var extensionStorage = null;
-  var sessionStorage = null;
-  function getExtensionStorage() {
-    if (!extensionStorage) {
-      extensionStorage = new ExtensionStorage();
+  var localSessionStorageInstance = null;
+  function getLocalSessionStorage() {
+    if (!localSessionStorageInstance) {
+      localSessionStorageInstance = new LocalSessionStorage();
     }
-    return extensionStorage;
+    return localSessionStorageInstance;
+  }
+
+  // src/storage/extension-storage.ts
+  var browserAPI = typeof browser !== "undefined" ? browser : chrome;
+  var ExtensionStorage = class {
+    async get(key, defaultValue) {
+      try {
+        const result = await browserAPI.storage.local.get(key);
+        return result[key] !== void 0 ? result[key] : defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    }
+    async set(key, value) {
+      try {
+        await browserAPI.storage.local.set({ [key]: value });
+      } catch {
+      }
+    }
+    async remove(keys) {
+      try {
+        await browserAPI.storage.local.remove(keys);
+      } catch {
+      }
+    }
+  };
+  var extensionStorageInstance = null;
+  function getExtensionStorage() {
+    if (!extensionStorageInstance) {
+      extensionStorageInstance = new ExtensionStorage();
+    }
+    return extensionStorageInstance;
   }
   function getSessionStorage() {
-    if (!sessionStorage) {
-      sessionStorage = new LocalSessionStorage();
-    }
-    return sessionStorage;
+    return getLocalSessionStorage();
   }
   var getExtensionSessionStorage = getSessionStorage;
 
   // src/network/extension-fetch.ts
-  var browser2 = globalThis.browser || globalThis.chrome;
+  var browserAPI2 = typeof browser !== "undefined" ? browser : chrome;
   var ExtensionFetch = class {
     async fetchJSON(url) {
       try {
@@ -422,7 +444,7 @@
     }
     async fetchFeed(_primaryUrl, _fallbackUrl) {
       try {
-        const response = await browser2.runtime.sendMessage({ type: "fetchFeed" });
+        const response = await browserAPI2.runtime.sendMessage({ type: "fetchFeed" });
         return response?.feed || null;
       } catch {
         return null;
@@ -446,13 +468,17 @@
   }
 
   // src/i18n/extension-i18n.ts
-  var browser3 = globalThis.browser || globalThis.chrome;
+  var browserAPI3 = typeof browser !== "undefined" ? browser : chrome;
   var ExtensionI18n = class {
     messages = {};
     async loadMessages(lang) {
       try {
-        const url = browser3.runtime.getURL(`_locales/${lang}/messages.json`);
+        const url = browserAPI3.runtime.getURL(`_locales/${lang}/messages.json`);
         const response = await fetch(url);
+        if (!response.ok) {
+          this.messages = {};
+          return;
+        }
         this.messages = await response.json();
       } catch {
         this.messages = {};
@@ -636,7 +662,7 @@
   function parseCashbackRate(description) {
     if (!description) return { value: 0, type: "percent", isVariable: false };
     const normalized = description.toLowerCase().trim();
-    const isVariable = normalized.startsWith("opptil") || normalized.startsWith("opp til") || normalized.startsWith("up to") || normalized.includes("-");
+    const isVariable = normalized.startsWith("opptil") || normalized.startsWith("opp til") || normalized.startsWith("up to") || /\d+\s*[-\u2013]\s*\d+/.test(normalized);
     const cleanDesc = description.replace(/^(opptil|opp til|up to)\s*/i, "").trim();
     const percentMatch = cleanDesc.match(/(\d+[,.]?\d*)\s*%/);
     if (percentMatch?.[1]) {
@@ -762,19 +788,19 @@
   }
 
   // src/main.ts
-  function shouldBailOutEarly(sessionStorage2, currentHost) {
+  function shouldBailOutEarly(sessionStorage, currentHost) {
     if (window.top !== window.self) return true;
     const messageShownKey = `${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`;
-    const messageShownTime = sessionStorage2.get(messageShownKey);
+    const messageShownTime = sessionStorage.get(messageShownKey);
     if (messageShownTime) {
       const elapsed = Date.now() - parseInt(messageShownTime, 10);
       if (elapsed < CONFIG.messageDuration) return true;
     }
     return false;
   }
-  function markMessageShown(sessionStorage2, currentHost) {
+  function markMessageShown(sessionStorage, currentHost) {
     const messageShownKey = `${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`;
-    sessionStorage2.set(messageShownKey, Date.now().toString());
+    sessionStorage.set(messageShownKey, Date.now().toString());
   }
   async function initialize(adapters, currentHost) {
     const { storage, fetcher, i18n } = adapters;
@@ -802,12 +828,14 @@
     }
     return { settings, feedManager, match };
   }
+  var DEFAULT_CASHBACK_PATHS = ["/cashback/", "/shop/", "/reward/"];
   function isOnCashbackPage(currentHost, pathname, enabledServices, services) {
     for (const serviceId of enabledServices) {
       const service = services[serviceId];
       if (!service?.reminderDomain) continue;
       const isServiceDomain = currentHost === service.reminderDomain || currentHost === "www." + service.reminderDomain;
-      const isCashbackPath = pathname.startsWith("/cashback/") || pathname.startsWith("/shop/") || pathname.startsWith("/reward/");
+      const patterns = service.cashbackPathPatterns ?? DEFAULT_CASHBACK_PATHS;
+      const isCashbackPath = patterns.some((pattern) => pathname.startsWith(pattern));
       if (isServiceDomain && isCashbackPath) {
         return { isOnPage: true, service };
       }
@@ -819,16 +847,16 @@
   init_constants();
 
   // src/ui/styles/base.css
-  var base_default = ":host{all:initial;font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.6;--bg:#fff;--bg-transparent:rgba(255,255,255,0.97);--bg-header:#f3f3f3;--border:#ececec;--text:#333;--text-muted:#666;--accent:#4D4DFF;--accent-hover:#3232ff;--shadow:rgba(0,0,0,0.3);--info-bg:#ccc;--btn-bg:#e8e8e8;--btn-bg-active:#4D4DFF;color:var(--text);}:host(.tbvl-dark){--bg:#2a2a2a;--bg-transparent:rgba(42,42,42,0.97);--bg-header:#363636;--border:#4a4a4a;--text:#e0e0e0;--text-muted:#a0a0a0;--accent:#8c8cff;--accent-hover:#7a7aff;--shadow:rgba(0,0,0,0.4);--info-bg:#5a5a5a;--btn-bg:#4a4a4a;--btn-bg-active:#8c8cff;}@media (prefers-color-scheme:dark){:host(.tbvl-system){--bg:#2a2a2a;--bg-transparent:rgba(42,42,42,0.97);--bg-header:#363636;--border:#4a4a4a;--text:#e0e0e0;--text-muted:#a0a0a0;--accent:#6b6bff;--accent-hover:#5252ff;--shadow:rgba(0,0,0,0.4);--info-bg:#5a5a5a;--btn-bg:#4a4a4a;--btn-bg-active:#8c8cff;}}:host *,:host *::before,:host *::after{all:revert;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif !important;font-size:inherit;line-height:inherit;letter-spacing:normal;word-spacing:normal;text-transform:none;text-indent:0;text-shadow:none;text-decoration:none;text-align:left;white-space:normal;font-style:normal;font-weight:normal;font-variant:normal;color:inherit;background:transparent;border:none;margin:0;padding:0;outline:none;vertical-align:baseline;float:none;clear:none;direction:ltr;visibility:visible;opacity:1;filter:none;transform:none;pointer-events:auto;}.container{position:fixed;z-index:2147483647;width:360px;max-width:calc(100vw - 40px);background:var(--bg);border-radius:8px;box-shadow:0 8px 24px var(--shadow);overflow:hidden;transition:top 0.3s ease,bottom 0.3s ease,left 0.3s ease,right 0.3s ease;}.container.animate-in{animation:slideIn 0.4s ease-out;}.container.dragging{transition:none;opacity:0.9;}.container.snapping{transition:left 0.35s cubic-bezier(0.25,0.46,0.45,0.94),top 0.35s cubic-bezier(0.25,0.46,0.45,0.94);}.container.bottom-right{bottom:20px;right:20px;}.container.bottom-left{bottom:20px;left:20px;}.container.top-right{top:20px;right:20px;}.container.top-left{top:20px;left:20px;}@keyframes slideIn{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}.header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-header);border-bottom:1px solid var(--border);user-select:none;}.logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}.logo-icon{display:inline-block;width:32px;height:32px;flex-shrink:0;object-fit:contain;}.header-right{display:flex;align-items:center;}.close-btn{width:22px;height:22px;cursor:pointer;transition:transform 0.2s;position:relative;border:none;background:transparent;padding:0;}.close-btn::before,.close-btn::after{content:'';position:absolute;top:50%;left:50%;width:16px;height:2px;background:var(--text-muted);border-radius:1px;}.close-btn::before{transform:translate(-50%,-50%) rotate(45deg);}.close-btn::after{transform:translate(-50%,-50%) rotate(-45deg);}.close-btn:hover{transform:scale(1.15);}.close-btn:hover::before,.close-btn:hover::after{background:var(--text);}.body{padding:16px;max-height:500px;opacity:1;overflow-y:auto;transition:max-height 0.3s ease,opacity 0.2s ease,padding 0.3s ease;}";
+  var base_default = ":host{all:initial;font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.6;--bg:#fff;--bg-transparent:rgba(255,255,255,0.97);--bg-header:#f3f3f3;--border:#ececec;--text:#333;--text-muted:#666;--accent:#4D4DFF;--accent-hover:#3232ff;--shadow:rgba(0,0,0,0.3);--info-bg:#ccc;--btn-bg:#e8e8e8;--btn-bg-active:#4D4DFF;color:var(--text);}:host(.tbvl-dark){--bg:#2a2a2a;--bg-transparent:rgba(42,42,42,0.97);--bg-header:#363636;--border:#4a4a4a;--text:#e0e0e0;--text-muted:#a0a0a0;--accent:#8c8cff;--accent-hover:#7a7aff;--shadow:rgba(0,0,0,0.4);--info-bg:#5a5a5a;--btn-bg:#4a4a4a;--btn-bg-active:#8c8cff;}@media (prefers-color-scheme:dark){:host(.tbvl-system){--bg:#2a2a2a;--bg-transparent:rgba(42,42,42,0.97);--bg-header:#363636;--border:#4a4a4a;--text:#e0e0e0;--text-muted:#a0a0a0;--accent:#8c8cff;--accent-hover:#7a7aff;--shadow:rgba(0,0,0,0.4);--info-bg:#5a5a5a;--btn-bg:#4a4a4a;--btn-bg-active:#8c8cff;}}:host *,:host *::before,:host *::after{all:revert;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif !important;font-size:inherit;line-height:inherit;letter-spacing:normal;word-spacing:normal;text-transform:none;text-indent:0;text-shadow:none;text-decoration:none;text-align:left;white-space:normal;font-style:normal;font-weight:normal;font-variant:normal;color:inherit;background:transparent;border:none;margin:0;padding:0;outline:none;vertical-align:baseline;float:none;clear:none;direction:ltr;visibility:visible;opacity:1;filter:none;transform:none;pointer-events:auto;}.container{position:fixed;z-index:2147483647;width:360px;max-width:calc(100vw - 40px);background:var(--bg);border-radius:8px;box-shadow:0 8px 24px var(--shadow);overflow:hidden;transition:top 0.3s ease,bottom 0.3s ease,left 0.3s ease,right 0.3s ease;}.container.animate-in{animation:slideIn 0.4s ease-out;}.container.dragging{transition:none;opacity:0.9;}.container.snapping{transition:left 0.35s cubic-bezier(0.25,0.46,0.45,0.94),top 0.35s cubic-bezier(0.25,0.46,0.45,0.94);}.container.bottom-right{bottom:20px;right:20px;}.container.bottom-left{bottom:20px;left:20px;}.container.top-right{top:20px;right:20px;}.container.top-left{top:20px;left:20px;}@keyframes slideIn{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}.header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-header);border-bottom:1px solid var(--border);user-select:none;}.logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}.logo-icon{display:inline-block;width:32px;height:32px;flex-shrink:0;object-fit:contain;}.header-right{display:flex;align-items:center;}.close-btn{width:22px;height:22px;cursor:pointer;transition:transform 0.2s;position:relative;border:none;background:transparent;padding:0;}.close-btn::before,.close-btn::after{content:'';position:absolute;top:50%;left:50%;width:16px;height:2px;background:var(--text-muted);border-radius:1px;}.close-btn::before{transform:translate(-50%,-50%) rotate(45deg);}.close-btn::after{transform:translate(-50%,-50%) rotate(-45deg);}.close-btn:hover{transform:scale(1.15);}.close-btn:hover::before,.close-btn:hover::after{background:var(--text);}.body{padding:16px;max-height:500px;opacity:1;overflow-y:auto;transition:max-height 0.3s ease,opacity 0.2s ease,padding 0.3s ease;}";
 
   // src/ui/styles/notification.css
-  var notification_default = ".settings-btn{width:20px;height:20px;cursor:pointer;opacity:0.6;transition:opacity 0.2s,transform 0.2s;margin-right:12px;}.settings-btn:hover{opacity:1;transform:rotate(30deg);}:host(.tbvl-dark) .settings-btn{filter:invert(1);}@media (prefers-color-scheme:dark){:host(.tbvl-system) .settings-btn{filter:invert(1);}}.minimize-btn{width:20px;height:20px;cursor:pointer;opacity:0.6;transition:opacity 0.2s ease,transform 0.2s ease;margin-right:12px;display:flex;align-items:center;justify-content:center;}.minimize-btn:hover{opacity:1;}.minimize-btn::before{content:'';width:12px;height:2px;background:var(--text-muted);border-radius:1px;}.minimize-btn:hover::before{background:var(--text);}.cashback{display:block;font-size:20px;font-weight:700;color:var(--accent);margin-bottom:6px;}.cashback.has-details{cursor:pointer;position:relative;}.cashback-tooltip{display:none;position:fixed;width:320px;max-height:70vh;overflow-y:auto;padding:12px;background:var(--bg-transparent,rgba(30,30,30,0.97));border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;font-weight:400;color:var(--text);z-index:10;white-space:normal;line-height:1.4;}.cashback.has-details:hover .cashback-tooltip,.cashback.has-details.tooltip-visible .cashback-tooltip{display:block;}.cashback-tooltip-item{display:flex;gap:8px;margin-bottom:8px;}.cashback-tooltip-item:last-child{margin-bottom:0;}.cashback-tooltip-value{font-weight:600;color:var(--accent);white-space:nowrap;min-width:45px;}.cashback-tooltip-desc{flex:1;}.subtitle{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text);}.reminder{margin:0 0 6px;font-weight:500;color:var(--text);}.checklist{list-style:decimal;margin:8px 0 0 20px;padding:0;font-size:13px;color:var(--text);}.checklist li{display:list-item;margin:6px 0;}.action-btn{display:block;margin:16px auto 0;padding:12px 24px;background:var(--accent);color:#fff;text-decoration:none;border-radius:6px;font-weight:600;text-align:center;cursor:pointer;transition:background 0.2s;}.action-btn:hover{background:var(--accent-hover);}.action-btn.adblock{background:#ff0000;animation:pulse 0.7s infinite alternate ease-in-out;pointer-events:none;cursor:default;position:relative;padding-right:36px;}@keyframes pulse{from{transform:scale(1);}to{transform:scale(1.03);}}.recheck-icon{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:18px;cursor:pointer;pointer-events:auto;opacity:0.8;transition:opacity 0.2s,transform 0.2s;}.recheck-icon:hover{opacity:1;}.action-btn.adblock .recheck-icon{display:inline-block;}.recheck-icon.spinning{animation:spin 0.8s linear infinite;}@keyframes spin{from{transform:translateY(-50%) rotate(0deg);}to{transform:translateY(-50%) rotate(360deg);}}.action-btn.has-code{position:relative;padding-right:40px;}.copy-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;opacity:0.7;transition:opacity 0.2s;}.copy-icon:hover{opacity:1;}.copy-icon.copied{opacity:1;}.hide-site{display:block;margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center;cursor:pointer;text-decoration:none;transition:color 0.2s;}.hide-site:hover{color:var(--text);text-decoration:underline;}.info-link{position:absolute;bottom:8px;right:8px;width:16px;height:16px;font-size:9px;font-weight:bold;color:var(--text);background:var(--info-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0.2;cursor:pointer;transition:opacity 0.2s ease;}.info-link:hover{opacity:0.45;}.confirmation{text-align:center;padding:8px 0;color:var(--text);}.settings{display:none;}.settings.active{display:block;}.content.hidden{display:none;}.settings-title{font-size:16px;font-weight:600;margin-bottom:16px;}:host(.tbvl-dark) .settings-title{color:#fff;}@media (prefers-color-scheme:dark){:host(.tbvl-system) .settings-title{color:#fff;}}.setting-row{margin-bottom:16px;}.setting-label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:8px;}.settings-grid{display:grid;grid-template-columns:1fr auto;gap:12px 16px;align-items:start;margin-bottom:16px;}.settings-grid .setting-row{margin-bottom:0;}.settings-grid .setting-row:nth-child(2){display:flex;flex-direction:column;align-items:flex-end;}.settings-grid .setting-label{margin-bottom:6px;}.theme-buttons{display:flex;gap:8px;}.theme-btn{flex:1;padding:8px 12px;background:var(--btn-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;cursor:pointer;transition:all 0.2s;text-align:center;}.theme-btn:hover{border-color:var(--accent);}.theme-btn.active{background:var(--btn-bg-active);color:#fff;border-color:var(--btn-bg-active);}.position-buttons{flex-wrap:wrap;width:80px;}.position-buttons .theme-btn{flex:0 0 calc(50% - 4px);padding:6px;font-size:16px;}.settings-back{display:inline-block;margin-top:12px;font-size:13px;color:var(--accent);cursor:pointer;text-decoration:none;}.settings-back:hover{text-decoration:underline;}.hidden-sites-info{font-size:12px;color:var(--text-muted);margin-top:8px;}.reset-hidden{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:none;}.reset-hidden:hover{text-decoration:underline;}.toggle-row{display:flex;align-items:center;justify-content:space-between;}.toggle-switch{position:relative;width:44px;height:24px;background:var(--btn-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;}.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--text-muted);border-radius:50%;transition:transform 0.2s,background 0.2s;}.toggle-switch.active{background:var(--btn-bg-active);border-color:var(--btn-bg-active);}.toggle-switch.active::after{transform:translateX(20px);background:#fff;}.service-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}.service-toggle-row:first-child{padding-top:0;}.service-info{display:flex;align-items:center;gap:8px;}.service-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}.service-name{font-size:14px;color:var(--text);}.coming-soon{font-size:12px;color:var(--text-muted);margin-left:4px;}.container{transition:width 0.3s ease,min-width 0.3s ease;}.container.minimized{width:auto;min-width:270px;cursor:pointer;}.container.minimized .body{max-height:0;opacity:0;padding:0 16px;}.container.minimized .info-link{opacity:0;pointer-events:none;}.cashback-mini{font-weight:700;font-size:15px;color:var(--accent);margin-left:auto;padding:0 16px;opacity:0;max-width:0;height:0;overflow:hidden;text-align:center;transition:opacity 0.2s ease,max-width 0.3s ease,height 0.3s ease;}.container.minimized .cashback-mini{opacity:1;max-width:150px;height:auto;}.container.minimized .settings-btn,.container.minimized .minimize-btn{opacity:0;pointer-events:none;width:0;margin:0;overflow:hidden;}@media (max-width:700px){.checklist{display:none;}.reminder{display:none;}}";
+  var notification_default = ".settings-btn{width:20px;height:20px;cursor:pointer;opacity:0.6;transition:opacity 0.2s,transform 0.2s;margin-right:12px;}.settings-btn:hover{opacity:1;transform:rotate(30deg);}:host(.tbvl-dark) .settings-btn{filter:invert(1);}@media (prefers-color-scheme:dark){:host(.tbvl-system) .settings-btn{filter:invert(1);}}.minimize-btn{width:20px;height:20px;cursor:pointer;opacity:0.6;transition:opacity 0.2s ease,transform 0.2s ease;margin-right:12px;display:flex;align-items:center;justify-content:center;}.minimize-btn:hover{opacity:1;}.minimize-btn::before{content:'';width:12px;height:2px;background:var(--text-muted);border-radius:1px;}.minimize-btn:hover::before{background:var(--text);}.cashback{display:block;font-size:20px;font-weight:700;color:var(--accent);margin-bottom:6px;}.cashback.has-details{cursor:pointer;position:relative;}.cashback-tooltip{display:none;position:fixed;width:320px;max-height:70vh;overflow-y:auto;padding:12px;background:var(--bg-transparent,rgba(30,30,30,0.97));border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;font-weight:400;color:var(--text);z-index:10;white-space:normal;line-height:1.4;}.cashback.has-details:hover .cashback-tooltip,.cashback.has-details.tooltip-visible .cashback-tooltip{display:block;}.cashback-tooltip-item{display:flex;gap:8px;margin-bottom:8px;}.cashback-tooltip-item:last-child{margin-bottom:0;}.cashback-tooltip-value{font-weight:600;color:var(--accent);white-space:nowrap;min-width:45px;}.cashback-tooltip-desc{flex:1;}.subtitle{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text);}.reminder{margin:0 0 6px;font-weight:500;color:var(--text);}.checklist{list-style:decimal;margin:8px 0 0 20px;padding:0;font-size:13px;color:var(--text);}.checklist li{display:list-item;margin:6px 0;}.action-btn{display:block;margin:16px auto 0;padding:12px 24px;background:var(--accent);color:#fff;text-decoration:none;border-radius:6px;font-weight:600;text-align:center;cursor:pointer;transition:background 0.2s;}.action-btn:hover{background:var(--accent-hover);}.action-btn.adblock{background:#ff0000;animation:pulse 0.7s infinite alternate ease-in-out;pointer-events:none;cursor:default;position:relative;padding-right:36px;}@keyframes pulse{from{transform:scale(1);}to{transform:scale(1.03);}}.recheck-icon{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:18px;cursor:pointer;pointer-events:auto;opacity:0.8;transition:opacity 0.2s,transform 0.2s;}.recheck-icon:hover{opacity:1;}.action-btn.adblock .recheck-icon{display:inline-block;}.recheck-icon.spinning{animation:spin 0.8s linear infinite;}@keyframes spin{from{transform:translateY(-50%) rotate(0deg);}to{transform:translateY(-50%) rotate(360deg);}}.action-btn.has-code{position:relative;padding-right:40px;}.copy-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;opacity:0.7;transition:opacity 0.2s;}.copy-icon:hover{opacity:1;}.copy-icon.copied{opacity:1;}.hide-site{display:block;margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center;cursor:pointer;text-decoration:none;transition:color 0.2s;}.hide-site:hover{color:var(--text);text-decoration:underline;}.info-link{position:absolute;bottom:8px;right:8px;width:16px;height:16px;font-size:9px;font-weight:bold;color:var(--text);background:var(--info-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0.2;cursor:pointer;transition:opacity 0.2s ease;}.info-link:hover{opacity:0.45;}.confirmation{text-align:center;padding:8px 0;color:var(--text);}.settings{display:none;}.settings.active{display:block;}.content.hidden{display:none;}.settings-title{font-size:16px;font-weight:600;margin-bottom:16px;}:host(.tbvl-dark) .settings-title{color:#fff;}@media (prefers-color-scheme:dark){:host(.tbvl-system) .settings-title{color:#fff;}}.setting-row{margin-bottom:16px;}.setting-label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:8px;}.settings-grid{display:grid;grid-template-columns:1fr auto;gap:12px 16px;align-items:start;margin-bottom:16px;}.settings-grid .setting-row{margin-bottom:0;}.settings-grid .setting-row:nth-child(2){display:flex;flex-direction:column;align-items:flex-end;}.settings-grid .setting-label{margin-bottom:6px;}.theme-buttons{display:flex;gap:8px;}.theme-btn{flex:1;padding:8px 12px;background:var(--btn-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;cursor:pointer;transition:all 0.2s;text-align:center;}.theme-btn:hover{border-color:var(--accent);}.theme-btn.active{background:var(--btn-bg-active);color:#fff;border-color:var(--btn-bg-active);}.position-buttons{flex-wrap:wrap;width:80px;}.position-buttons .theme-btn{flex:0 0 calc(50% - 4px);padding:6px;font-size:16px;}.settings-back{display:inline-block;margin-top:12px;font-size:13px;color:var(--accent);cursor:pointer;text-decoration:none;}.settings-back:hover{text-decoration:underline;}.hidden-sites-info{font-size:12px;color:var(--text-muted);margin-top:8px;}.reset-hidden{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:none;}.reset-hidden:hover{text-decoration:underline;}.toggle-row{display:flex;align-items:center;justify-content:space-between;}.toggle-switch{position:relative;width:44px;height:24px;background:var(--btn-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;}.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--text-muted);border-radius:50%;transition:transform 0.2s,background 0.2s;}.toggle-switch.active{background:var(--btn-bg-active);border-color:var(--btn-bg-active);}.toggle-switch.active::after{transform:translateX(20px);background:#fff;}.service-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}.service-toggle-row:first-child{padding-top:0;}.service-info{display:flex;align-items:center;gap:8px;}.service-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}.service-name{font-size:14px;color:var(--text);}.coming-soon{font-size:12px;color:var(--text-muted);margin-left:4px;}.container.minimized{width:auto;min-width:270px;cursor:pointer;}.container.minimized .body{max-height:0;opacity:0;padding:0 16px;}.container.minimized .info-link{opacity:0;pointer-events:none;}.cashback-mini{font-weight:700;font-size:15px;color:var(--accent);margin-left:auto;padding:0 16px;opacity:0;max-width:0;height:0;overflow:hidden;text-align:center;transition:opacity 0.2s ease,max-width 0.3s ease,height 0.3s ease;}.container.minimized .cashback-mini{opacity:1;max-width:150px;height:auto;}.container.minimized .settings-btn,.container.minimized .minimize-btn{opacity:0;pointer-events:none;width:0;margin:0;overflow:hidden;}@media (max-width:700px){.checklist{display:none;}.reminder{display:none;}}";
 
   // src/ui/styles/reminder.css
   var reminder_default = ".title{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--accent);}.message{margin:0 0 12px;color:var(--text);}.tip{font-size:13px;color:var(--text-muted);margin:0;}.minimize-btn{width:20px;height:20px;cursor:pointer;opacity:0.6;transition:opacity 0.2s ease,transform 0.2s ease;margin-right:12px;display:flex;align-items:center;justify-content:center;}.minimize-btn:hover{opacity:1;}.minimize-btn::before{content:'';width:12px;height:2px;background:var(--text-muted);border-radius:1px;}.minimize-btn:hover::before{background:var(--text);}.container{transition:width 0.3s ease,min-width 0.3s ease;}.container.minimized{width:auto;min-width:270px;cursor:pointer;}.container.minimized .body{max-height:0;opacity:0;padding:0 16px;}.reminder-mini{font-weight:700;font-size:16px;color:var(--accent);margin-left:auto;padding:0 16px;opacity:0;max-width:0;overflow:hidden;text-align:center;transition:opacity 0.2s ease,max-width 0.3s ease;}.container.minimized .reminder-mini{opacity:1;max-width:50px;}.container.minimized .minimize-btn{opacity:0;pointer-events:none;width:0;margin:0;overflow:hidden;}";
 
   // src/ui/styles/service-selector.css
-  var service_selector_default = ".header{cursor:default;}.settings-title{font-size:16px;font-weight:600;margin-bottom:16px;color:#333;}.service-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}.service-toggle-row:first-child{padding-top:0;}.service-info{display:flex;align-items:center;gap:8px;}.service-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}.service-name{font-size:14px;color:var(--text);}.coming-soon{font-size:12px;color:var(--text-muted);margin-left:4px;}.toggle-switch{position:relative;width:44px;height:24px;background:var(--btn-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;}.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--text-muted);border-radius:50%;transition:transform 0.2s,background 0.2s;}.toggle-switch.active{background:var(--btn-bg-active);border-color:var(--btn-bg-active);}.toggle-switch.active::after{transform:translateX(20px);background:#fff;}.action-btn{display:block;margin:20px auto 0;padding:12px 24px;background:var(--accent);color:#fff;text-decoration:none;border-radius:6px;font-weight:600;text-align:center;cursor:pointer;transition:background 0.2s;max-width:200px;border:none;}.action-btn:hover{background:var(--accent-hover);}";
+  var service_selector_default = ".header{cursor:default;}.settings-title{font-size:16px;font-weight:600;margin-bottom:16px;color:var(--text);}.service-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}.service-toggle-row:first-child{padding-top:0;}.service-info{display:flex;align-items:center;gap:8px;}.service-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}.service-name{font-size:14px;color:var(--text);}.coming-soon{font-size:12px;color:var(--text-muted);margin-left:4px;}.toggle-switch{position:relative;width:44px;height:24px;background:var(--btn-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;}.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--text-muted);border-radius:50%;transition:transform 0.2s,background 0.2s;}.toggle-switch.active{background:var(--btn-bg-active);border-color:var(--btn-bg-active);}.toggle-switch.active::after{transform:translateX(20px);background:var(--accent-contrast,#fff);}.action-btn{display:block;margin:20px auto 0;padding:12px 24px;background:var(--accent);color:#fff;text-decoration:none;border-radius:6px;font-weight:600;text-align:center;cursor:pointer;transition:background 0.2s;max-width:200px;border:none;}.action-btn:hover{background:var(--accent-hover);}";
 
   // src/ui/styles/index.ts
   function getNotificationStyles() {
@@ -888,7 +916,8 @@
 
   // src/ui/components/draggable.ts
   var DRAG_THRESHOLD = 5;
-  function makeCornerDraggable(container, _handle, onPositionChange) {
+  var SNAPPING_DURATION_MS = 350;
+  function makeCornerDraggable(container, onPositionChange) {
     let isDragging = false;
     let hasMoved = false;
     let startX;
@@ -989,7 +1018,7 @@
         container.style.right = "";
         container.style.bottom = "";
         container.classList.add(position);
-      }, 350);
+      }, SNAPPING_DURATION_MS);
       onPositionChange(position);
     }
     function onClickCapture(e) {
@@ -1005,6 +1034,15 @@
     container.addEventListener("touchstart", onDragStart, { passive: true });
     document.addEventListener("touchmove", onDragMove, { passive: false });
     document.addEventListener("touchend", onDragEnd);
+    return function cleanup() {
+      container.removeEventListener("mousedown", onDragStart);
+      document.removeEventListener("mousemove", onDragMove);
+      document.removeEventListener("mouseup", onDragEnd);
+      container.removeEventListener("click", onClickCapture, true);
+      container.removeEventListener("touchstart", onDragStart);
+      document.removeEventListener("touchmove", onDragMove);
+      document.removeEventListener("touchend", onDragEnd);
+    };
   }
 
   // src/core/adblock-detection.ts
@@ -1061,7 +1099,7 @@
 
   // src/ui/views/notification.ts
   function createNotification(options) {
-    const { match, settings, services, i18n, fetcher, sessionStorage: sessionStorage2, currentHost, onClose } = options;
+    const { match, settings, services, i18n, fetcher, sessionStorage, currentHost, onClose } = options;
     const service = match.service;
     const shadowHost = createShadowHost();
     document.body.appendChild(shadowHost);
@@ -1096,7 +1134,7 @@
     reminder.className = "reminder";
     reminder.textContent = i18n.getMessage("rememberTo");
     const checklist = createChecklist(service, i18n);
-    const { actionBtn, recheckIcon } = createActionButton(match, service, i18n, sessionStorage2, currentHost, content);
+    const { actionBtn, recheckIcon } = createActionButton(match, service, i18n, sessionStorage, currentHost, content);
     const hideSiteLink = document.createElement("span");
     hideSiteLink.className = "hide-site";
     hideSiteLink.textContent = i18n.getMessage("dontShowOnThisSite");
@@ -1123,7 +1161,9 @@
     if (settings.getStartMinimized()) {
       container.classList.add("minimized");
     }
+    let draggableCleanup = null;
     function closeNotification() {
+      draggableCleanup?.();
       shadowHost.remove();
       document.removeEventListener("keydown", handleKeydown);
       onClose?.();
@@ -1199,7 +1239,7 @@
       }).catch(() => {
       });
     }
-    makeCornerDraggable(container, header, async (position) => {
+    draggableCleanup = makeCornerDraggable(container, async (position) => {
       await settings.setPositionForSite(position);
     });
     return shadowHost;
@@ -1315,7 +1355,7 @@
     });
     return checklist;
   }
-  function createActionButton(match, service, i18n, sessionStorage2, currentHost, content) {
+  function createActionButton(match, service, i18n, sessionStorage, currentHost, content) {
     const actionBtn = document.createElement("a");
     actionBtn.className = "action-btn";
     const baseUrl = service.clickthroughUrl || "";
@@ -1342,7 +1382,7 @@
     recheckIcon.title = i18n.getMessage("checkAdblockAgain");
     actionBtn.appendChild(recheckIcon);
     actionBtn.addEventListener("click", (e) => {
-      sessionStorage2.set(`${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`, Date.now().toString());
+      sessionStorage.set(`${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`, Date.now().toString());
       if (service.type === "code" && match.offer?.code) {
         const copyIcon = actionBtn.querySelector(".copy-icon");
         if (actionBtn.dataset.copied !== "true") {
@@ -1364,7 +1404,7 @@
         }
         return;
       }
-      content.innerHTML = "";
+      content.replaceChildren();
       const confirmation = document.createElement("div");
       confirmation.className = "confirmation";
       confirmation.textContent = i18n.getMessage("purchaseRegistered");
@@ -1466,7 +1506,7 @@
       if (!btn?.dataset.theme) return;
       const newTheme = btn.dataset.theme;
       await settings.setTheme(newTheme);
-      shadowHost.className = `tbvl-${newTheme}`;
+      applyThemeClass(shadowHost, newTheme);
       themeButtons.querySelectorAll(".theme-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
     });
@@ -1616,7 +1656,9 @@
     container.appendChild(header);
     container.appendChild(body);
     shadowRoot.appendChild(container);
+    let draggableCleanup = null;
     function closeNotification() {
+      draggableCleanup?.();
       shadowHost.remove();
       document.removeEventListener("keydown", handleKeydown);
       onClose?.();
@@ -1639,17 +1681,17 @@
         }
       }
     });
-    makeCornerDraggable(container, header, async (position) => {
+    draggableCleanup = makeCornerDraggable(container, async (position) => {
       await settings.setPositionForSite(position);
     });
     return shadowHost;
   }
 
   // src/ui/views/service-selector.ts
+  init_services();
   function createServiceSelector(options) {
     const { settings, services, i18n, onSave } = options;
     const shadowHost = createShadowHost();
-    document.body.appendChild(shadowHost);
     const shadowRoot = shadowHost.attachShadow({ mode: "open" });
     injectStyles(shadowRoot, getServiceSelectorStyles());
     const container = document.createElement("div");
@@ -1678,12 +1720,11 @@
     title.className = "settings-title";
     title.textContent = i18n.getMessage("selectServices");
     content.appendChild(title);
-    const serviceOrder = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
     const toggleStates = {};
-    serviceOrder.forEach((serviceId) => {
+    SERVICE_ORDER.forEach((serviceId) => {
       toggleStates[serviceId] = serviceId === "trumf";
     });
-    serviceOrder.forEach((serviceId) => {
+    SERVICE_ORDER.forEach((serviceId) => {
       const service = services[serviceId];
       if (!service) return;
       const row = document.createElement("div");
@@ -1706,12 +1747,23 @@
       }
       const toggle = document.createElement("div");
       toggle.className = "toggle-switch";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("tabindex", "0");
+      toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
       if (toggleStates[serviceId]) {
         toggle.classList.add("active");
       }
-      toggle.addEventListener("click", () => {
+      const handleToggle = () => {
         toggleStates[serviceId] = !toggleStates[serviceId];
         toggle.classList.toggle("active", toggleStates[serviceId]);
+        toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
+      };
+      toggle.addEventListener("click", handleToggle);
+      toggle.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleToggle();
+        }
       });
       row.appendChild(info);
       row.appendChild(toggle);
@@ -1721,17 +1773,26 @@
     saveBtn.className = "action-btn";
     saveBtn.textContent = i18n.getMessage("saveServices");
     saveBtn.addEventListener("click", async () => {
-      const enabledServices = serviceOrder.filter((serviceId) => toggleStates[serviceId]);
+      const enabledServices = SERVICE_ORDER.filter((serviceId) => toggleStates[serviceId]);
       const hasActiveService = enabledServices.some((id) => !services[id]?.comingSoon);
       if (!hasActiveService) {
         enabledServices.push("trumf");
       }
-      await settings.setEnabledServices(enabledServices);
-      await settings.setSetupComplete(true);
-      if (onSave) {
-        onSave(enabledServices);
-      } else {
-        window.location.reload();
+      try {
+        await settings.setEnabledServices(enabledServices);
+        await settings.setSetupComplete(true);
+        if (onSave) {
+          onSave(enabledServices);
+        } else {
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("[BonusVarsler] Failed to save service selection:", error);
+        if (onSave) {
+          onSave(enabledServices);
+        } else {
+          window.location.reload();
+        }
       }
     });
     content.appendChild(saveBtn);
@@ -1739,6 +1800,7 @@
     container.appendChild(header);
     container.appendChild(body);
     shadowRoot.appendChild(container);
+    document.body.appendChild(shadowHost);
     return shadowHost;
   }
 
@@ -1747,13 +1809,13 @@
   (async function() {
     "use strict";
     const currentHost = window.location.hostname;
-    const sessionStorage2 = getExtensionSessionStorage();
-    if (shouldBailOutEarly(sessionStorage2, currentHost)) {
+    const sessionStorage = getExtensionSessionStorage();
+    if (shouldBailOutEarly(sessionStorage, currentHost)) {
       return;
     }
     const adapters = {
       storage: getExtensionStorage(),
-      sessionStorage: sessionStorage2,
+      sessionStorage,
       fetcher: getExtensionFetch(),
       i18n: getExtensionI18n()
     };
@@ -1796,10 +1858,9 @@
         enabledServices,
         services
       );
-      const reminderShownKey = `BonusVarsler_ReminderShown`;
-      const reminderShown = sessionStorage2.get(reminderShownKey);
+      const reminderShown = sessionStorage.get(STORAGE_KEYS.reminderShown);
       if (reminderResult.isOnPage && reminderResult.service && !reminderShown) {
-        sessionStorage2.set(reminderShownKey, "true");
+        sessionStorage.set(STORAGE_KEYS.reminderShown, "true");
         createReminderNotification({
           service: reminderResult.service,
           settings: result.settings,
@@ -1812,14 +1873,14 @@
       return;
     }
     const { settings, feedManager, match } = result;
-    markMessageShown(sessionStorage2, currentHost);
+    markMessageShown(sessionStorage, currentHost);
     createNotification({
       match,
       settings,
       services: feedManager.getServices(),
       i18n,
       fetcher,
-      sessionStorage: sessionStorage2,
+      sessionStorage,
       currentHost
     });
   })();

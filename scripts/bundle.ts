@@ -11,6 +11,19 @@ import * as path from "path";
 const ROOT = path.resolve(import.meta.dir, "..");
 const SRC = path.join(ROOT, "src");
 
+// Plugin to resolve tsconfig path aliases (@/* -> ./src/*)
+function aliasPlugin(): esbuild.Plugin {
+  return {
+    name: "alias",
+    setup(build) {
+      build.onResolve({ filter: /^@\// }, (args) => {
+        const resolved = path.join(SRC, args.path.slice(2));
+        return { path: resolved };
+      });
+    },
+  };
+}
+
 // Read CSS file and return as a string for injection
 function inlineCSS(): esbuild.Plugin {
   return {
@@ -107,7 +120,7 @@ async function build() {
     format: "iife",
     target: "es2022",
     minify: false, // Keep readable for debugging
-    plugins: [inlineCSS(), jsonPlugin()],
+    plugins: [aliasPlugin(), inlineCSS(), jsonPlugin()],
     logLevel: "info",
   };
 

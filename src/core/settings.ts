@@ -12,6 +12,9 @@ import {
   DEFAULT_POSITION,
   DEFAULT_THEME,
 } from "../config/constants.js";
+
+// Maximum number of site-specific positions to store (to prevent unbounded growth)
+const MAX_SITE_POSITIONS = 100;
 import { getDefaultEnabledServices } from "../config/services.js";
 
 export interface SettingsCache {
@@ -207,6 +210,17 @@ export class Settings {
 
   async setPositionForSite(position: Position): Promise<void> {
     this.cache.sitePositions[this.currentHost] = position;
+
+    // Evict oldest entries if over limit
+    const hosts = Object.keys(this.cache.sitePositions);
+    if (hosts.length > MAX_SITE_POSITIONS) {
+      // Remove oldest entries (first in object order) to get back under limit
+      const toRemove = hosts.slice(0, hosts.length - MAX_SITE_POSITIONS);
+      for (const host of toRemove) {
+        delete this.cache.sitePositions[host];
+      }
+    }
+
     await this.storage.set(STORAGE_KEYS.sitePositions, this.cache.sitePositions);
   }
 

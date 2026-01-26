@@ -5,21 +5,20 @@
 
 import type { I18nAdapter, Messages } from "./types.js";
 
-// Cross-browser compatibility
-declare const globalThis: {
-  browser?: typeof chrome;
-  chrome?: typeof chrome;
-};
-
-const browser = globalThis.browser || globalThis.chrome!;
+// Use browser API (Firefox) or chrome API (Chrome/Edge)
+const browserAPI = (typeof browser !== "undefined" ? browser : chrome);
 
 export class ExtensionI18n implements I18nAdapter {
   private messages: Messages = {};
 
   async loadMessages(lang: string): Promise<void> {
     try {
-      const url = browser.runtime.getURL(`_locales/${lang}/messages.json`);
+      const url = browserAPI.runtime.getURL(`_locales/${lang}/messages.json`);
       const response = await fetch(url);
+      if (!response.ok) {
+        this.messages = {};
+        return;
+      }
       this.messages = await response.json();
     } catch {
       this.messages = {};
