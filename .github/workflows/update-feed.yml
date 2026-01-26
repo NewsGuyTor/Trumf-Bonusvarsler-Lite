@@ -2,8 +2,8 @@ name: Update Merchant Feeds
 
 on:
   schedule:
-    # Run twice weekly: Monday and Thursday at 6am UTC
-    - cron: '0 6 * * 1,4'
+    # Run daily at 6am UTC
+    - cron: '0 6 * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:

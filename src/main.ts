@@ -6,7 +6,7 @@
 import type { StorageAdapter, SessionStorageAdapter } from "./storage/types.js";
 import type { FetchAdapter } from "./network/types.js";
 import type { I18nAdapter } from "./i18n/types.js";
-import { MESSAGE_SHOWN_KEY_PREFIX, CONFIG, STORAGE_KEYS } from "./config/constants.js";
+import { MESSAGE_SHOWN_KEY_PREFIX, PAGE_VISIT_COUNT_PREFIX, CONFIG, STORAGE_KEYS } from "./config/constants.js";
 import { DOMAIN_ALIASES } from "./config/domain-aliases.js";
 import { Settings } from "./core/settings.js";
 import { FeedManager } from "./core/feed.js";
@@ -33,7 +33,18 @@ export function shouldBailOutEarly(
   // Skip iframes entirely
   if (window.top !== window.self) return true;
 
-  // Check cheap sync storage before any extension API calls
+  // Track page visits per host
+  const pageVisitKey = `${PAGE_VISIT_COUNT_PREFIX}${currentHost}`;
+  const currentVisits = parseInt(sessionStorage.get(pageVisitKey) ?? "0", 10);
+  const newVisitCount = currentVisits + 1;
+  sessionStorage.set(pageVisitKey, newVisitCount.toString());
+
+  // Only apply cooldown after enough page visits
+  if (newVisitCount <= CONFIG.pageVisitsBeforeCooldown) {
+    return false; // Show notification for first N visits
+  }
+
+  // Check cooldown after N visits
   const messageShownKey = `${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`;
   const messageShownTime = sessionStorage.get(messageShownKey);
   if (messageShownTime) {

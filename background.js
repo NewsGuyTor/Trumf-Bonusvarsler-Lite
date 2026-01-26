@@ -63,13 +63,6 @@ async function fetchBundledFallback() {
 }
 
 async function getFeed() {
-  // TESTING ONLY: Use bundled feed first to test before pushing to GitHub
-  // TODO: Remove this block before release, or after pushing sitelist.json to GitHub
-  const bundledFeed = await fetchBundledFallback();
-  if (bundledFeed) {
-    return bundledFeed;
-  }
-
   // Try primary feed (GitHub)
   let feed = await fetchFeedWithRetry(CONFIG.feedUrl);
   if (feed) {

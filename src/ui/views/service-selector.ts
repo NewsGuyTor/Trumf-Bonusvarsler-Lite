@@ -126,6 +126,20 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
 
     // Toggle handler (click and keyboard)
     const handleToggle = () => {
+      // If turning off, check if this is the last active service
+      if (toggleStates[serviceId]) {
+        const activeEnabledCount = SERVICE_ORDER.filter(
+          (id) => toggleStates[id] && !services[id]?.comingSoon
+        ).length;
+        // Prevent deselecting the last active service
+        if (activeEnabledCount <= 1 && !services[serviceId]?.comingSoon) {
+          toggle.classList.remove("shake");
+          // Force reflow to restart animation
+          void toggle.offsetWidth;
+          toggle.classList.add("shake");
+          return;
+        }
+      }
       toggleStates[serviceId] = !toggleStates[serviceId];
       toggle.classList.toggle("active", toggleStates[serviceId]);
       toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));

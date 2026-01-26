@@ -10,6 +10,7 @@ export const CONFIG = {
   fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
   cacheDuration: 48 * 60 * 60 * 1000, // 48 hours
   messageDuration: 10 * 60 * 1000, // 10 minutes
+  pageVisitsBeforeCooldown: 3, // Start cooldown after this many page visits per site
   maxRetries: 5,
   retryDelays: [100, 500, 1000, 2000, 4000], // Exponential backoff
   adblockTimeout: 3000, // 3 seconds timeout for adblock checks
@@ -46,8 +47,9 @@ export const LEGACY_KEYS = {
 // Version tracking
 export const CURRENT_VERSION = "6.0";
 
-// Per-host session key prefix (used with localStorage)
+// Per-host session key prefixes (used with localStorage)
 export const MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
+export const PAGE_VISIT_COUNT_PREFIX = "BonusVarsler_PageVisits_";
 
 // Position options
 export type Position = "bottom-right" | "bottom-left" | "top-right" | "top-left";

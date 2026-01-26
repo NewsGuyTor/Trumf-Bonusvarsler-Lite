@@ -31,7 +31,7 @@
   };
 
   // src/config/constants.ts
-  var CONFIG, STORAGE_KEYS, LEGACY_KEYS, CURRENT_VERSION, MESSAGE_SHOWN_KEY_PREFIX, DEFAULT_POSITION, DEFAULT_THEME, AD_TEST_URLS, AD_BANNER_IDS, CSP_RESTRICTED_SITES;
+  var CONFIG, STORAGE_KEYS, LEGACY_KEYS, CURRENT_VERSION, MESSAGE_SHOWN_KEY_PREFIX, PAGE_VISIT_COUNT_PREFIX, DEFAULT_POSITION, DEFAULT_THEME, AD_TEST_URLS, AD_BANNER_IDS, CSP_RESTRICTED_SITES;
   var init_constants = __esm({
     "src/config/constants.ts"() {
       "use strict";
@@ -42,6 +42,8 @@
         // 48 hours
         messageDuration: 10 * 60 * 1e3,
         // 10 minutes
+        pageVisitsBeforeCooldown: 3,
+        // Start cooldown after this many page visits per site
         maxRetries: 5,
         retryDelays: [100, 500, 1e3, 2e3, 4e3],
         // Exponential backoff
@@ -74,6 +76,7 @@
       };
       CURRENT_VERSION = "6.0";
       MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
+      PAGE_VISIT_COUNT_PREFIX = "BonusVarsler_PageVisits_";
       DEFAULT_POSITION = "bottom-right";
       DEFAULT_THEME = "light";
       AD_TEST_URLS = [
@@ -896,6 +899,13 @@
   // src/main.ts
   function shouldBailOutEarly(sessionStorage, currentHost) {
     if (window.top !== window.self) return true;
+    const pageVisitKey = `${PAGE_VISIT_COUNT_PREFIX}${currentHost}`;
+    const currentVisits = parseInt(sessionStorage.get(pageVisitKey) ?? "0", 10);
+    const newVisitCount = currentVisits + 1;
+    sessionStorage.set(pageVisitKey, newVisitCount.toString());
+    if (newVisitCount <= CONFIG.pageVisitsBeforeCooldown) {
+      return false;
+    }
     const messageShownKey = `${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`;
     const messageShownTime = sessionStorage.get(messageShownKey);
     if (messageShownTime) {
@@ -1748,7 +1758,7 @@
   var reminder_default = "/**\n * Reminder notification CSS\n * Extends base.css for the reminder notification on cashback portal pages\n */\n\n/* Title */\n.title {\n    display: block;\n    font-size: 16px;\n    font-weight: 600;\n    margin-bottom: 10px;\n    color: var(--accent);\n}\n\n/* Message */\n.message {\n    margin: 0 0 12px;\n    color: var(--text);\n}\n\n/* Tip */\n.tip {\n    font-size: 13px;\n    color: var(--text-muted);\n    margin: 0;\n}\n\n/* Minimize button */\n.minimize-btn {\n    width: 20px;\n    height: 20px;\n    cursor: pointer;\n    opacity: 0.6;\n    transition: opacity 0.2s ease, transform 0.2s ease;\n    margin-right: 12px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.minimize-btn:hover {\n    opacity: 1;\n}\n\n.minimize-btn::before {\n    content: '';\n    width: 12px;\n    height: 2px;\n    background: var(--text-muted);\n    border-radius: 1px;\n}\n\n.minimize-btn:hover::before {\n    background: var(--text);\n}\n\n/* Minimized state */\n.container {\n    transition: width 0.3s ease, min-width 0.3s ease;\n}\n\n.container.minimized {\n    width: auto;\n    min-width: 270px;\n    cursor: pointer;\n}\n\n.container.minimized .body {\n    max-height: 0;\n    opacity: 0;\n    padding: 0 16px;\n}\n\n/* Reminder badge for minimized state */\n.reminder-mini {\n    font-weight: 700;\n    font-size: 16px;\n    color: var(--accent);\n    margin-left: auto;\n    padding: 0 16px;\n    opacity: 0;\n    max-width: 0;\n    overflow: hidden;\n    text-align: center;\n    transition: opacity 0.2s ease, max-width 0.3s ease;\n}\n\n.container.minimized .reminder-mini {\n    opacity: 1;\n    max-width: 50px;\n}\n\n.container.minimized .minimize-btn {\n    opacity: 0;\n    pointer-events: none;\n    width: 0;\n    margin: 0;\n    overflow: hidden;\n}\n";
 
   // src/ui/styles/service-selector.css
-  var service_selector_default = "/**\n * Service selector CSS\n * Extends base.css for the first-run service selector\n */\n\n.header {\n    cursor: default;\n}\n\n.settings-title {\n    font-size: 16px;\n    font-weight: 600;\n    margin-bottom: 16px;\n    color: var(--text);\n}\n\n.service-toggle-row {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding: 8px 0;\n}\n\n.service-toggle-row:first-child {\n    padding-top: 0;\n}\n\n.service-info {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n}\n\n.service-dot {\n    width: 10px;\n    height: 10px;\n    border-radius: 50%;\n    flex-shrink: 0;\n}\n\n.service-name {\n    font-size: 14px;\n    color: var(--text);\n}\n\n.coming-soon {\n    font-size: 12px;\n    color: var(--text-muted);\n    margin-left: 4px;\n}\n\n.toggle-switch {\n    position: relative;\n    width: 44px;\n    height: 24px;\n    background: var(--btn-bg);\n    border: 1px solid var(--border);\n    border-radius: 12px;\n    cursor: pointer;\n    transition: background 0.2s, border-color 0.2s;\n    flex-shrink: 0;\n}\n\n.toggle-switch::after {\n    content: '';\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    width: 18px;\n    height: 18px;\n    background: var(--text-muted);\n    border-radius: 50%;\n    transition: transform 0.2s, background 0.2s;\n}\n\n.toggle-switch.active {\n    background: var(--btn-bg-active);\n    border-color: var(--btn-bg-active);\n}\n\n.toggle-switch.active::after {\n    transform: translateX(20px);\n    background: var(--accent-contrast, #fff);\n}\n\n.action-btn {\n    display: block;\n    margin: 20px auto 0;\n    padding: 12px 24px;\n    background: var(--accent);\n    color: #fff;\n    text-decoration: none;\n    border-radius: 6px;\n    font-weight: 600;\n    text-align: center;\n    cursor: pointer;\n    transition: background 0.2s;\n    max-width: 200px;\n    border: none;\n}\n\n.action-btn:hover {\n    background: var(--accent-hover);\n}\n";
+  var service_selector_default = "/**\n * Service selector CSS\n * Extends base.css for the first-run service selector\n */\n\n.header {\n    cursor: default;\n}\n\n.settings-title {\n    font-size: 16px;\n    font-weight: 600;\n    margin-bottom: 16px;\n    color: var(--text);\n}\n\n.service-toggle-row {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding: 8px 0;\n}\n\n.service-toggle-row:first-child {\n    padding-top: 0;\n}\n\n.service-info {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n}\n\n.service-dot {\n    width: 10px;\n    height: 10px;\n    border-radius: 50%;\n    flex-shrink: 0;\n}\n\n.service-name {\n    font-size: 14px;\n    color: var(--text);\n}\n\n.coming-soon {\n    font-size: 12px;\n    color: var(--text-muted);\n    margin-left: 4px;\n}\n\n.toggle-switch {\n    position: relative;\n    width: 44px;\n    height: 24px;\n    background: var(--btn-bg);\n    border: 1px solid var(--border);\n    border-radius: 12px;\n    cursor: pointer;\n    transition: background 0.2s, border-color 0.2s;\n    flex-shrink: 0;\n}\n\n.toggle-switch::after {\n    content: '';\n    position: absolute;\n    top: 2px;\n    left: 2px;\n    width: 18px;\n    height: 18px;\n    background: var(--text-muted);\n    border-radius: 50%;\n    transition: transform 0.2s, background 0.2s;\n}\n\n.toggle-switch.active {\n    background: var(--btn-bg-active);\n    border-color: var(--btn-bg-active);\n}\n\n.toggle-switch.active::after {\n    transform: translateX(20px);\n    background: var(--accent-contrast, #fff);\n}\n\n@keyframes shake {\n    0%, 100% { transform: translateX(0); }\n    20% { transform: translateX(-3px); }\n    40% { transform: translateX(3px); }\n    60% { transform: translateX(-3px); }\n    80% { transform: translateX(3px); }\n}\n\n.toggle-switch.shake {\n    animation: shake 0.3s ease-in-out;\n}\n\n.action-btn {\n    display: block;\n    margin: 20px auto 0;\n    padding: 12px 24px;\n    background: var(--accent);\n    color: #fff;\n    text-decoration: none;\n    border-radius: 6px;\n    font-weight: 600;\n    text-align: center;\n    cursor: pointer;\n    transition: background 0.2s;\n    max-width: 200px;\n    border: none;\n}\n\n.action-btn:hover {\n    background: var(--accent-hover);\n}\n";
 
   // src/ui/styles/index.ts
   function getNotificationStyles() {
@@ -2735,6 +2745,17 @@
         toggle.classList.add("active");
       }
       const handleToggle = () => {
+        if (toggleStates[serviceId]) {
+          const activeEnabledCount = SERVICE_ORDER.filter(
+            (id) => toggleStates[id] && !services[id]?.comingSoon
+          ).length;
+          if (activeEnabledCount <= 1 && !services[serviceId]?.comingSoon) {
+            toggle.classList.remove("shake");
+            void toggle.offsetWidth;
+            toggle.classList.add("shake");
+            return;
+          }
+        }
         toggleStates[serviceId] = !toggleStates[serviceId];
         toggle.classList.toggle("active", toggleStates[serviceId]);
         toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
