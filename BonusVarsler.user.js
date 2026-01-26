@@ -181,32 +181,32 @@
             color: var(--text);
         }
         :host(.tbvl-dark) {
-            --bg: #1e1e1e;
-            --bg-transparent: rgba(30, 30, 30, 0.97);
-            --bg-header: #2d2d2d;
-            --border: #404040;
+            --bg: #2a2a2a;
+            --bg-transparent: rgba(42, 42, 42, 0.97);
+            --bg-header: #363636;
+            --border: #4a4a4a;
             --text: #e0e0e0;
-            --text-muted: #999;
+            --text-muted: #a0a0a0;
             --accent: #8c8cff;
             --accent-hover: #7a7aff;
-            --shadow: rgba(0,0,0,0.5);
-            --info-bg: #555;
-            --btn-bg: #404040;
+            --shadow: rgba(0,0,0,0.4);
+            --info-bg: #5a5a5a;
+            --btn-bg: #4a4a4a;
             --btn-bg-active: #8c8cff;
         }
         @media (prefers-color-scheme: dark) {
             :host(.tbvl-system) {
-                --bg: #1e1e1e;
-                --bg-transparent: rgba(30, 30, 30, 0.97);
-                --bg-header: #2d2d2d;
-                --border: #404040;
+                --bg: #2a2a2a;
+                --bg-transparent: rgba(42, 42, 42, 0.97);
+                --bg-header: #363636;
+                --border: #4a4a4a;
                 --text: #e0e0e0;
-                --text-muted: #999;
+                --text-muted: #a0a0a0;
                 --accent: #6b6bff;
                 --accent-hover: #5252ff;
-                --shadow: rgba(0,0,0,0.5);
-                --info-bg: #555;
-                --btn-bg: #404040;
+                --shadow: rgba(0,0,0,0.4);
+                --info-bg: #5a5a5a;
+                --btn-bg: #4a4a4a;
                 --btn-bg-active: #8c8cff;
             }
         }
@@ -442,7 +442,7 @@
   // Settings cache (loaded at init, used synchronously)
   let settingsCache = {
     hiddenSites: new Set(),
-    theme: "system",
+    theme: "light",
     startMinimized: false,
     position: "bottom-right", // default position
     sitePositions: {}, // per-site position overrides
@@ -505,7 +505,7 @@
 
     const hiddenSitesArray = await gmGetValue(hiddenSitesKey, []);
     settingsCache.hiddenSites = new Set(hiddenSitesArray);
-    settingsCache.theme = await gmGetValue(themeKey, "system");
+    settingsCache.theme = await gmGetValue(themeKey, "light");
     settingsCache.startMinimized = await gmGetValue(startMinimizedKey, false);
     settingsCache.position = await gmGetValue(positionKey, "bottom-right");
     settingsCache.sitePositions = await gmGetValue(sitePositionsKey, {});
@@ -2624,6 +2624,9 @@
               copyIcon.innerHTML = "&#x2713;"; // ✓ checkmark
             }
             actionBtn.dataset.copied = "true";
+            // Clear any selection/focus state to fix cursor hover effects
+            window.getSelection()?.removeAllRanges();
+            document.body.focus();
           };
           const onError = () => {
             // Clipboard failed - mark as copied anyway and allow navigation
@@ -2632,6 +2635,9 @@
               copyIcon.title = "Kopiering feilet";
             }
             actionBtn.dataset.copied = "true";
+            // Clear any selection/focus state to fix cursor hover effects
+            window.getSelection()?.removeAllRanges();
+            document.body.focus();
           };
           if (typeof GM_setClipboard === "function") {
             try {

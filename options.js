@@ -198,7 +198,7 @@ async function initLanguage() {
 
 // Initialize theme buttons
 async function initTheme() {
-  const currentTheme = await getValue(KEYS.theme, "system");
+  const currentTheme = await getValue(KEYS.theme, "light");
   const buttons = document.querySelectorAll("#theme-buttons .theme-btn");
 
   buttons.forEach((btn) => {
