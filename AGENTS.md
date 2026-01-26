@@ -7,8 +7,8 @@ This file provides guidance to AI coding agents (Codex, etc.) when working with 
 BonusVarsler is a browser extension and userscript that displays notifications when users visit online stores that offer cashback bonus through various loyalty programs.
 
 ### Roadmap
-1. **Current**: Trumf support
-2. **Next**: Add re:member, OBOS, SAS EuroBonus support (in-place update)
+1. **Done**: Trumf, re:member, DNB support
+2. **Next**: Add OBOS, SAS EuroBonus support
 
 ## Architecture
 
@@ -83,3 +83,66 @@ The project has two versions that share most code:
 ## Language
 
 The userscript UI is in Norwegian. The extension supports multiple languages via `_locales/`. Use Norwegian for the primary language.
+
+## Adding a New Service
+
+### Service Types
+- **Tracking-based** (like Trumf, re:member): User clicks through to service site, tracking link registers purchase
+- **Code-based** (like DNB): User gets a rebate code to enter at checkout, no tracking needed
+
+### Files to Modify
+
+1. **`data/services.json`** - Add service definition:
+   ```json
+   "serviceid": {
+     "id": "serviceid",
+     "name": "Service Name",
+     "clickthroughUrl": "https://...",  // Use {urlName} placeholder for tracking-based
+     "reminderDomain": "service.no",    // Optional: domain for reminder notifications
+     "color": "#HEXCOLOR",
+     "defaultEnabled": false,
+     "type": "code"                     // Only for code-based services
+   }
+   ```
+
+2. **`content.js`** - Add to SERVICES fallback object (~line 99)
+
+3. **`options.js`** - Add to SERVICES_FALLBACK (~line 18)
+
+4. **`BonusVarsler.user.js`** - Same changes as content.js
+
+5. **`_locales/*/messages.json`** - Add service-specific i18n strings (all 6 locales)
+
+6. **`scripts/scrape-feeds.ts`** - Add scraping function for the new service
+
+7. **`build.js`** - Add service to SERVICES object (with feedUrl or scrapeUrl if applicable)
+
+### Creating Service Icon (Hue-Shifted)
+
+Create a colored version of the logo for the new service:
+```bash
+# Adjust hue value (0-200) to match service color
+convert icon-64.png -modulate 100,100,HUE icon-64-serviceid.png
+```
+
+Hue values for reference:
+- 100 = original blue (#4D4DFF)
+- 55 = teal (#007272, DNB)
+- 15 = orange (#f28d00, re:member)
+
+Then add to content.js:
+1. Add `LOGO_ICON_SERVICEID_URL` constant with base64 data
+2. Update icon selection logic (~line 1358 and ~line 2001)
+
+### Code-Based Service Specifics
+
+For code-based services (type: "code"):
+- Button shows the rebate code instead of "Get X bonus"
+- First click copies code, second click opens link
+- Skip adblock detection (codes work regardless)
+- Add service-specific checklist instructions (e.g., `dnbInstruction1/2/3`)
+
+### Scraper Caching
+
+The scraper (`scripts/scrape-feeds.ts`) caches results for 5 hours in `.scraper-cache.json`.
+Delete the cache file to force a fresh scrape during development.
