@@ -68,24 +68,30 @@ export class Settings {
           STORAGE_KEYS.enabledServices,
           null
         );
-        const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData, null);
-        const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime, null);
+        const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData_v3, null);
+        const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime_v3, null);
+        const legacyFeedDataV4 = await this.storage.get(LEGACY_KEYS.feedData_v4, null);
+        const legacyFeedTimeV4 = await this.storage.get(LEGACY_KEYS.feedTime_v4, null);
         const isLegacyUser =
           existingEnabledServices === null &&
-          (legacyFeedData !== null || legacyFeedTime !== null);
+          (legacyFeedData !== null || legacyFeedTime !== null ||
+           legacyFeedDataV4 !== null || legacyFeedTimeV4 !== null);
 
         // Check if this is an existing user
         const isExistingUser =
           storedVersion !== null || existingEnabledServices !== null || isLegacyUser;
 
-        // Remove cache-related and legacy keys
+        // Remove cache-related and legacy keys (v3 and v4)
         const keysToRemove = [
           STORAGE_KEYS.feedData,
           STORAGE_KEYS.feedTime,
           STORAGE_KEYS.hostIndex,
-          LEGACY_KEYS.feedData,
-          LEGACY_KEYS.feedTime,
-          LEGACY_KEYS.hostIndex,
+          LEGACY_KEYS.feedData_v3,
+          LEGACY_KEYS.feedTime_v3,
+          LEGACY_KEYS.hostIndex_v3,
+          LEGACY_KEYS.feedData_v4,
+          LEGACY_KEYS.feedTime_v4,
+          LEGACY_KEYS.hostIndex_v4,
           STORAGE_KEYS.reminderShown,
         ];
 

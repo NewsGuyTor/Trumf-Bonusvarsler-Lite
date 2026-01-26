@@ -49,9 +49,9 @@
         // 3 seconds timeout for adblock checks
       };
       STORAGE_KEYS = {
-        feedData: "BonusVarsler_FeedData_v4",
-        feedTime: "BonusVarsler_FeedTime_v4",
-        hostIndex: "BonusVarsler_HostIndex_v4",
+        feedData: "BonusVarsler_FeedData_v1",
+        feedTime: "BonusVarsler_FeedTime_v1",
+        hostIndex: "BonusVarsler_HostIndex_v1",
         hiddenSites: "BonusVarsler_HiddenSites",
         theme: "BonusVarsler_Theme",
         startMinimized: "BonusVarsler_StartMinimized",
@@ -65,9 +65,12 @@
         version: "BonusVarsler_Version"
       };
       LEGACY_KEYS = {
-        feedData: "BonusVarsler_FeedData_v3",
-        feedTime: "BonusVarsler_FeedTime_v3",
-        hostIndex: "BonusVarsler_HostIndex_v3"
+        feedData_v3: "BonusVarsler_FeedData_v3",
+        feedTime_v3: "BonusVarsler_FeedTime_v3",
+        hostIndex_v3: "BonusVarsler_HostIndex_v3",
+        feedData_v4: "BonusVarsler_FeedData_v4",
+        feedTime_v4: "BonusVarsler_FeedTime_v4",
+        hostIndex_v4: "BonusVarsler_HostIndex_v4"
       };
       CURRENT_VERSION = "6.0";
       MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
@@ -230,17 +233,22 @@
                 STORAGE_KEYS.enabledServices,
                 null
               );
-              const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData, null);
-              const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime, null);
-              const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null);
+              const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData_v3, null);
+              const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime_v3, null);
+              const legacyFeedDataV4 = await this.storage.get(LEGACY_KEYS.feedData_v4, null);
+              const legacyFeedTimeV4 = await this.storage.get(LEGACY_KEYS.feedTime_v4, null);
+              const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null || legacyFeedDataV4 !== null || legacyFeedTimeV4 !== null);
               const isExistingUser = storedVersion !== null || existingEnabledServices !== null || isLegacyUser;
               const keysToRemove = [
                 STORAGE_KEYS.feedData,
                 STORAGE_KEYS.feedTime,
                 STORAGE_KEYS.hostIndex,
-                LEGACY_KEYS.feedData,
-                LEGACY_KEYS.feedTime,
-                LEGACY_KEYS.hostIndex,
+                LEGACY_KEYS.feedData_v3,
+                LEGACY_KEYS.feedTime_v3,
+                LEGACY_KEYS.hostIndex_v3,
+                LEGACY_KEYS.feedData_v4,
+                LEGACY_KEYS.feedTime_v4,
+                LEGACY_KEYS.hostIndex_v4,
                 STORAGE_KEYS.reminderShown
               ];
               await this.storage.remove(keysToRemove);

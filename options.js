@@ -53,9 +53,9 @@ const KEYS = {
   startMinimized: "BonusVarsler_StartMinimized",
   position: "BonusVarsler_Position",
   sitePositions: "BonusVarsler_SitePositions",
-  feedData: "BonusVarsler_FeedData_v4",
-  feedTime: "BonusVarsler_FeedTime_v4",
-  hostIndex: "BonusVarsler_HostIndex_v4",
+  feedData: "BonusVarsler_FeedData_v1",
+  feedTime: "BonusVarsler_FeedTime_v1",
+  hostIndex: "BonusVarsler_HostIndex_v1",
   language: "BonusVarsler_Language",
   enabledServices: "BonusVarsler_EnabledServices",
 };

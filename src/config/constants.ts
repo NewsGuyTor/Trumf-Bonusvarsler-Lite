@@ -17,9 +17,9 @@ export const CONFIG = {
 
 // Storage keys
 export const STORAGE_KEYS = {
-  feedData: "BonusVarsler_FeedData_v4",
-  feedTime: "BonusVarsler_FeedTime_v4",
-  hostIndex: "BonusVarsler_HostIndex_v4",
+  feedData: "BonusVarsler_FeedData_v1",
+  feedTime: "BonusVarsler_FeedTime_v1",
+  hostIndex: "BonusVarsler_HostIndex_v1",
   hiddenSites: "BonusVarsler_HiddenSites",
   theme: "BonusVarsler_Theme",
   startMinimized: "BonusVarsler_StartMinimized",
@@ -33,11 +33,14 @@ export const STORAGE_KEYS = {
   version: "BonusVarsler_Version",
 } as const;
 
-// Legacy v3 storage keys for migration
+// Legacy storage keys for migration cleanup (v3 and v4)
 export const LEGACY_KEYS = {
-  feedData: "BonusVarsler_FeedData_v3",
-  feedTime: "BonusVarsler_FeedTime_v3",
-  hostIndex: "BonusVarsler_HostIndex_v3",
+  feedData_v3: "BonusVarsler_FeedData_v3",
+  feedTime_v3: "BonusVarsler_FeedTime_v3",
+  hostIndex_v3: "BonusVarsler_HostIndex_v3",
+  feedData_v4: "BonusVarsler_FeedData_v4",
+  feedTime_v4: "BonusVarsler_FeedTime_v4",
+  hostIndex_v4: "BonusVarsler_HostIndex_v4",
 } as const;
 
 // Version tracking

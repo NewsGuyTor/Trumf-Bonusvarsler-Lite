@@ -114,11 +114,11 @@ Each platform (extension/userscript) provides its own implementations in `src/pl
 - Feed cached in browser storage for 48 hours
 - CSP-restricted sites skip URL-based adblock checks
 
-## Storage Keys (v4)
+## Storage Keys (v1)
 
 Defined in `src/config/constants.ts`:
 
-- `BonusVarsler_FeedData_v4` / `_FeedTime_v4` / `_HostIndex_v4` - Cached feed
+- `BonusVarsler_FeedData_v1` / `_FeedTime_v1` / `_HostIndex_v1` - Cached feed
 - `BonusVarsler_HiddenSites` - Array of hidden hostnames
 - `BonusVarsler_Theme` - "light", "dark", or "system"
 - `BonusVarsler_StartMinimized` - Boolean
