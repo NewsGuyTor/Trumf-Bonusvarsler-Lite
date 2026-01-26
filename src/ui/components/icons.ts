@@ -2,12 +2,24 @@
  * Icon data URIs (PNG files converted to base64 at build time)
  */
 
+import { SERVICE_ORDER } from "../../config/services.js";
+
 // Logo icons (64px for 2x retina, displayed at 32px)
 import LOGO_ICON_URL from "../../../icons/icon-64.png";
 import LOGO_ICON_REMEMBER_URL from "../../../icons/icon-64-remember.png";
 import LOGO_ICON_DNB_URL from "../../../icons/icon-64-dnb.png";
 
 export { LOGO_ICON_URL, LOGO_ICON_REMEMBER_URL, LOGO_ICON_DNB_URL };
+
+// Service ID type derived from SERVICE_ORDER
+export type ServiceId = (typeof SERVICE_ORDER)[number];
+
+// Typed mapping of service IDs to logo icons
+const SERVICE_LOGO_ICONS: Readonly<Partial<Record<ServiceId, string>>> = {
+  trumf: LOGO_ICON_URL,
+  remember: LOGO_ICON_REMEMBER_URL,
+  dnb: LOGO_ICON_DNB_URL,
+} as const;
 
 // Settings gear icon
 export const SETTINGS_ICON_URI =
@@ -18,14 +30,8 @@ export const SETTINGS_ICON_URI =
 
 /**
  * Get logo icon URL for a service
+ * Accepts ServiceId for type-safe calls or string for dynamic service IDs
  */
-export function getLogoIconForService(serviceId: string): string {
-  switch (serviceId) {
-    case "remember":
-      return LOGO_ICON_REMEMBER_URL;
-    case "dnb":
-      return LOGO_ICON_DNB_URL;
-    default:
-      return LOGO_ICON_URL;
-  }
+export function getLogoIconForService(service: ServiceId | string): string {
+  return SERVICE_LOGO_ICONS[service as ServiceId] ?? LOGO_ICON_URL;
 }

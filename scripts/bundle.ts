@@ -25,20 +25,15 @@ function aliasPlugin(): esbuild.Plugin {
 }
 
 // Read CSS file and return as a string for injection
+// Note: No minification to avoid corrupting CSS string literals (content:, data URLs, etc.)
 function inlineCSS(): esbuild.Plugin {
   return {
     name: "inline-css",
     setup(build) {
       build.onLoad({ filter: /\.css$/ }, async (args) => {
         const css = await Bun.file(args.path).text();
-        // Minify CSS by removing comments and extra whitespace
-        const minified = css
-          .replace(/\/\*[\s\S]*?\*\//g, "") // Remove comments
-          .replace(/\s+/g, " ") // Collapse whitespace
-          .replace(/\s*([{}:;,])\s*/g, "$1") // Remove space around punctuation
-          .trim();
         return {
-          contents: `export default ${JSON.stringify(minified)};`,
+          contents: `export default ${JSON.stringify(css)};`,
           loader: "js",
         };
       });
@@ -125,22 +120,30 @@ async function build() {
 
   // Check if src directory exists
   if (!fs.existsSync(SRC)) {
-    console.log("⚠️  src/ directory not found. Creating placeholder...");
-    fs.mkdirSync(SRC, { recursive: true });
-    console.log("   Created src/ directory. Add TypeScript source files to continue.");
-    return;
+    console.error(`❌ Source directory not found: ${SRC}`);
+    console.error("   Cannot build without source files. This would ship stale artifacts.");
+    process.exit(1);
   }
 
   // Check if entry points exist
   const extensionEntry = path.join(SRC, "platform", "extension.ts");
   const userscriptEntry = path.join(SRC, "platform", "userscript.ts");
 
-  if (!fs.existsSync(extensionEntry) || !fs.existsSync(userscriptEntry)) {
-    console.log("⚠️  Entry points not found. Expected:");
-    console.log(`   - ${extensionEntry}`);
-    console.log(`   - ${userscriptEntry}`);
-    console.log("   Skipping bundle step.");
-    return;
+  const missingEntries: string[] = [];
+  if (!fs.existsSync(extensionEntry)) {
+    missingEntries.push(extensionEntry);
+  }
+  if (!fs.existsSync(userscriptEntry)) {
+    missingEntries.push(userscriptEntry);
+  }
+
+  if (missingEntries.length > 0) {
+    console.error("❌ Required entry points not found:");
+    for (const entry of missingEntries) {
+      console.error(`   - ${entry}`);
+    }
+    console.error("   Cannot build without entry points. This would ship stale artifacts.");
+    process.exit(1);
   }
 
   const commonOptions: esbuild.BuildOptions = {
