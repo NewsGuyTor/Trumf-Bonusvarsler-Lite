@@ -184,6 +184,12 @@
     to { transform: scale(1.03); }
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 /* Recheck icon */
 .recheck-icon {
     display: none;

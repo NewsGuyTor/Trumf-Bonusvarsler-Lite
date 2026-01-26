@@ -1366,6 +1366,12 @@
     to { transform: scale(1.03); }
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 /* Recheck icon */
 .recheck-icon {
     display: none;
@@ -2314,6 +2320,14 @@
     recheckIcon.setAttribute("aria-label", i18n.getMessage("checkAdblockAgain"));
     actionBtn.appendChild(recheckIcon);
     actionBtn.addEventListener("click", (e) => {
+      if (actionBtn.classList.contains("adblock")) {
+        e.preventDefault();
+        actionBtn.style.animation = "shake 0.3s ease-in-out";
+        actionBtn.addEventListener("animationend", () => {
+          actionBtn.style.animation = "pulse 0.7s infinite alternate ease-in-out";
+        }, { once: true });
+        return;
+      }
       sessionStorage.set(`${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`, Date.now().toString());
       if (service.type === "code" && match.offer?.code) {
         const copyIcon = actionBtn.querySelector(".copy-icon");

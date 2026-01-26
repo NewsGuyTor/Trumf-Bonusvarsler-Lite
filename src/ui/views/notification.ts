@@ -473,6 +473,16 @@ function createActionButton(
 
   // Click handler
   actionBtn.addEventListener("click", (e) => {
+    // Don't proceed if adblock is detected - shake to indicate disabled
+    if (actionBtn.classList.contains("adblock")) {
+      e.preventDefault();
+      actionBtn.style.animation = "shake 0.3s ease-in-out";
+      actionBtn.addEventListener("animationend", () => {
+        actionBtn.style.animation = "pulse 0.7s infinite alternate ease-in-out";
+      }, { once: true });
+      return;
+    }
+
     sessionStorage.set(`${MESSAGE_SHOWN_KEY_PREFIX}${currentHost}`, Date.now().toString());
 
     // Code-based service handling
