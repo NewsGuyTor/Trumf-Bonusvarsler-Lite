@@ -46,6 +46,24 @@ function inlineCSS(): esbuild.Plugin {
   };
 }
 
+// Read PNG file and return as base64 data URI (at build time)
+function inlinePNG(): esbuild.Plugin {
+  return {
+    name: "inline-png",
+    setup(build) {
+      build.onLoad({ filter: /\.png$/ }, async (args) => {
+        const buffer = await Bun.file(args.path).arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        const dataUri = `data:image/png;base64,${base64}`;
+        return {
+          contents: `export default ${JSON.stringify(dataUri)};`,
+          loader: "js",
+        };
+      });
+    },
+  };
+}
+
 // Plugin to read JSON files with validation
 function jsonPlugin(): esbuild.Plugin {
   return {
@@ -130,7 +148,7 @@ async function build() {
     format: "iife",
     target: "es2022",
     minify: false, // Keep readable for debugging
-    plugins: [aliasPlugin(), inlineCSS(), jsonPlugin()],
+    plugins: [aliasPlugin(), inlineCSS(), inlinePNG(), jsonPlugin()],
     logLevel: "info",
   };
 
