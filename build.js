@@ -8,11 +8,11 @@
  * - Creates Firefox XPI and Chrome ZIP packages with platform-specific manifests
  */
 
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
-const http = require("http");
-const { execSync } = require("child_process");
+import fs from "fs";
+import path from "path";
+import https from "https";
+import http from "http";
+import { execSync } from "child_process";
 
 // ===================
 // Configuration
@@ -653,7 +653,7 @@ function createPackages() {
     JSON.stringify(createManifest("firefox"), null, 2)
   );
 
-  const xpiName = `bonusvarsler-lite-${version}.xpi`;
+  const xpiName = `bonusvarsler-${version}.xpi`;
   execSync(`cd "${firefoxDir}" && zip -r "../${xpiName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${xpiName}`);
 
@@ -670,7 +670,7 @@ function createPackages() {
     JSON.stringify(createManifest("chrome"), null, 2)
   );
 
-  const zipName = `bonusvarsler-lite-${version}-chrome.zip`;
+  const zipName = `bonusvarsler-${version}-chrome.zip`;
   execSync(`cd "${chromeDir}" && zip -r "../${zipName}" .`, { stdio: "pipe" });
   console.log(`   ✓ Created ${zipName}`);
 

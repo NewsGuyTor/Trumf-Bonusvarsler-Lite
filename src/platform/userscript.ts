@@ -17,6 +17,7 @@ import { createNotification } from "../ui/views/notification.js";
 import { createReminderNotification } from "../ui/views/reminder.js";
 import { createServiceSelector } from "../ui/views/service-selector.js";
 import { STORAGE_KEYS } from "../config/constants.js";
+import { SERVICES_FALLBACK } from "../config/services.js";
 
 // Immediate IIFE for early bailout
 (async function () {
@@ -53,7 +54,7 @@ import { STORAGE_KEYS } from "../config/constants.js";
       await storage.set(STORAGE_KEYS.setupShowCount, 1);
       createServiceSelector({
         settings: result?.settings ?? (await createTempSettings(adapters, currentHost)),
-        services: result?.feedManager.getServices() ?? {},
+        services: result?.feedManager.getServices() ?? SERVICES_FALLBACK,
         i18n,
       });
       return;

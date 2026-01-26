@@ -1903,6 +1903,7 @@
 
   // src/platform/userscript.ts
   init_constants();
+  init_services();
   (async function() {
     "use strict";
     const currentHost = window.location.hostname;
@@ -1925,7 +1926,7 @@
         await storage.set(STORAGE_KEYS.setupShowCount, 1);
         createServiceSelector({
           settings: result?.settings ?? await createTempSettings(adapters, currentHost),
-          services: result?.feedManager.getServices() ?? {},
+          services: result?.feedManager.getServices() ?? SERVICES_FALLBACK,
           i18n
         });
         return;
