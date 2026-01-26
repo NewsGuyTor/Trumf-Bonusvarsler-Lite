@@ -935,8 +935,33 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-
+    "cdon.com",
+    "elite.se",
+    "elon.no",
+    "extraoptical.no",
+    "fabel.no",
+    "hoie.no",
+    "lux-case.no",
+    "vetzoo.no",
+    "www.bookbeat.no",
+    "www.clickandboat.com",
+    "www.ekstralys.no",
+    "www.elite.se",
+    "www.getyourguide.com",
+    "www.klokkegiganten.no",
+    "www.myprotein.no",
+    "www.skyshowtime.com",
+    "www.sportmann.no",
+    "www.strikkia.no",
+    "www.vivara.no",
   ]);
+
+  // Check if current site has restrictive CSP (either in known list or via meta tag)
+  function isCspRestrictedSite() {
+    if (CSP_RESTRICTED_SITES.has(currentHost)) return true;
+    // Check for CSP meta tag which indicates restrictive policy
+    return document.querySelector('meta[http-equiv="Content-Security-Policy"]') !== null;
+  }
 
   async function checkUrlBlocked(url) {
     try {
@@ -992,7 +1017,7 @@
     ];
 
     // Skip URL checks on sites with strict CSP (causes false positives)
-    const skipUrlChecks = CSP_RESTRICTED_SITES.has(currentHost);
+    const skipUrlChecks = isCspRestrictedSite();
 
     try {
       const checks = await withTimeout(
@@ -2171,12 +2196,12 @@
       : service.clickthroughUrl;
     actionBtn.target = "_blank";
     actionBtn.rel = "noopener noreferrer";
+    actionBtn.href = clickthroughUrl; // Always set href for keyboard focusability
     // For code-based services, show the rebate code in the button with copy icon
     // First click copies code, second click opens link
     if (service.type === "code" && match.offer?.code) {
       actionBtn.classList.add("has-code");
-      // Don't set href yet - require copy first
-      actionBtn.dataset.pendingHref = clickthroughUrl;
+      actionBtn.dataset.copied = "false"; // Track if code has been copied
       const codeText = document.createTextNode(match.offer.code);
       actionBtn.appendChild(codeText);
       const copyIcon = document.createElement("span");
@@ -2185,7 +2210,6 @@
       copyIcon.title = "Kopier kode";
       actionBtn.appendChild(copyIcon);
     } else {
-      actionBtn.href = clickthroughUrl;
       actionBtn.textContent = i18n("getServiceBonus", service.name);
     }
 
@@ -2507,19 +2531,27 @@
       // For code-based services: first click copies code, second click opens link
       if (service.type === "code" && match.offer?.code) {
         const copyIcon = actionBtn.querySelector(".copy-icon");
-        if (!actionBtn.href && actionBtn.dataset.pendingHref) {
-          // First click: copy code and enable link
+        if (actionBtn.dataset.copied !== "true") {
+          // First click: copy code, then allow navigation on second click
           e.preventDefault();
-          navigator.clipboard.writeText(match.offer.code).then(() => {
-            if (copyIcon) {
-              copyIcon.innerHTML = "&#x2713;"; // ✓ checkmark
-            }
-            // Enable the link for second click
-            actionBtn.href = actionBtn.dataset.pendingHref;
-            delete actionBtn.dataset.pendingHref;
-          });
+          navigator.clipboard.writeText(match.offer.code)
+            .then(() => {
+              if (copyIcon) {
+                copyIcon.innerHTML = "&#x2713;"; // ✓ checkmark
+              }
+              actionBtn.dataset.copied = "true";
+            })
+            .catch(() => {
+              // Clipboard failed - mark as copied anyway and allow navigation
+              if (copyIcon) {
+                copyIcon.innerHTML = "&#x26A0;"; // ⚠ warning
+                copyIcon.title = "Kopiering feilet";
+              }
+              actionBtn.dataset.copied = "true";
+            });
+          return;
         }
-        // Second click: link is now set, will navigate normally
+        // Second click (or after copy): navigate normally
         return;
       }
       content.innerHTML = "";
@@ -2527,6 +2559,16 @@
       confirmation.className = "confirmation";
       confirmation.textContent = i18n("purchaseRegistered");
       content.appendChild(confirmation);
+    });
+
+    // Keyboard support for code-based services (Enter/Space)
+    actionBtn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (service.type === "code" && match.offer?.code && actionBtn.dataset.copied !== "true") {
+          e.preventDefault();
+          actionBtn.click();
+        }
+      }
     });
 
     // Minimize/expand toggle

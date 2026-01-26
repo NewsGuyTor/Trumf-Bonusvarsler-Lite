@@ -93,6 +93,7 @@ The userscript UI is in Norwegian. The extension supports multiple languages via
 ### Files to Modify
 
 1. **`data/services.json`** - Add service definition:
+
    ```json
    "serviceid": {
      "id": "serviceid",
@@ -120,6 +121,7 @@ The userscript UI is in Norwegian. The extension supports multiple languages via
 ### Creating Service Icon (Hue-Shifted)
 
 Create a colored version of the logo for the new service:
+
 ```bash
 # Adjust hue value (0-200) to match service color
 convert icon-64.png -modulate 100,100,HUE icon-64-serviceid.png

@@ -55,7 +55,11 @@ const EXTENSION_FILES = [
   "options.js",
   "options.css",
   "icon.png",
-  "icons",
+  "icons/icon-16.png",
+  "icons/icon-32.png",
+  "icons/icon-48.png",
+  "icons/icon-128.png",
+  "icons/icon-256.png",
   "_locales",
   "data",
 ];
@@ -174,6 +178,8 @@ function copyRecursive(src, dest) {
       copyRecursive(path.join(src, child), path.join(dest, child));
     }
   } else {
+    // Ensure parent directory exists for nested files
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
   }
 }
@@ -523,9 +529,14 @@ async function checkAllSitesCSP(sitelist) {
     return cache.restrictedSites;
   }
 
-  // Get all unique merchant hosts
-  const merchants = Object.keys(sitelist.merchants || {});
-  console.log(`\n🔍 Checking CSP on ${merchants.length} sites (parallel)...`);
+  // Get merchants that have at least one tracking-based service (non-code)
+  // Code-based services (like DNB) skip adblock detection, so CSP doesn't matter
+  const merchants = Object.entries(sitelist.merchants || {})
+    .filter(([_, merchant]) =>
+      merchant.offers.some((offer) => SERVICES_BASE[offer.serviceId]?.type !== "code")
+    )
+    .map(([host]) => host);
+  console.log(`\n🔍 Checking CSP on ${merchants.length} sites with tracking-based services (parallel)...`);
 
   const CONCURRENCY = 30;
   const restrictedSites = [];
@@ -714,8 +725,19 @@ async function main() {
     }
 
     // Load the sitelist that was created/updated by the scraper
-    const sitelist = JSON.parse(fs.readFileSync("data/sitelist.json", "utf8"));
-    console.log(`\n   ✓ Loaded sitelist with ${Object.keys(sitelist.merchants || {}).length} merchants`);
+    // Try data/sitelist.json first, fall back to root sitelist.json
+    let sitelist;
+    if (fs.existsSync("data/sitelist.json")) {
+      sitelist = JSON.parse(fs.readFileSync("data/sitelist.json", "utf8"));
+      console.log(`\n   ✓ Loaded sitelist with ${Object.keys(sitelist.merchants || {}).length} merchants`);
+    } else if (fs.existsSync("sitelist.json")) {
+      console.log("\n   ⚠ data/sitelist.json not found, using root sitelist.json as fallback");
+      sitelist = JSON.parse(fs.readFileSync("sitelist.json", "utf8"));
+      console.log(`   ✓ Loaded sitelist with ${Object.keys(sitelist.merchants || {}).length} merchants`);
+    } else {
+      console.error("\n❌ No sitelist.json found in data/ or root. Run the scraper first.");
+      process.exit(1);
+    }
 
     // Copy to root sitelist.json (used for GitHub CDN fallback)
     fs.writeFileSync("sitelist.json", JSON.stringify(sitelist));

@@ -788,13 +788,18 @@ async function main() {
       };
     }
 
-    // Add DNB offer
-    merchants[merchantKey].offers.push({
-      serviceId: "dnb",
-      urlName: "", // DNB uses static URL
-      cashbackDescription: merchant.cashbackDescription,
-      ...(merchant.code && { code: merchant.code }),
-    });
+    // Add DNB offer (check for duplicates first)
+    const hasDnbOffer = merchants[merchantKey].offers.some(
+      (o) => o.serviceId === "dnb"
+    );
+    if (!hasDnbOffer) {
+      merchants[merchantKey].offers.push({
+        serviceId: "dnb",
+        urlName: "", // DNB uses static URL
+        cashbackDescription: merchant.cashbackDescription,
+        ...(merchant.code && { code: merchant.code }),
+      });
+    }
   }
 
   // ===================

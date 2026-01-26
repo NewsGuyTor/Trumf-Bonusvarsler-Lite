@@ -913,8 +913,33 @@
 
   // Sites with strict CSP that blocks our test URLs (causes false positives)
   const CSP_RESTRICTED_SITES = new Set([
-
+    "cdon.com",
+    "elite.se",
+    "elon.no",
+    "extraoptical.no",
+    "fabel.no",
+    "hoie.no",
+    "lux-case.no",
+    "vetzoo.no",
+    "www.bookbeat.no",
+    "www.clickandboat.com",
+    "www.ekstralys.no",
+    "www.elite.se",
+    "www.getyourguide.com",
+    "www.klokkegiganten.no",
+    "www.myprotein.no",
+    "www.skyshowtime.com",
+    "www.sportmann.no",
+    "www.strikkia.no",
+    "www.vivara.no",
   ]);
+
+  // Check if current site has restrictive CSP (either in known list or via meta tag)
+  function isCspRestrictedSite() {
+    if (CSP_RESTRICTED_SITES.has(currentHost)) return true;
+    // Check for CSP meta tag which indicates restrictive policy
+    return document.querySelector('meta[http-equiv="Content-Security-Policy"]') !== null;
+  }
 
   async function checkUrlBlocked(url) {
     try {
@@ -970,7 +995,7 @@
     ];
 
     // Skip URL checks on sites with strict CSP (causes false positives)
-    const skipUrlChecks = CSP_RESTRICTED_SITES.has(currentHost);
+    const skipUrlChecks = isCspRestrictedSite();
 
     try {
       const checks = await withTimeout(
