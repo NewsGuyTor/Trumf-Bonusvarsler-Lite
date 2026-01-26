@@ -1332,7 +1332,7 @@
             .body {
                 max-height: 500px;
                 opacity: 1;
-                overflow: hidden;
+                overflow-y: auto;
                 transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
             }
             .container.minimized {
@@ -1526,6 +1526,7 @@
                 font-size: 16px;
                 font-weight: 600;
                 margin-bottom: 16px;
+                color: #333;
             }
             .service-toggle-row {
                 display: flex;
@@ -1585,10 +1586,6 @@
             .toggle-switch.active::after {
                 transform: translateX(20px);
                 background: #fff;
-            }
-            .toggle-switch.disabled {
-                opacity: 0.4;
-                cursor: not-allowed;
             }
             .action-btn {
                 display: block;
@@ -1696,17 +1693,11 @@
       if (toggleStates[serviceId]) {
         toggle.classList.add("active");
       }
-      if (service.comingSoon) {
-        toggle.classList.add("disabled");
-      }
-
-      // Toggle click handler (skip for coming soon services)
-      if (!service.comingSoon) {
-        toggle.addEventListener("click", () => {
-          toggleStates[serviceId] = !toggleStates[serviceId];
-          toggle.classList.toggle("active", toggleStates[serviceId]);
-        });
-      }
+      // Toggle click handler
+      toggle.addEventListener("click", () => {
+        toggleStates[serviceId] = !toggleStates[serviceId];
+        toggle.classList.toggle("active", toggleStates[serviceId]);
+      });
 
       row.appendChild(info);
       row.appendChild(toggle);
@@ -1719,14 +1710,16 @@
     saveBtn.textContent = "Lagre tjenester";
 
     saveBtn.addEventListener("click", async () => {
-      // Get enabled services (only non-coming-soon that are toggled on)
+      // Get enabled services
       const enabledServices = serviceOrder.filter(
-        (serviceId) =>
-          toggleStates[serviceId] && !SERVICES[serviceId]?.comingSoon,
+        (serviceId) => toggleStates[serviceId],
       );
 
-      // Ensure at least one service is enabled
-      if (enabledServices.length === 0) {
+      // Ensure at least one active (non-coming-soon) service is enabled
+      const hasActiveService = enabledServices.some(
+        (id) => !SERVICES[id]?.comingSoon,
+      );
+      if (!hasActiveService) {
         enabledServices.push("trumf");
       }
 
@@ -2025,6 +2018,25 @@
                 margin-bottom: 8px;
             }
 
+            .settings-grid {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 12px 16px;
+                align-items: start;
+                margin-bottom: 16px;
+            }
+            .settings-grid .setting-row {
+                margin-bottom: 0;
+            }
+            .settings-grid .setting-row:nth-child(2) {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            .settings-grid .setting-label {
+                margin-bottom: 6px;
+            }
+
             .theme-buttons {
                 display: flex;
                 gap: 8px;
@@ -2158,7 +2170,7 @@
             .body {
                 max-height: 500px;
                 opacity: 1;
-                overflow: hidden;
+                overflow-y: auto;
                 transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
             }
             .container.minimized {
@@ -2187,13 +2199,15 @@
                 padding: 0 16px;
                 opacity: 0;
                 max-width: 0;
+                height: 0;
                 overflow: hidden;
                 text-align: center;
-                transition: opacity 0.2s ease, max-width 0.3s ease;
+                transition: opacity 0.2s ease, max-width 0.3s ease, height 0.3s ease;
             }
             .container.minimized .cashback-mini {
                 opacity: 1;
                 max-width: 150px;
+                height: auto;
             }
             .settings-btn,
             .minimize-btn {
@@ -2360,10 +2374,6 @@
     const settings = document.createElement("div");
     settings.className = "settings";
 
-    const settingsTitle = document.createElement("div");
-    settingsTitle.className = "settings-title";
-    settingsTitle.textContent = "Innstillinger";
-
     const themeRow = document.createElement("div");
     themeRow.className = "setting-row";
 
@@ -2392,9 +2402,10 @@
     themeRow.appendChild(themeLabel);
     themeRow.appendChild(themeButtons);
 
-    // Start minimized toggle
+    // Start minimized toggle (inside theme column)
     const minimizeRow = document.createElement("div");
-    minimizeRow.className = "setting-row toggle-row";
+    minimizeRow.className = "toggle-row";
+    minimizeRow.style.marginTop = "12px";
 
     const minimizeLabel = document.createElement("span");
     minimizeLabel.className = "setting-label";
@@ -2407,6 +2418,7 @@
 
     minimizeRow.appendChild(minimizeLabel);
     minimizeRow.appendChild(minimizeToggle);
+    themeRow.appendChild(minimizeRow);
 
     // Position setting
     const positionRow = document.createElement("div");
@@ -2414,7 +2426,7 @@
 
     const positionLabel = document.createElement("span");
     positionLabel.className = "setting-label";
-    positionLabel.textContent = "Standard posisjon";
+    positionLabel.textContent = "Posisjon";
 
     const positionButtons = document.createElement("div");
     positionButtons.className = "theme-buttons position-buttons";
@@ -2436,15 +2448,8 @@
       positionButtons.appendChild(btn);
     });
 
-    const positionInfo = document.createElement("div");
-    positionInfo.className = "hidden-sites-info";
-    positionInfo.style.fontStyle = "italic";
-    positionInfo.textContent =
-      "Dra varselet for å overstyre posisjonen på denne siden.";
-
     positionRow.appendChild(positionLabel);
     positionRow.appendChild(positionButtons);
-    positionRow.appendChild(positionInfo);
 
     const hiddenSites = getHiddenSites();
     const hiddenCount = hiddenSites.size;
@@ -2479,10 +2484,13 @@
     backLink.className = "settings-back";
     backLink.textContent = "← Tilbake";
 
-    settings.appendChild(settingsTitle);
-    settings.appendChild(themeRow);
-    settings.appendChild(minimizeRow);
-    settings.appendChild(positionRow);
+    // Create grid for theme and position
+    const settingsGrid = document.createElement("div");
+    settingsGrid.className = "settings-grid";
+    settingsGrid.appendChild(themeRow);
+    settingsGrid.appendChild(positionRow);
+
+    settings.appendChild(settingsGrid);
     if (hiddenRow) {
       settings.appendChild(hiddenRow);
     }

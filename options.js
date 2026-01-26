@@ -323,10 +323,14 @@ async function initServices() {
     enabledServices = defaultEnabled;
   }
 
-  // Create checkbox for each service (skip comingSoon services)
-  Object.values(SERVICES)
-    .filter((s) => !s.comingSoon)
-    .forEach((service) => {
+  // Service order: active services first, then coming soon
+  const serviceOrder = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
+
+  // Create checkbox for each service
+  serviceOrder.forEach((serviceId) => {
+    const service = SERVICES[serviceId];
+    if (!service) return;
+
     const row = document.createElement("div");
     row.className = "service-row";
 
@@ -349,6 +353,14 @@ async function initServices() {
 
     label.appendChild(colorDot);
     label.appendChild(nameSpan);
+
+    // Add "coming soon" text for placeholder services
+    if (service.comingSoon) {
+      const comingSoon = document.createElement("span");
+      comingSoon.className = "coming-soon";
+      comingSoon.textContent = i18n("comingSoon");
+      label.appendChild(comingSoon);
+    }
 
     row.appendChild(checkbox);
     row.appendChild(label);

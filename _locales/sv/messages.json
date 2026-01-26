@@ -37,7 +37,7 @@
     "message": "När aktiverat visas meddelandet i minimerat läge."
   },
   "defaultPosition": {
-    "message": "Standardposition"
+    "message": "Position"
   },
   "positionTopLeft": {
     "message": "Uppe till vänster"
@@ -86,6 +86,9 @@
   },
   "cannotDisableAllServices": {
     "message": "Minst en tjänst måste vara aktiverad"
+  },
+  "comingSoon": {
+    "message": "(kommer snart)"
   },
   "reportIssue": {
     "message": "Rapportera problem"
@@ -250,5 +253,15 @@
   },
   "dnbInstruction3": {
     "message": "Betala med ditt DNB-kort (Visa eller Mastercard)"
+  },
+
+  "selectServices": {
+    "message": "Välj bonusprogram"
+  },
+  "saveServices": {
+    "message": "Spara tjänster"
+  },
+  "comingSoon": {
+    "message": "(kommer snart)"
   }
 }

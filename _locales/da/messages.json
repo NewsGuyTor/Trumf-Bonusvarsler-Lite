@@ -37,7 +37,7 @@
     "message": "Når aktiveret vises advarslen i minimeret tilstand."
   },
   "defaultPosition": {
-    "message": "Standardposition"
+    "message": "Position"
   },
   "positionTopLeft": {
     "message": "Øverst til venstre"
@@ -86,6 +86,9 @@
   },
   "cannotDisableAllServices": {
     "message": "Mindst én tjeneste skal være aktiveret"
+  },
+  "comingSoon": {
+    "message": "(kommer snart)"
   },
   "reportIssue": {
     "message": "Rapporter problem"
@@ -250,5 +253,15 @@
   },
   "dnbInstruction3": {
     "message": "Betal med dit DNB-kort (Visa eller Mastercard)"
+  },
+
+  "selectServices": {
+    "message": "Vælg bonusprogrammer"
+  },
+  "saveServices": {
+    "message": "Gem tjenester"
+  },
+  "comingSoon": {
+    "message": "(kommer snart)"
   }
 }

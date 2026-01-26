@@ -26,19 +26,28 @@
   "obos": {
     "id": "obos",
     "name": "OBOS",
+    "clickthroughUrl": "",
+    "reminderDomain": "",
     "color": "#0047ba",
+    "defaultEnabled": false,
     "comingSoon": true
   },
   "naf": {
     "id": "naf",
     "name": "NAF",
+    "clickthroughUrl": "",
+    "reminderDomain": "",
     "color": "#ffd816",
+    "defaultEnabled": false,
     "comingSoon": true
   },
   "lofavor": {
     "id": "lofavor",
     "name": "LOfavør",
+    "clickthroughUrl": "",
+    "reminderDomain": "",
     "color": "#ff0000",
+    "defaultEnabled": false,
     "comingSoon": true
   }
 }

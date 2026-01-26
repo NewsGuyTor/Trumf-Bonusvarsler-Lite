@@ -37,7 +37,7 @@
     "message": "Cuando está activado, la alerta aparece en estado minimizado."
   },
   "defaultPosition": {
-    "message": "Posición predeterminada"
+    "message": "Posición"
   },
   "positionTopLeft": {
     "message": "Arriba a la izquierda"
@@ -86,6 +86,9 @@
   },
   "cannotDisableAllServices": {
     "message": "Al menos un servicio debe estar habilitado"
+  },
+  "comingSoon": {
+    "message": "(próximamente)"
   },
   "reportIssue": {
     "message": "Reportar problema"
@@ -250,5 +253,15 @@
   },
   "dnbInstruction3": {
     "message": "Paga con tu tarjeta DNB (Visa o Mastercard)"
+  },
+
+  "selectServices": {
+    "message": "Selecciona programas de bonificación"
+  },
+  "saveServices": {
+    "message": "Guardar servicios"
+  },
+  "comingSoon": {
+    "message": "(próximamente)"
   }
 }
