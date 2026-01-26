@@ -1,0 +1,161 @@
+/**
+ * Reminder notification view
+ * Shows on cashback portal pages to remind users about tracking
+ */
+
+import type { I18nAdapter } from "../../i18n/types.js";
+import type { Settings } from "../../core/settings.js";
+import type { Service } from "../../config/services.js";
+import type { Position } from "../../config/constants.js";
+import { getReminderStyles } from "../styles/index.js";
+import {
+  createShadowHost,
+  applyThemeClass,
+  injectStyles,
+} from "../components/shadow-host.js";
+import { getLogoIconForService } from "../components/icons.js";
+import { makeCornerDraggable } from "../components/draggable.js";
+
+export interface ReminderOptions {
+  service: Service;
+  settings: Settings;
+  i18n: I18nAdapter;
+  onClose?: () => void;
+}
+
+/**
+ * Create and show the reminder notification
+ */
+export function createReminderNotification(options: ReminderOptions): HTMLElement {
+  const { service, settings, i18n, onClose } = options;
+
+  // Create shadow host
+  const shadowHost = createShadowHost();
+  document.body.appendChild(shadowHost);
+  const shadowRoot = shadowHost.attachShadow({ mode: "open" });
+
+  // Inject styles with service color override
+  const styleOverride = `
+    :host {
+      --accent: ${service.color};
+      --accent-hover: ${service.color};
+    }
+  `;
+  injectStyles(shadowRoot, getReminderStyles() + styleOverride);
+
+  // Create container
+  const container = document.createElement("div");
+  container.className = `container animate-in ${settings.getPosition()}`;
+  container.setAttribute("role", "dialog");
+  container.setAttribute("aria-label", i18n.getMessage("ariaReminderLabel"));
+
+  // Apply theme
+  applyThemeClass(shadowHost, settings.getTheme());
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "header";
+
+  const logo = document.createElement("div");
+  logo.className = "logo";
+
+  const logoIcon = document.createElement("img");
+  logoIcon.className = "logo-icon";
+  logoIcon.src = getLogoIconForService(service.id);
+  logoIcon.alt = "";
+
+  const logoText = document.createElement("span");
+  logoText.textContent = "BonusVarsler";
+
+  logo.appendChild(logoIcon);
+  logo.appendChild(logoText);
+
+  const headerRight = document.createElement("div");
+  headerRight.className = "header-right";
+
+  // Reminder badge for minimized state
+  const reminderMini = document.createElement("span");
+  reminderMini.className = "reminder-mini";
+  reminderMini.textContent = "!";
+
+  const minimizeBtn = document.createElement("button");
+  minimizeBtn.className = "minimize-btn";
+  minimizeBtn.setAttribute("aria-label", i18n.getMessage("ariaMinimize"));
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "close-btn";
+  closeBtn.setAttribute("aria-label", i18n.getMessage("ariaClose"));
+
+  headerRight.appendChild(reminderMini);
+  headerRight.appendChild(minimizeBtn);
+  headerRight.appendChild(closeBtn);
+
+  header.appendChild(logo);
+  header.appendChild(headerRight);
+
+  // Body
+  const body = document.createElement("div");
+  body.className = "body";
+
+  const title = document.createElement("span");
+  title.className = "title";
+  title.textContent = i18n.getMessage("importantReminder");
+
+  const message = document.createElement("p");
+  message.className = "message";
+  message.textContent = i18n.getMessage("reminderMessage");
+
+  const adblockWarning = document.createElement("p");
+  adblockWarning.className = "message";
+  adblockWarning.textContent = i18n.getMessage("reminderAdblockWarning");
+
+  const tip = document.createElement("p");
+  tip.className = "tip";
+  tip.textContent = i18n.getMessage("reminderTip");
+
+  body.appendChild(title);
+  body.appendChild(message);
+  body.appendChild(adblockWarning);
+  body.appendChild(tip);
+
+  container.appendChild(header);
+  container.appendChild(body);
+  shadowRoot.appendChild(container);
+
+  // Event handlers
+  function closeNotification() {
+    shadowHost.remove();
+    document.removeEventListener("keydown", handleKeydown);
+    onClose?.();
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      closeNotification();
+    }
+  }
+
+  closeBtn.addEventListener("click", closeNotification);
+  document.addEventListener("keydown", handleKeydown);
+
+  // Minimize/expand toggle
+  minimizeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    container.classList.add("minimized");
+  });
+
+  container.addEventListener("click", (e) => {
+    if (container.classList.contains("minimized")) {
+      if (!(e.target as HTMLElement).closest(".close-btn")) {
+        container.classList.remove("minimized");
+      }
+    }
+  });
+
+  // Make draggable
+  makeCornerDraggable(container, header, async (position: Position) => {
+    await settings.setPositionForSite(position);
+  });
+
+  return shadowHost;
+}

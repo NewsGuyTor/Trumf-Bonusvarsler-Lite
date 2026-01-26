@@ -1,0 +1,99 @@
+/**
+ * Reminder notification CSS
+ * Extends base.css for the reminder notification on cashback portal pages
+ */
+
+/* Title */
+.title {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--accent);
+}
+
+/* Message */
+.message {
+    margin: 0 0 12px;
+    color: var(--text);
+}
+
+/* Tip */
+.tip {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Minimize button */
+.minimize-btn {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.minimize-btn:hover {
+    opacity: 1;
+}
+
+.minimize-btn::before {
+    content: '';
+    width: 12px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 1px;
+}
+
+.minimize-btn:hover::before {
+    background: var(--text);
+}
+
+/* Minimized state */
+.container {
+    transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+.container.minimized {
+    width: auto;
+    min-width: 270px;
+    cursor: pointer;
+}
+
+.container.minimized .body {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 16px;
+}
+
+/* Reminder badge for minimized state */
+.reminder-mini {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--accent);
+    margin-left: auto;
+    padding: 0 16px;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    text-align: center;
+    transition: opacity 0.2s ease, max-width 0.3s ease;
+}
+
+.container.minimized .reminder-mini {
+    opacity: 1;
+    max-width: 50px;
+}
+
+.container.minimized .minimize-btn {
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    margin: 0;
+    overflow: hidden;
+}

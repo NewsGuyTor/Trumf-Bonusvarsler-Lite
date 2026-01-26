@@ -1,0 +1,214 @@
+/**
+ * Base CSS for BonusVarsler notifications
+ * Shared styles for all notification types
+ */
+
+:host {
+    all: initial;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    --bg: #fff;
+    --bg-transparent: rgba(255, 255, 255, 0.97);
+    --bg-header: #f3f3f3;
+    --border: #ececec;
+    --text: #333;
+    --text-muted: #666;
+    --accent: #4D4DFF;
+    --accent-hover: #3232ff;
+    --shadow: rgba(0,0,0,0.3);
+    --info-bg: #ccc;
+    --btn-bg: #e8e8e8;
+    --btn-bg-active: #4D4DFF;
+    color: var(--text);
+}
+
+:host(.tbvl-dark) {
+    --bg: #2a2a2a;
+    --bg-transparent: rgba(42, 42, 42, 0.97);
+    --bg-header: #363636;
+    --border: #4a4a4a;
+    --text: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --accent: #8c8cff;
+    --accent-hover: #7a7aff;
+    --shadow: rgba(0,0,0,0.4);
+    --info-bg: #5a5a5a;
+    --btn-bg: #4a4a4a;
+    --btn-bg-active: #8c8cff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :host(.tbvl-system) {
+        --bg: #2a2a2a;
+        --bg-transparent: rgba(42, 42, 42, 0.97);
+        --bg-header: #363636;
+        --border: #4a4a4a;
+        --text: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --accent: #6b6bff;
+        --accent-hover: #5252ff;
+        --shadow: rgba(0,0,0,0.4);
+        --info-bg: #5a5a5a;
+        --btn-bg: #4a4a4a;
+        --btn-bg-active: #8c8cff;
+    }
+}
+
+:host *,
+:host *::before,
+:host *::after {
+    all: revert;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, sans-serif !important;
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: normal;
+    word-spacing: normal;
+    text-transform: none;
+    text-indent: 0;
+    text-shadow: none;
+    text-decoration: none;
+    text-align: left;
+    white-space: normal;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    color: inherit;
+    background: transparent;
+    border: none;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    vertical-align: baseline;
+    float: none;
+    clear: none;
+    direction: ltr;
+    visibility: visible;
+    opacity: 1;
+    filter: none;
+    transform: none;
+    pointer-events: auto;
+}
+
+/* Container */
+.container {
+    position: fixed;
+    z-index: 2147483647;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    background: var(--bg);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px var(--shadow);
+    overflow: hidden;
+    transition: top 0.3s ease, bottom 0.3s ease, left 0.3s ease, right 0.3s ease;
+}
+
+.container.animate-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+.container.dragging {
+    transition: none;
+    opacity: 0.9;
+}
+
+.container.snapping {
+    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                top 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Position classes */
+.container.bottom-right { bottom: 20px; right: 20px; }
+.container.bottom-left { bottom: 20px; left: 20px; }
+.container.top-right { top: 20px; right: 20px; }
+.container.top-left { top: 20px; left: 20px; }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+}
+
+.logo-icon {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* Close button */
+.close-btn {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.close-btn::before,
+.close-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 1px;
+}
+
+.close-btn::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close-btn::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.close-btn:hover {
+    transform: scale(1.15);
+}
+
+.close-btn:hover::before,
+.close-btn:hover::after {
+    background: var(--text);
+}
+
+/* Body */
+.body {
+    padding: 16px;
+    max-height: 500px;
+    opacity: 1;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+}

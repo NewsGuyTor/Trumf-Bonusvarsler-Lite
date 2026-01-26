@@ -1,0 +1,556 @@
+/**
+ * Main notification CSS
+ * Extends base.css for the main cashback notification
+ */
+
+/* Settings button */
+.settings-btn {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.2s;
+    margin-right: 12px;
+}
+
+.settings-btn:hover {
+    opacity: 1;
+    transform: rotate(30deg);
+}
+
+:host(.tbvl-dark) .settings-btn {
+    filter: invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :host(.tbvl-system) .settings-btn {
+        filter: invert(1);
+    }
+}
+
+/* Minimize button */
+.minimize-btn {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.minimize-btn:hover {
+    opacity: 1;
+}
+
+.minimize-btn::before {
+    content: '';
+    width: 12px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 1px;
+}
+
+.minimize-btn:hover::before {
+    background: var(--text);
+}
+
+/* Cashback display */
+.cashback {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.cashback.has-details {
+    cursor: pointer;
+    position: relative;
+}
+
+/* Cashback tooltip */
+.cashback-tooltip {
+    display: none;
+    position: fixed;
+    width: 320px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--bg-transparent, rgba(30, 30, 30, 0.97));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    z-index: 10;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+.cashback.has-details:hover .cashback-tooltip,
+.cashback.has-details.tooltip-visible .cashback-tooltip {
+    display: block;
+}
+
+.cashback-tooltip-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.cashback-tooltip-item:last-child {
+    margin-bottom: 0;
+}
+
+.cashback-tooltip-value {
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+    min-width: 45px;
+}
+
+.cashback-tooltip-desc {
+    flex: 1;
+}
+
+/* Subtitle and reminder */
+.subtitle {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text);
+}
+
+.reminder {
+    margin: 0 0 6px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+/* Checklist */
+.checklist {
+    list-style: decimal;
+    margin: 8px 0 0 20px;
+    padding: 0;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.checklist li {
+    display: list-item;
+    margin: 6px 0;
+}
+
+/* Action button */
+.action-btn {
+    display: block;
+    margin: 16px auto 0;
+    padding: 12px 24px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* Adblock warning state */
+.action-btn.adblock {
+    background: #ff0000;
+    animation: pulse 0.7s infinite alternate ease-in-out;
+    pointer-events: none;
+    cursor: default;
+    position: relative;
+    padding-right: 36px;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.03); }
+}
+
+/* Recheck icon */
+.recheck-icon {
+    display: none;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.recheck-icon:hover {
+    opacity: 1;
+}
+
+.action-btn.adblock .recheck-icon {
+    display: inline-block;
+}
+
+.recheck-icon.spinning {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: translateY(-50%) rotate(0deg); }
+    to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Code button */
+.action-btn.has-code {
+    position: relative;
+    padding-right: 40px;
+}
+
+.copy-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.copy-icon:hover {
+    opacity: 1;
+}
+
+.copy-icon.copied {
+    opacity: 1;
+}
+
+/* Hide site link */
+.hide-site {
+    display: block;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.hide-site:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+/* Info link */
+.info-link {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    font-weight: bold;
+    color: var(--text);
+    background: var(--info-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    opacity: 0.2;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.info-link:hover {
+    opacity: 0.45;
+}
+
+/* Confirmation state */
+.confirmation {
+    text-align: center;
+    padding: 8px 0;
+    color: var(--text);
+}
+
+/* Settings panel */
+.settings {
+    display: none;
+}
+
+.settings.active {
+    display: block;
+}
+
+.content.hidden {
+    display: none;
+}
+
+.settings-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+:host(.tbvl-dark) .settings-title {
+    color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :host(.tbvl-system) .settings-title {
+        color: #fff;
+    }
+}
+
+.setting-row {
+    margin-bottom: 16px;
+}
+
+.setting-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px 16px;
+    align-items: start;
+    margin-bottom: 16px;
+}
+
+.settings-grid .setting-row {
+    margin-bottom: 0;
+}
+
+.settings-grid .setting-row:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.settings-grid .setting-label {
+    margin-bottom: 6px;
+}
+
+/* Theme buttons */
+.theme-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.theme-btn:hover {
+    border-color: var(--accent);
+}
+
+.theme-btn.active {
+    background: var(--btn-bg-active);
+    color: #fff;
+    border-color: var(--btn-bg-active);
+}
+
+/* Position buttons */
+.position-buttons {
+    flex-wrap: wrap;
+    width: 80px;
+}
+
+.position-buttons .theme-btn {
+    flex: 0 0 calc(50% - 4px);
+    padding: 6px;
+    font-size: 16px;
+}
+
+/* Settings back link */
+.settings-back {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.settings-back:hover {
+    text-decoration: underline;
+}
+
+/* Hidden sites info */
+.hidden-sites-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+.reset-hidden {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.reset-hidden:hover {
+    text-decoration: underline;
+}
+
+/* Toggle switch */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.toggle-switch.active {
+    background: var(--btn-bg-active);
+    border-color: var(--btn-bg-active);
+}
+
+.toggle-switch.active::after {
+    transform: translateX(20px);
+    background: #fff;
+}
+
+/* Service toggle rows */
+.service-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.service-toggle-row:first-child {
+    padding-top: 0;
+}
+
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.service-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.service-name {
+    font-size: 14px;
+    color: var(--text);
+}
+
+.coming-soon {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+/* Minimized state */
+.container {
+    transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+.container.minimized {
+    width: auto;
+    min-width: 270px;
+    cursor: pointer;
+}
+
+.container.minimized .body {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 16px;
+}
+
+.container.minimized .info-link {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Cashback badge for minimized state */
+.cashback-mini {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--accent);
+    margin-left: auto;
+    padding: 0 16px;
+    opacity: 0;
+    max-width: 0;
+    height: 0;
+    overflow: hidden;
+    text-align: center;
+    transition: opacity 0.2s ease, max-width 0.3s ease, height 0.3s ease;
+}
+
+.container.minimized .cashback-mini {
+    opacity: 1;
+    max-width: 150px;
+    height: auto;
+}
+
+.container.minimized .settings-btn,
+.container.minimized .minimize-btn {
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Mobile responsive */
+@media (max-width: 700px) {
+    .checklist { display: none; }
+    .reminder { display: none; }
+}

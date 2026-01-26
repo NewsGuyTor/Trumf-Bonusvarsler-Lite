@@ -748,6 +748,14 @@ async function main() {
     // Update source files with new CSP-restricted sites list
     updateCSPRestrictedSites(restrictedSites);
 
+    // Bundle TypeScript source
+    console.log("\n📦 Bundling TypeScript source...\n");
+    try {
+      execSync("bun run scripts/bundle.ts", { stdio: "inherit" });
+    } catch (error) {
+      console.error("   ⚠ TypeScript bundling failed, continuing with existing content.js");
+    }
+
     // Update .gitignore
     updateGitignore();
 
