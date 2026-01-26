@@ -51,10 +51,26 @@ import { SERVICES_FALLBACK } from "../config/services.js";
     // First-run flow
     if (setupShowCount === 0) {
       // Count 0: Show selector on any page
+      // Get services - either from result or use fallback
+      const services = result?.feedManager.getServices();
+      const hasServices = services && Object.keys(services).length > 0;
+
+      if (!hasServices) {
+        // No services available yet - use fallback to ensure selector has content
+        await storage.set(STORAGE_KEYS.setupShowCount, 1);
+        createServiceSelector({
+          settings: result?.settings ?? (await createTempSettings(adapters, currentHost)),
+          services: SERVICES_FALLBACK,
+          i18n,
+        });
+        return;
+      }
+
+      // Services available - proceed with selector
       await storage.set(STORAGE_KEYS.setupShowCount, 1);
       createServiceSelector({
         settings: result?.settings ?? (await createTempSettings(adapters, currentHost)),
-        services: result?.feedManager.getServices() ?? SERVICES_FALLBACK,
+        services,
         i18n,
       });
       return;

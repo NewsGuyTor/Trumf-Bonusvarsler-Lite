@@ -12,10 +12,10 @@ import {
   DEFAULT_POSITION,
   DEFAULT_THEME,
 } from "../config/constants.js";
+import { getDefaultEnabledServices } from "../config/services.js";
 
 // Maximum number of site-specific positions to store (to prevent unbounded growth)
 const MAX_SITE_POSITIONS = 100;
-import { getDefaultEnabledServices } from "../config/services.js";
 
 export interface SettingsCache {
   hiddenSites: Set<string>;
@@ -106,8 +106,9 @@ export class Settings {
 
         console.log("[BonusVarsler] Migrated to version", CURRENT_VERSION);
       }
-    } catch {
-      // Migration failed, continue anyway
+    } catch (err) {
+      // Migration failed - log error but continue anyway to not block the user
+      console.error("[BonusVarsler] Settings migration failed:", err);
     }
   }
 

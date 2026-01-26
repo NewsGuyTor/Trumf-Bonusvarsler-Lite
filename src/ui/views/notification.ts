@@ -101,6 +101,9 @@ export function createNotification(options: NotificationOptions): HTMLElement {
   const hideSiteLink = document.createElement("span");
   hideSiteLink.className = "hide-site";
   hideSiteLink.textContent = i18n.getMessage("dontShowOnThisSite");
+  hideSiteLink.setAttribute("role", "button");
+  hideSiteLink.setAttribute("tabindex", "0");
+  hideSiteLink.setAttribute("aria-label", i18n.getMessage("dontShowOnThisSite"));
 
   // Assemble content
   content.appendChild(cashback);
@@ -158,10 +161,17 @@ export function createNotification(options: NotificationOptions): HTMLElement {
   document.addEventListener("keydown", handleKeydown);
 
   // Settings toggle
-  settingsBtn.addEventListener("click", (e) => {
+  const openSettings = (e: Event) => {
     e.stopPropagation();
     content.classList.add("hidden");
     settingsPanel.classList.add("active");
+  };
+  settingsBtn.addEventListener("click", openSettings);
+  settingsBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openSettings(e);
+    }
   });
 
   // Minimize/expand toggle
@@ -180,9 +190,16 @@ export function createNotification(options: NotificationOptions): HTMLElement {
   });
 
   // Hide site
-  hideSiteLink.addEventListener("click", async () => {
+  const handleHideSite = async () => {
     await settings.hideSite(currentHost);
     closeNotification();
+  };
+  hideSiteLink.addEventListener("click", handleHideSite);
+  hideSiteLink.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleHideSite();
+    }
   });
 
   // Adblock detection (skip for code-based services)
@@ -190,30 +207,49 @@ export function createNotification(options: NotificationOptions): HTMLElement {
     const originalHref = actionBtn.getAttribute("href") || "";
     const originalText = actionBtn.childNodes[0]?.textContent || "";
 
-    recheckIcon.addEventListener("click", async (e) => {
+    const handleRecheck = async (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
       if (actionBtn.childNodes[0]) {
         actionBtn.childNodes[0].textContent = i18n.getMessage("checkingAdblock");
       }
       recheckIcon.classList.add("spinning");
-      const isBlocked = await detectAdblock(fetcher, currentHost);
-      recheckIcon.classList.remove("spinning");
 
-      if (isBlocked) {
-        actionBtn.classList.add("adblock");
-        if (actionBtn.childNodes[0]) {
-          actionBtn.childNodes[0].textContent = i18n.getMessage("adblockerDetected");
+      try {
+        const isBlocked = await detectAdblock(fetcher, currentHost);
+
+        if (isBlocked) {
+          actionBtn.classList.add("adblock");
+          if (actionBtn.childNodes[0]) {
+            actionBtn.childNodes[0].textContent = i18n.getMessage("adblockerDetected");
+          }
+          actionBtn.removeAttribute("href");
+          actionBtn.removeAttribute("target");
+        } else {
+          actionBtn.classList.remove("adblock");
+          if (actionBtn.childNodes[0]) {
+            actionBtn.childNodes[0].textContent = originalText;
+          }
+          actionBtn.setAttribute("href", originalHref);
+          actionBtn.setAttribute("target", "_blank");
         }
-        actionBtn.removeAttribute("href");
-        actionBtn.removeAttribute("target");
-      } else {
+      } catch {
+        // On error, restore original state
         actionBtn.classList.remove("adblock");
         if (actionBtn.childNodes[0]) {
           actionBtn.childNodes[0].textContent = originalText;
         }
         actionBtn.setAttribute("href", originalHref);
         actionBtn.setAttribute("target", "_blank");
+      } finally {
+        recheckIcon.classList.remove("spinning");
+      }
+    };
+
+    recheckIcon.addEventListener("click", handleRecheck);
+    recheckIcon.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        handleRecheck(e);
       }
     });
 
@@ -274,6 +310,9 @@ function createHeaderControls(cashbackText: string, i18n: I18nAdapter) {
   settingsBtn.className = "settings-btn";
   settingsBtn.src = SETTINGS_ICON_URI;
   settingsBtn.alt = i18n.getMessage("settings");
+  settingsBtn.setAttribute("role", "button");
+  settingsBtn.setAttribute("tabindex", "0");
+  settingsBtn.setAttribute("aria-label", i18n.getMessage("settings"));
 
   const minimizeBtn = document.createElement("button");
   minimizeBtn.className = "minimize-btn";
@@ -415,7 +454,7 @@ function createActionButton(
 
     const copyIcon = document.createElement("span");
     copyIcon.className = "copy-icon";
-    copyIcon.innerHTML = "&#x1F4CB;"; // 📋
+    copyIcon.textContent = "📋";
     copyIcon.title = i18n.getMessage("copyCode") || "Kopier kode";
     actionBtn.appendChild(copyIcon);
   } else {
@@ -425,8 +464,11 @@ function createActionButton(
   // Create recheck icon
   const recheckIcon = document.createElement("span");
   recheckIcon.className = "recheck-icon";
-  recheckIcon.innerHTML = "&#x21bb;"; // ↻
+  recheckIcon.textContent = "↻";
   recheckIcon.title = i18n.getMessage("checkAdblockAgain");
+  recheckIcon.setAttribute("role", "button");
+  recheckIcon.setAttribute("tabindex", "0");
+  recheckIcon.setAttribute("aria-label", i18n.getMessage("checkAdblockAgain"));
   actionBtn.appendChild(recheckIcon);
 
   // Click handler
@@ -438,18 +480,29 @@ function createActionButton(
       const copyIcon = actionBtn.querySelector(".copy-icon");
       if (actionBtn.dataset.copied !== "true") {
         e.preventDefault();
+
+        // Guard against missing Clipboard API
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+          if (copyIcon) {
+            (copyIcon as HTMLElement).textContent = "⚠";
+            (copyIcon as HTMLElement).title = i18n.getMessage("copyFailed") || "Kopiering feilet";
+          }
+          actionBtn.dataset.copied = "true";
+          return;
+        }
+
         navigator.clipboard
           .writeText(match.offer.code)
           .then(() => {
             if (copyIcon) {
-              copyIcon.innerHTML = "&#x2713;"; // ✓
+              (copyIcon as HTMLElement).textContent = "✓";
             }
             actionBtn.dataset.copied = "true";
             window.getSelection()?.removeAllRanges();
           })
           .catch(() => {
             if (copyIcon) {
-              copyIcon.innerHTML = "&#x26A0;"; // ⚠
+              (copyIcon as HTMLElement).textContent = "⚠";
               (copyIcon as HTMLElement).title = i18n.getMessage("copyFailed") || "Kopiering feilet";
             }
             actionBtn.dataset.copied = "true";

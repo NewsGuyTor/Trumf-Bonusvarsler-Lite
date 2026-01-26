@@ -20,6 +20,8 @@ export class ExtensionFetch implements FetchAdapter {
     }
   }
 
+  // URL params are intentionally unused here because the background script manages
+  // feed URLs and handles CORS/fallback logic internally via its own configuration.
   async fetchFeed<T>(_primaryUrl: string, _fallbackUrl?: string): Promise<T | null> {
     try {
       // Request feed from background script (handles CORS and fallback)

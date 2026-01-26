@@ -46,15 +46,25 @@ function inlineCSS(): esbuild.Plugin {
   };
 }
 
-// Plugin to read JSON files
+// Plugin to read JSON files with validation
 function jsonPlugin(): esbuild.Plugin {
   return {
     name: "json",
     setup(build) {
       build.onLoad({ filter: /\.json$/ }, async (args) => {
         const json = await Bun.file(args.path).text();
+        // Validate JSON at build time to catch errors early
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(json);
+        } catch (err) {
+          throw new Error(
+            `Invalid JSON in ${args.path}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+        // Use the parsed and re-serialized value to ensure valid output
         return {
-          contents: `export default ${json};`,
+          contents: `export default ${JSON.stringify(parsed)};`,
           loader: "js",
         };
       });
@@ -149,7 +159,16 @@ async function build() {
   });
 
   // Prepend userscript header
-  const userscriptCode = userscriptResult.outputFiles?.[0]?.text || "";
+  const userscriptCode = userscriptResult.outputFiles?.[0]?.text;
+  if (!userscriptCode || userscriptCode.trim() === "") {
+    console.error("❌ Userscript build produced empty or missing output");
+    console.error("   Build metadata:", JSON.stringify({
+      outputFilesCount: userscriptResult.outputFiles?.length ?? 0,
+      errors: userscriptResult.errors,
+      warnings: userscriptResult.warnings,
+    }, null, 2));
+    process.exit(1);
+  }
   const finalUserscript = getUserscriptHeader() + userscriptCode;
   fs.writeFileSync(path.join(ROOT, "BonusVarsler.user.js"), finalUserscript);
   console.log("   ✓ BonusVarsler.user.js");

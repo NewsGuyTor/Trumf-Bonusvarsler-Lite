@@ -167,12 +167,16 @@
 
 /* Adblock warning state */
 .action-btn.adblock {
-    background: #ff0000;
+    background: #c50000;
     animation: pulse 0.7s infinite alternate ease-in-out;
-    pointer-events: none;
     cursor: default;
     position: relative;
     padding-right: 36px;
+    border: 2px solid #900;
+}
+
+.action-btn.adblock::before {
+    content: "⚠ ";
 }
 
 @keyframes pulse {

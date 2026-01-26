@@ -110,11 +110,16 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
       info.appendChild(comingSoon);
     }
 
+    // Give the name element a unique ID for the toggle's accessible name
+    const nameId = `service-name-${serviceId}`;
+    name.id = nameId;
+
     const toggle = document.createElement("div");
     toggle.className = "toggle-switch";
     toggle.setAttribute("role", "switch");
     toggle.setAttribute("tabindex", "0");
     toggle.setAttribute("aria-checked", String(toggleStates[serviceId]));
+    toggle.setAttribute("aria-labelledby", nameId);
     if (toggleStates[serviceId]) {
       toggle.classList.add("active");
     }
@@ -144,6 +149,11 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
   saveBtn.className = "action-btn";
   saveBtn.textContent = i18n.getMessage("saveServices");
 
+  // Error display element (initially hidden)
+  const errorDisplay = document.createElement("div");
+  errorDisplay.className = "error-message";
+  errorDisplay.style.cssText = "color: #c50000; font-size: 13px; margin-top: 8px; display: none;";
+
   saveBtn.addEventListener("click", async () => {
     // Get enabled services
     const enabledServices = SERVICE_ORDER.filter((serviceId) => toggleStates[serviceId]);
@@ -153,6 +163,9 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
     if (!hasActiveService) {
       enabledServices.push("trumf");
     }
+
+    // Hide any previous error
+    errorDisplay.style.display = "none";
 
     try {
       // Save to storage
@@ -167,16 +180,14 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
       }
     } catch (error) {
       console.error("[BonusVarsler] Failed to save service selection:", error);
-      // Still try to proceed with callback/reload
-      if (onSave) {
-        onSave(enabledServices);
-      } else {
-        window.location.reload();
-      }
+      // Show error and keep dialog open - do NOT proceed with callback/reload
+      errorDisplay.textContent = i18n.getMessage("saveFailed") || "Kunne ikke lagre. Prøv igjen.";
+      errorDisplay.style.display = "block";
     }
   });
 
   content.appendChild(saveBtn);
+  content.appendChild(errorDisplay);
   body.appendChild(content);
 
   container.appendChild(header);

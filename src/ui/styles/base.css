@@ -91,6 +91,16 @@
     pointer-events: auto;
 }
 
+/* Restore accessible focus indicators for keyboard users */
+:host button:focus-visible,
+:host a:focus-visible,
+:host [tabindex]:focus-visible,
+:host [role="button"]:focus-visible,
+:host [role="switch"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 /* Container */
 .container {
     position: fixed;

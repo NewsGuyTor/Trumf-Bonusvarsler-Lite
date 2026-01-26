@@ -23,22 +23,31 @@ export interface ReminderOptions {
   onClose?: () => void;
 }
 
+// Validate hex color format
+function isValidHexColor(color: string): boolean {
+  return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(color);
+}
+
 /**
  * Create and show the reminder notification
  */
 export function createReminderNotification(options: ReminderOptions): HTMLElement {
   const { service, settings, i18n, onClose } = options;
 
+  // Capture focus to restore later
+  const previousActiveElement = document.activeElement as HTMLElement | null;
+
   // Create shadow host
   const shadowHost = createShadowHost();
   document.body.appendChild(shadowHost);
   const shadowRoot = shadowHost.attachShadow({ mode: "open" });
 
-  // Inject styles with service color override
+  // Inject styles with service color override (validate color first)
+  const safeColor = isValidHexColor(service.color) ? service.color : "#4D4DFF";
   const styleOverride = `
     :host {
-      --accent: ${service.color};
-      --accent-hover: ${service.color};
+      --accent: ${safeColor};
+      --accent-hover: ${safeColor};
     }
   `;
   injectStyles(shadowRoot, getReminderStyles() + styleOverride);
@@ -129,17 +138,42 @@ export function createReminderNotification(options: ReminderOptions): HTMLElemen
     draggableCleanup?.();
     shadowHost.remove();
     document.removeEventListener("keydown", handleKeydown);
+    // Restore focus to previously focused element
+    if (previousActiveElement && typeof previousActiveElement.focus === "function") {
+      previousActiveElement.focus();
+    }
     onClose?.();
   }
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       closeNotification();
+      return;
+    }
+
+    // Simple focus trap for Tab key within the dialog
+    if (e.key === "Tab") {
+      const focusableElements = shadowRoot.querySelectorAll<HTMLElement>(
+        'button, [href], [tabindex]:not([tabindex="-1"])'
+      );
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && shadowRoot.activeElement === firstFocusable) {
+        e.preventDefault();
+        lastFocusable?.focus();
+      } else if (!e.shiftKey && shadowRoot.activeElement === lastFocusable) {
+        e.preventDefault();
+        firstFocusable?.focus();
+      }
     }
   }
 
   closeBtn.addEventListener("click", closeNotification);
   document.addEventListener("keydown", handleKeydown);
+
+  // Move focus into the dialog
+  closeBtn.focus();
 
   // Minimize/expand toggle
   minimizeBtn.addEventListener("click", (e) => {
