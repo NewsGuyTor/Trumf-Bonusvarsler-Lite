@@ -70,7 +70,7 @@ const SUPPORTED_LOCALES = ["no", "en", "sv", "da", "fr", "es"];
 const EXTENSION_CONFIG = {
   name: "BonusVarsler",
   shortName: "BonusVarsler",
-  firefoxId: "bonusvarsler@kristofferR",
+  firefoxId: "trumf-bonusvarsler-lite@kristofferR",
 };
 
 // ===================

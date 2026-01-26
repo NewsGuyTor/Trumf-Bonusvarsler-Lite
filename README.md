@@ -2,11 +2,11 @@
 
 # BonusVarsler
 
-**Trumf | re:member *(kommer snart)* | OBOS *(kommer snart)* | SAS EuroBonus *(kommer snart)***
+**Trumf | re:member | DNB | OBOS *(kommer snart)* | SAS EuroBonus *(kommer snart)***
 
 <p align="center">
 
-![Versjon](https://img.shields.io/badge/Versjon-5.0-blue)
+![Versjon](https://img.shields.io/badge/Versjon-6.0-blue)
 ![Lisens](https://img.shields.io/badge/Lisens-GPL--3.0-green)
 ![Støttet i](https://img.shields.io/badge/Støttet_i-Chrome%20|%20Firefox%20|%20Edge%20|%20Safari-yellow)
 
@@ -25,7 +25,7 @@
 ---
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/bonusvarsler-lite-for-tru/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
-  <a href="https://addons.mozilla.org/firefox/addon/bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+  <a href="https://addons.mozilla.org/firefox/addon/bonusvarsler/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
 </p>
 
 ---
@@ -60,7 +60,7 @@ Denne utvidelsen løser problemet: Du handler som vanlig, og får et varsel når
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/bonusvarsler-lite-for-tru/ldnjfkeilnhpghjcogjchdchhfplcdmp"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Google/Chrome%20Web%20Store/SVG%20(with%20border).svg" alt="Chrome Web Store" width="230" height="60"></a>
-  <a href="https://addons.mozilla.org/firefox/addon/bonusvarsler-lite/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
+  <a href="https://addons.mozilla.org/firefox/addon/bonusvarsler/"><img src="https://raw.githubusercontent.com/kazcfz/Browser-Promotional-Badges/refs/heads/main/Mozilla/Firefox/Get%20The%20Add-On.svg" alt="Firefox Add-on" width="172" height="60"></a>
 </p>
 
 <details>
