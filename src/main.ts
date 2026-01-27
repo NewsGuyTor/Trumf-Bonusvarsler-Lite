@@ -84,14 +84,10 @@ export async function initialize(
   const settings = new Settings(storage, currentHost);
   await settings.load();
 
-  // Check if site is hidden or blacklisted before any i18n fetches
+  // Check if site is hidden or blacklisted
   if (settings.isSiteHidden(currentHost) || settings.isSiteBlacklisted(currentHost)) {
     return null;
   }
-
-  // Load language and messages only if we're continuing
-  const lang = await storage.get<string>(STORAGE_KEYS.language, "no");
-  await i18n.loadMessages(lang);
 
   // Initialize feed manager
   const feedManager = new FeedManager(storage, fetcher);
@@ -116,6 +112,10 @@ export async function initialize(
   if (!match) {
     return null;
   }
+
+  // Load language and messages only when we have a match and will show UI
+  const lang = await storage.get<string>(STORAGE_KEYS.language, "no");
+  await i18n.loadMessages(lang);
 
   return { settings, feedManager, match };
 }

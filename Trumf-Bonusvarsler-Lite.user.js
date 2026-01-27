@@ -959,8 +959,6 @@
     if (settings.isSiteHidden(currentHost) || settings.isSiteBlacklisted(currentHost)) {
       return null;
     }
-    const lang = await storage.get(STORAGE_KEYS.language, "no");
-    await i18n.loadMessages(lang);
     const feedManager = new FeedManager(storage, fetcher);
     const isKnown = await feedManager.isKnownMerchantHost(currentHost, DOMAIN_ALIASES);
     if (isKnown === false) {
@@ -976,6 +974,8 @@
     if (!match) {
       return null;
     }
+    const lang = await storage.get(STORAGE_KEYS.language, "no");
+    await i18n.loadMessages(lang);
     return { settings, feedManager, match };
   }
   var DEFAULT_CASHBACK_PATHS = ["/cashback/", "/shop/", "/reward/"];
