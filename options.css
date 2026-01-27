@@ -310,6 +310,63 @@ body {
   margin-top: 12px;
 }
 
+/* Blacklisted sites */
+.blacklist-add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.blacklist-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.blacklist-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.blacklist-input::placeholder {
+  color: var(--text-muted);
+}
+
+.no-blacklisted-sites {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.blacklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.blacklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.blacklist-name {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.blacklist-actions {
+  margin-top: 12px;
+}
+
 /* Buttons */
 .btn {
   padding: 8px 16px;

@@ -93,6 +93,11 @@ export async function initialize(
     return null;
   }
 
+  // Check if site is blacklisted
+  if (settings.isSiteBlacklisted(currentHost)) {
+    return null;
+  }
+
   // Initialize feed manager
   const feedManager = new FeedManager(storage, fetcher);
 

@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         BonusVarsler
+// @name         BonusVarsler (for Trumf, DNB, re:member++)
 // @namespace    http://tampermonkey.net/
-// @version      6.0.0
+// @version      6.1.0
 // @description  Varsler om bonuser og cashback fra Trumf, re:member, DNB og andre når du besøker nettsider som tilbyr dette. Norsk utvidelse.
 // @author       kristofferR
 // @match        *://*/*
@@ -55,6 +55,7 @@
         feedTime: "BonusVarsler_FeedTime_v1",
         hostIndex: "BonusVarsler_HostIndex_v1",
         hiddenSites: "BonusVarsler_HiddenSites",
+        blacklistedSites: "BonusVarsler_BlacklistedSites",
         theme: "BonusVarsler_Theme",
         startMinimized: "BonusVarsler_StartMinimized",
         position: "BonusVarsler_Position",
@@ -74,7 +75,7 @@
         feedTime_v4: "BonusVarsler_FeedTime_v4",
         hostIndex_v4: "BonusVarsler_HostIndex_v4"
       };
-      CURRENT_VERSION = "6.0";
+      CURRENT_VERSION = "6.1";
       MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
       PAGE_VISIT_COUNT_PREFIX = "BonusVarsler_PageVisits_";
       DEFAULT_POSITION = "bottom-right";
@@ -200,6 +201,7 @@
   function createDefaultSettings() {
     return {
       hiddenSites: /* @__PURE__ */ new Set(),
+      blacklistedSites: /* @__PURE__ */ new Set(),
       theme: DEFAULT_THEME,
       startMinimized: false,
       position: DEFAULT_POSITION,
@@ -275,6 +277,8 @@
           await this.runMigrations();
           const hiddenSitesArray = await this.storage.get(STORAGE_KEYS.hiddenSites, []);
           this.cache.hiddenSites = new Set(hiddenSitesArray);
+          const blacklistedSitesArray = await this.storage.get(STORAGE_KEYS.blacklistedSites, []);
+          this.cache.blacklistedSites = new Set(blacklistedSitesArray);
           this.cache.theme = await this.storage.get(STORAGE_KEYS.theme, DEFAULT_THEME);
           this.cache.startMinimized = await this.storage.get(STORAGE_KEYS.startMinimized, false);
           this.cache.position = await this.storage.get(STORAGE_KEYS.position, DEFAULT_POSITION);
@@ -308,6 +312,40 @@
         async resetHiddenSites() {
           this.cache.hiddenSites = /* @__PURE__ */ new Set();
           await this.storage.set(STORAGE_KEYS.hiddenSites, []);
+        }
+        // ==================
+        // Blacklisted Sites
+        // ==================
+        getBlacklistedSites() {
+          return this.cache.blacklistedSites;
+        }
+        isSiteBlacklisted(host) {
+          if (this.cache.blacklistedSites.has(host)) {
+            return true;
+          }
+          if (host.startsWith("www.") && this.cache.blacklistedSites.has(host.slice(4))) {
+            return true;
+          }
+          if (!host.startsWith("www.") && this.cache.blacklistedSites.has("www." + host)) {
+            return true;
+          }
+          return false;
+        }
+        async blacklistSite(host) {
+          if (!this.cache.blacklistedSites.has(host)) {
+            this.cache.blacklistedSites.add(host);
+            await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+          }
+        }
+        async unblacklistSite(host) {
+          if (this.cache.blacklistedSites.has(host)) {
+            this.cache.blacklistedSites.delete(host);
+            await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+          }
+        }
+        async resetBlacklistedSites() {
+          this.cache.blacklistedSites = /* @__PURE__ */ new Set();
+          await this.storage.set(STORAGE_KEYS.blacklistedSites, []);
         }
         // ==================
         // Theme
@@ -925,6 +963,9 @@
     const settings = new Settings(storage, currentHost);
     await settings.load();
     if (settings.isSiteHidden(currentHost)) {
+      return null;
+    }
+    if (settings.isSiteBlacklisted(currentHost)) {
       return null;
     }
     const feedManager = new FeedManager(storage, fetcher);

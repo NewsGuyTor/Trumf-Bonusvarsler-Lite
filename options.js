@@ -49,6 +49,7 @@ let SERVICES = { ...SERVICES_FALLBACK };
 // Storage keys
 const KEYS = {
   hiddenSites: "BonusVarsler_HiddenSites",
+  blacklistedSites: "BonusVarsler_BlacklistedSites",
   theme: "BonusVarsler_Theme",
   startMinimized: "BonusVarsler_StartMinimized",
   position: "BonusVarsler_Position",
@@ -307,6 +308,95 @@ async function initHiddenSites() {
   });
 }
 
+// Initialize blacklisted sites
+async function initBlacklistedSites() {
+  const blacklistedSites = await getValue(KEYS.blacklistedSites, []);
+  const container = document.getElementById("blacklist-container");
+  const list = document.getElementById("blacklist-list");
+  const actions = document.getElementById("blacklist-actions");
+  const input = document.getElementById("blacklist-input");
+  const addBtn = document.getElementById("blacklist-add-btn");
+
+  function render() {
+    list.innerHTML = "";
+
+    if (blacklistedSites.length === 0) {
+      container.style.display = "block";
+      actions.style.display = "none";
+      return;
+    }
+
+    container.style.display = "none";
+    actions.style.display = "block";
+
+    blacklistedSites.forEach((site, index) => {
+      const item = document.createElement("div");
+      item.className = "blacklist-item";
+
+      const name = document.createElement("span");
+      name.className = "blacklist-name";
+      name.textContent = site;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-site-btn";
+      removeBtn.textContent = "×";
+      removeBtn.title = i18n("remove");
+      removeBtn.addEventListener("click", async () => {
+        blacklistedSites.splice(index, 1);
+        await setValue(KEYS.blacklistedSites, blacklistedSites);
+        render();
+        showStatus(i18n("siteUnblacklisted", site));
+      });
+
+      item.appendChild(name);
+      item.appendChild(removeBtn);
+      list.appendChild(item);
+    });
+  }
+
+  render();
+
+  // Add site to blacklist
+  async function addSite() {
+    const site = input.value.trim().toLowerCase();
+    if (!site) return;
+
+    // Basic validation - must look like a domain
+    if (!site.includes(".") || site.includes("/") || site.includes(" ")) {
+      showStatus(i18n("invalidDomain"));
+      return;
+    }
+
+    if (blacklistedSites.includes(site)) {
+      showStatus(i18n("siteAlreadyBlacklisted"));
+      return;
+    }
+
+    blacklistedSites.push(site);
+    await setValue(KEYS.blacklistedSites, blacklistedSites);
+    input.value = "";
+    render();
+    showStatus(i18n("siteBlacklisted", site));
+  }
+
+  addBtn.addEventListener("click", addSite);
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      addSite();
+    }
+  });
+
+  // Reset all blacklisted sites
+  document.getElementById("reset-blacklist").addEventListener("click", async () => {
+    if (confirm(i18n("confirmResetBlacklist"))) {
+      blacklistedSites.length = 0;
+      await setValue(KEYS.blacklistedSites, []);
+      render();
+      showStatus(i18n("allBlacklistedSitesRemoved"));
+    }
+  });
+}
+
 // Initialize services checkboxes
 async function initServices() {
   const container = document.getElementById("services-list");
@@ -438,5 +528,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPosition();
   initServices();
   initHiddenSites();
+  initBlacklistedSites();
   initClearCache();
 });

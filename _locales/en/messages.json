@@ -60,6 +60,46 @@
   "noHiddenSites": {
     "message": "No sites are hidden."
   },
+  "blacklistedSites": {
+    "message": "Blacklisted sites"
+  },
+  "blacklistDescription": {
+    "message": "Sites where the extension should never run."
+  },
+  "addSite": {
+    "message": "Add"
+  },
+  "noBlacklistedSites": {
+    "message": "No sites are blacklisted."
+  },
+  "siteBlacklisted": {
+    "message": "$SITE$ blacklisted",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteUnblacklisted": {
+    "message": "$SITE$ removed from blacklist",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteAlreadyBlacklisted": {
+    "message": "Site is already blacklisted"
+  },
+  "invalidDomain": {
+    "message": "Invalid domain"
+  },
+  "confirmResetBlacklist": {
+    "message": "Are you sure you want to reset all blacklisted sites?"
+  },
+  "allBlacklistedSitesRemoved": {
+    "message": "All blacklisted sites removed"
+  },
   "resetAll": {
     "message": "Reset all"
   },

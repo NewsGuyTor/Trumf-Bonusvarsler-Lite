@@ -19,6 +19,7 @@ const MAX_SITE_POSITIONS = 100;
 
 export interface SettingsCache {
   hiddenSites: Set<string>;
+  blacklistedSites: Set<string>;
   theme: Theme;
   startMinimized: boolean;
   position: Position;
@@ -31,6 +32,7 @@ export interface SettingsCache {
 export function createDefaultSettings(): SettingsCache {
   return {
     hiddenSites: new Set(),
+    blacklistedSites: new Set(),
     theme: DEFAULT_THEME,
     startMinimized: false,
     position: DEFAULT_POSITION,
@@ -127,6 +129,8 @@ export class Settings {
 
     const hiddenSitesArray = await this.storage.get<string[]>(STORAGE_KEYS.hiddenSites, []);
     this.cache.hiddenSites = new Set(hiddenSitesArray);
+    const blacklistedSitesArray = await this.storage.get<string[]>(STORAGE_KEYS.blacklistedSites, []);
+    this.cache.blacklistedSites = new Set(blacklistedSitesArray);
     this.cache.theme = await this.storage.get<Theme>(STORAGE_KEYS.theme, DEFAULT_THEME);
     this.cache.startMinimized = await this.storage.get<boolean>(STORAGE_KEYS.startMinimized, false);
     this.cache.position = await this.storage.get<Position>(STORAGE_KEYS.position, DEFAULT_POSITION);
@@ -169,6 +173,49 @@ export class Settings {
   async resetHiddenSites(): Promise<void> {
     this.cache.hiddenSites = new Set();
     await this.storage.set(STORAGE_KEYS.hiddenSites, []);
+  }
+
+  // ==================
+  // Blacklisted Sites
+  // ==================
+
+  getBlacklistedSites(): Set<string> {
+    return this.cache.blacklistedSites;
+  }
+
+  isSiteBlacklisted(host: string): boolean {
+    // Check exact match
+    if (this.cache.blacklistedSites.has(host)) {
+      return true;
+    }
+    // Check without www prefix
+    if (host.startsWith("www.") && this.cache.blacklistedSites.has(host.slice(4))) {
+      return true;
+    }
+    // Check with www prefix
+    if (!host.startsWith("www.") && this.cache.blacklistedSites.has("www." + host)) {
+      return true;
+    }
+    return false;
+  }
+
+  async blacklistSite(host: string): Promise<void> {
+    if (!this.cache.blacklistedSites.has(host)) {
+      this.cache.blacklistedSites.add(host);
+      await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+    }
+  }
+
+  async unblacklistSite(host: string): Promise<void> {
+    if (this.cache.blacklistedSites.has(host)) {
+      this.cache.blacklistedSites.delete(host);
+      await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+    }
+  }
+
+  async resetBlacklistedSites(): Promise<void> {
+    this.cache.blacklistedSites = new Set();
+    await this.storage.set(STORAGE_KEYS.blacklistedSites, []);
   }
 
   // ==================

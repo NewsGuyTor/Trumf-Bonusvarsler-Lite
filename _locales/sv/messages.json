@@ -60,6 +60,46 @@
   "noHiddenSites": {
     "message": "Inga sidor är dolda."
   },
+  "blacklistedSites": {
+    "message": "Blockerade sidor"
+  },
+  "blacklistDescription": {
+    "message": "Sidor där tillägget aldrig ska köras."
+  },
+  "addSite": {
+    "message": "Lägg till"
+  },
+  "noBlacklistedSites": {
+    "message": "Inga sidor är blockerade."
+  },
+  "siteBlacklisted": {
+    "message": "$SITE$ blockerad",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteUnblacklisted": {
+    "message": "$SITE$ borttagen från blockeringslistan",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteAlreadyBlacklisted": {
+    "message": "Sidan är redan blockerad"
+  },
+  "invalidDomain": {
+    "message": "Ogiltig domän"
+  },
+  "confirmResetBlacklist": {
+    "message": "Är du säker på att du vill återställa alla blockerade sidor?"
+  },
+  "allBlacklistedSitesRemoved": {
+    "message": "Alla blockerade sidor borttagna"
+  },
   "resetAll": {
     "message": "Återställ alla"
   },

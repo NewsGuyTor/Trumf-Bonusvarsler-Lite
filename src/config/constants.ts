@@ -22,6 +22,7 @@ export const STORAGE_KEYS = {
   feedTime: "BonusVarsler_FeedTime_v1",
   hostIndex: "BonusVarsler_HostIndex_v1",
   hiddenSites: "BonusVarsler_HiddenSites",
+  blacklistedSites: "BonusVarsler_BlacklistedSites",
   theme: "BonusVarsler_Theme",
   startMinimized: "BonusVarsler_StartMinimized",
   position: "BonusVarsler_Position",
@@ -45,7 +46,7 @@ export const LEGACY_KEYS = {
 } as const;
 
 // Version tracking
-export const CURRENT_VERSION = "6.0";
+export const CURRENT_VERSION = "6.1";
 
 // Per-host session key prefixes (used with localStorage)
 export const MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
