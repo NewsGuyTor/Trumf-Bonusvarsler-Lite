@@ -180,7 +180,13 @@ export class Settings {
   // ==================
 
   private normalizeHost(host: string): string {
-    return host.startsWith("www.") ? host.slice(4) : host;
+    let h = host.trim().toLowerCase();
+    if (h.startsWith("www.")) {
+      h = h.slice(4);
+    }
+    // Strip leading/trailing dots
+    h = h.replace(/^\.+|\.+$/g, "");
+    return h;
   }
 
   getBlacklistedSites(): Set<string> {

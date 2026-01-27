@@ -66,6 +66,11 @@ export function markMessageShown(
   sessionStorage.set(messageShownKey, Date.now().toString());
 }
 
+export type InitializeResult =
+  | { status: "blocked" }
+  | { status: "no-match"; settings: Settings }
+  | { status: "match"; settings: Settings; feedManager: FeedManager; match: NonNullable<ReturnType<typeof findBestOffer>> };
+
 /**
  * Initialize BonusVarsler
  * This is the main entry point called by platform-specific code
@@ -73,11 +78,7 @@ export function markMessageShown(
 export async function initialize(
   adapters: PlatformAdapters,
   currentHost: string
-): Promise<{
-  settings: Settings;
-  feedManager: FeedManager;
-  match: NonNullable<ReturnType<typeof findBestOffer>>;
-} | null> {
+): Promise<InitializeResult> {
   const { storage, fetcher, i18n } = adapters;
 
   // Initialize settings first so we can bail out early
@@ -86,7 +87,7 @@ export async function initialize(
 
   // Check if site is hidden or blacklisted
   if (settings.isSiteHidden(currentHost) || settings.isSiteBlacklisted(currentHost)) {
-    return null;
+    return { status: "blocked" };
   }
 
   // Initialize feed manager
@@ -95,13 +96,13 @@ export async function initialize(
   // Quick host check (if index is cached)
   const isKnown = await feedManager.isKnownMerchantHost(currentHost, DOMAIN_ALIASES);
   if (isKnown === false) {
-    return null; // Definitely not a merchant
+    return { status: "no-match", settings }; // Definitely not a merchant
   }
 
   // Get full feed and find merchant
   const feed = await feedManager.getFeed();
   if (!feed) {
-    return null;
+    return { status: "no-match", settings };
   }
 
   // Find best offer for this merchant
@@ -110,14 +111,14 @@ export async function initialize(
   const match = findBestOffer(feed, currentHost, enabledServices, services);
 
   if (!match) {
-    return null;
+    return { status: "no-match", settings };
   }
 
   // Load language and messages only when we have a match and will show UI
   const lang = await storage.get<string>(STORAGE_KEYS.language, "no");
   await i18n.loadMessages(lang);
 
-  return { settings, feedManager, match };
+  return { status: "match", settings, feedManager, match };
 }
 
 // Default cashback path patterns if service doesn't specify its own

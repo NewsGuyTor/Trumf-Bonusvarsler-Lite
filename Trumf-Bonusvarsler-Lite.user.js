@@ -20,420 +20,6 @@
 
 "use strict";
 (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __esm = (fn, res) => function __init() {
-    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-  };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-
-  // src/config/constants.ts
-  var CONFIG, STORAGE_KEYS, LEGACY_KEYS, CURRENT_VERSION, MESSAGE_SHOWN_KEY_PREFIX, PAGE_VISIT_COUNT_PREFIX, DEFAULT_POSITION, DEFAULT_THEME, AD_TEST_URLS, AD_BANNER_IDS, CSP_RESTRICTED_SITES;
-  var init_constants = __esm({
-    "src/config/constants.ts"() {
-      "use strict";
-      CONFIG = {
-        feedUrl: "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
-        fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
-        cacheDuration: 48 * 60 * 60 * 1e3,
-        // 48 hours
-        messageDuration: 10 * 60 * 1e3,
-        // 10 minutes
-        pageVisitsBeforeCooldown: 3,
-        // Start cooldown after this many page visits per site
-        maxRetries: 5,
-        retryDelays: [100, 500, 1e3, 2e3, 4e3],
-        // Exponential backoff
-        adblockTimeout: 3e3
-        // 3 seconds timeout for adblock checks
-      };
-      STORAGE_KEYS = {
-        feedData: "BonusVarsler_FeedData_v1",
-        feedTime: "BonusVarsler_FeedTime_v1",
-        hostIndex: "BonusVarsler_HostIndex_v1",
-        hiddenSites: "BonusVarsler_HiddenSites",
-        blacklistedSites: "BonusVarsler_BlacklistedSites",
-        theme: "BonusVarsler_Theme",
-        startMinimized: "BonusVarsler_StartMinimized",
-        position: "BonusVarsler_Position",
-        sitePositions: "BonusVarsler_SitePositions",
-        reminderShown: "BonusVarsler_ReminderShown",
-        language: "BonusVarsler_Language",
-        enabledServices: "BonusVarsler_EnabledServices",
-        setupComplete: "BonusVarsler_SetupComplete",
-        setupShowCount: "BonusVarsler_SetupShowCount",
-        version: "BonusVarsler_Version"
-      };
-      LEGACY_KEYS = {
-        feedData_v3: "BonusVarsler_FeedData_v3",
-        feedTime_v3: "BonusVarsler_FeedTime_v3",
-        hostIndex_v3: "BonusVarsler_HostIndex_v3",
-        feedData_v4: "BonusVarsler_FeedData_v4",
-        feedTime_v4: "BonusVarsler_FeedTime_v4",
-        hostIndex_v4: "BonusVarsler_HostIndex_v4"
-      };
-      CURRENT_VERSION = "6.1";
-      MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
-      PAGE_VISIT_COUNT_PREFIX = "BonusVarsler_PageVisits_";
-      DEFAULT_POSITION = "bottom-right";
-      DEFAULT_THEME = "light";
-      AD_TEST_URLS = [
-        "https://widgets.outbrain.com/outbrain.js",
-        "https://adligature.com/",
-        "https://secure.quantserve.com/quant.js",
-        "https://srvtrck.com/assets/css/LineIcons.css"
-      ];
-      AD_BANNER_IDS = [
-        "AdHeader",
-        "AdContainer",
-        "AD_Top",
-        "homead",
-        "ad-lead"
-      ];
-      CSP_RESTRICTED_SITES = /* @__PURE__ */ new Set([
-        "cdon.com",
-        "elite.se",
-        "elon.no",
-        "extraoptical.no",
-        "fabel.no",
-        "hoie.no",
-        "lux-case.no",
-        "vetzoo.no",
-        "www.bookbeat.no",
-        "www.clickandboat.com",
-        "www.ekstralys.no",
-        "www.elite.se",
-        "www.getyourguide.com",
-        "www.klokkegiganten.no",
-        "www.myprotein.no",
-        "www.skyshowtime.com",
-        "www.sportmann.no",
-        "www.strikkia.no",
-        "www.vivara.no"
-      ]);
-    }
-  });
-
-  // src/config/services.ts
-  function getDefaultEnabledServices(services = SERVICES_FALLBACK) {
-    return Object.values(services).filter((s) => s.defaultEnabled).map((s) => s.id);
-  }
-  function isValidService(service) {
-    return typeof service.name === "string" && service.name.length > 0 && typeof service.color === "string" && service.color.length > 0;
-  }
-  function mergeServices(feedServices, fallback = SERVICES_FALLBACK) {
-    if (!feedServices) {
-      return { ...fallback };
-    }
-    const merged = { ...fallback };
-    for (const [id, service] of Object.entries(feedServices)) {
-      const existing = merged[id] || {};
-      const candidate = { ...existing, ...service, id };
-      if (isValidService(candidate)) {
-        merged[id] = candidate;
-      } else {
-        console.warn(`BonusVarsler: Skipping invalid service "${id}" - missing required fields`);
-      }
-    }
-    return merged;
-  }
-  var SERVICES_FALLBACK, SERVICE_ORDER;
-  var init_services = __esm({
-    "src/config/services.ts"() {
-      "use strict";
-      SERVICES_FALLBACK = {
-        trumf: {
-          id: "trumf",
-          name: "Trumf",
-          clickthroughUrl: "https://trumfnetthandel.no/cashback/{urlName}",
-          reminderDomain: "trumfnetthandel.no",
-          color: "#4D4DFF",
-          defaultEnabled: true
-        },
-        remember: {
-          id: "remember",
-          name: "re:member",
-          clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
-          reminderDomain: "remember.no",
-          color: "#f28d00",
-          defaultEnabled: false
-        },
-        dnb: {
-          id: "dnb",
-          name: "DNB",
-          clickthroughUrl: "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter",
-          color: "#007272",
-          defaultEnabled: false,
-          type: "code"
-        },
-        obos: {
-          id: "obos",
-          name: "OBOS",
-          color: "#0047ba",
-          comingSoon: true
-        },
-        naf: {
-          id: "naf",
-          name: "NAF",
-          color: "#ffd816",
-          comingSoon: true
-        },
-        lofavor: {
-          id: "lofavor",
-          name: "LOfav\xF8r",
-          color: "#ff0000",
-          comingSoon: true
-        }
-      };
-      SERVICE_ORDER = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
-    }
-  });
-
-  // src/core/settings.ts
-  var settings_exports = {};
-  __export(settings_exports, {
-    Settings: () => Settings,
-    createDefaultSettings: () => createDefaultSettings
-  });
-  function createDefaultSettings() {
-    return {
-      hiddenSites: /* @__PURE__ */ new Set(),
-      blacklistedSites: /* @__PURE__ */ new Set(),
-      theme: DEFAULT_THEME,
-      startMinimized: false,
-      position: DEFAULT_POSITION,
-      sitePositions: {},
-      enabledServices: null,
-      setupComplete: false,
-      setupShowCount: 0
-    };
-  }
-  var MAX_SITE_POSITIONS, Settings;
-  var init_settings = __esm({
-    "src/core/settings.ts"() {
-      "use strict";
-      init_constants();
-      init_services();
-      MAX_SITE_POSITIONS = 100;
-      Settings = class {
-        cache;
-        storage;
-        currentHost;
-        constructor(storage, currentHost) {
-          this.cache = createDefaultSettings();
-          this.storage = storage;
-          this.currentHost = currentHost;
-        }
-        /**
-         * Run version-based migrations
-         */
-        async runMigrations() {
-          try {
-            const storedVersion = await this.storage.get(STORAGE_KEYS.version, null);
-            if (storedVersion !== CURRENT_VERSION) {
-              const existingEnabledServices = await this.storage.get(
-                STORAGE_KEYS.enabledServices,
-                null
-              );
-              const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData_v3, null);
-              const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime_v3, null);
-              const legacyFeedDataV4 = await this.storage.get(LEGACY_KEYS.feedData_v4, null);
-              const legacyFeedTimeV4 = await this.storage.get(LEGACY_KEYS.feedTime_v4, null);
-              const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null || legacyFeedDataV4 !== null || legacyFeedTimeV4 !== null);
-              const isExistingUser = storedVersion !== null || existingEnabledServices !== null || isLegacyUser;
-              const keysToRemove = [
-                STORAGE_KEYS.feedData,
-                STORAGE_KEYS.feedTime,
-                STORAGE_KEYS.hostIndex,
-                LEGACY_KEYS.feedData_v3,
-                LEGACY_KEYS.feedTime_v3,
-                LEGACY_KEYS.hostIndex_v3,
-                LEGACY_KEYS.feedData_v4,
-                LEGACY_KEYS.feedTime_v4,
-                LEGACY_KEYS.hostIndex_v4,
-                STORAGE_KEYS.reminderShown
-              ];
-              await this.storage.remove(keysToRemove);
-              if (isLegacyUser) {
-                await this.storage.set(STORAGE_KEYS.enabledServices, ["trumf"]);
-              }
-              if (isExistingUser) {
-                await this.storage.set(STORAGE_KEYS.setupComplete, true);
-              }
-              await this.storage.set(STORAGE_KEYS.version, CURRENT_VERSION);
-              console.log("[BonusVarsler] Migrated to version", CURRENT_VERSION);
-            }
-          } catch (err) {
-            console.error("[BonusVarsler] Settings migration failed:", err);
-          }
-        }
-        /**
-         * Load all settings from storage
-         */
-        async load() {
-          await this.runMigrations();
-          const hiddenSitesArray = await this.storage.get(STORAGE_KEYS.hiddenSites, []);
-          this.cache.hiddenSites = new Set(hiddenSitesArray);
-          const blacklistedSitesArray = await this.storage.get(STORAGE_KEYS.blacklistedSites, []);
-          this.cache.blacklistedSites = new Set(blacklistedSitesArray);
-          this.cache.theme = await this.storage.get(STORAGE_KEYS.theme, DEFAULT_THEME);
-          this.cache.startMinimized = await this.storage.get(STORAGE_KEYS.startMinimized, false);
-          this.cache.position = await this.storage.get(STORAGE_KEYS.position, DEFAULT_POSITION);
-          this.cache.sitePositions = await this.storage.get(
-            STORAGE_KEYS.sitePositions,
-            {}
-          );
-          const storedServices = await this.storage.get(
-            STORAGE_KEYS.enabledServices,
-            null
-          );
-          this.cache.enabledServices = storedServices;
-          this.cache.setupComplete = await this.storage.get(STORAGE_KEYS.setupComplete, false);
-          this.cache.setupShowCount = await this.storage.get(STORAGE_KEYS.setupShowCount, 0);
-        }
-        // ==================
-        // Hidden Sites
-        // ==================
-        getHiddenSites() {
-          return this.cache.hiddenSites;
-        }
-        isSiteHidden(host) {
-          return this.cache.hiddenSites.has(host);
-        }
-        async hideSite(host) {
-          if (!this.cache.hiddenSites.has(host)) {
-            this.cache.hiddenSites.add(host);
-            await this.storage.set(STORAGE_KEYS.hiddenSites, [...this.cache.hiddenSites]);
-          }
-        }
-        async resetHiddenSites() {
-          this.cache.hiddenSites = /* @__PURE__ */ new Set();
-          await this.storage.set(STORAGE_KEYS.hiddenSites, []);
-        }
-        // ==================
-        // Blacklisted Sites
-        // ==================
-        normalizeHost(host) {
-          return host.startsWith("www.") ? host.slice(4) : host;
-        }
-        getBlacklistedSites() {
-          return this.cache.blacklistedSites;
-        }
-        isSiteBlacklisted(host) {
-          return this.cache.blacklistedSites.has(this.normalizeHost(host));
-        }
-        async blacklistSite(host) {
-          const normalized = this.normalizeHost(host);
-          if (!this.cache.blacklistedSites.has(normalized)) {
-            this.cache.blacklistedSites.add(normalized);
-            await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
-          }
-        }
-        async unblacklistSite(host) {
-          const normalized = this.normalizeHost(host);
-          if (this.cache.blacklistedSites.has(normalized)) {
-            this.cache.blacklistedSites.delete(normalized);
-            await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
-          }
-        }
-        async resetBlacklistedSites() {
-          this.cache.blacklistedSites = /* @__PURE__ */ new Set();
-          await this.storage.set(STORAGE_KEYS.blacklistedSites, []);
-        }
-        // ==================
-        // Theme
-        // ==================
-        getTheme() {
-          return this.cache.theme;
-        }
-        async setTheme(theme) {
-          this.cache.theme = theme;
-          await this.storage.set(STORAGE_KEYS.theme, theme);
-        }
-        // ==================
-        // Start Minimized
-        // ==================
-        getStartMinimized() {
-          return this.cache.startMinimized;
-        }
-        async setStartMinimized(value) {
-          this.cache.startMinimized = value;
-          await this.storage.set(STORAGE_KEYS.startMinimized, value);
-        }
-        // ==================
-        // Position
-        // ==================
-        getPosition() {
-          return this.cache.sitePositions[this.currentHost] || this.cache.position;
-        }
-        getDefaultPosition() {
-          return this.cache.position;
-        }
-        async setDefaultPosition(position) {
-          this.cache.position = position;
-          await this.storage.set(STORAGE_KEYS.position, position);
-        }
-        async setPositionForSite(position) {
-          this.cache.sitePositions[this.currentHost] = position;
-          const hosts = Object.keys(this.cache.sitePositions);
-          if (hosts.length > MAX_SITE_POSITIONS) {
-            const toRemove = hosts.slice(0, hosts.length - MAX_SITE_POSITIONS);
-            for (const host of toRemove) {
-              delete this.cache.sitePositions[host];
-            }
-          }
-          await this.storage.set(STORAGE_KEYS.sitePositions, this.cache.sitePositions);
-        }
-        // ==================
-        // Enabled Services
-        // ==================
-        getEnabledServices() {
-          return this.cache.enabledServices || getDefaultEnabledServices();
-        }
-        isServiceEnabled(serviceId) {
-          return this.getEnabledServices().includes(serviceId);
-        }
-        async setServiceEnabled(serviceId, enabled) {
-          const current = this.getEnabledServices();
-          let updated;
-          if (enabled && !current.includes(serviceId)) {
-            updated = [...current, serviceId];
-          } else if (!enabled && current.includes(serviceId)) {
-            updated = current.filter((s) => s !== serviceId);
-          } else {
-            return;
-          }
-          this.cache.enabledServices = updated;
-          await this.storage.set(STORAGE_KEYS.enabledServices, updated);
-        }
-        async setEnabledServices(services) {
-          this.cache.enabledServices = services;
-          await this.storage.set(STORAGE_KEYS.enabledServices, services);
-        }
-        // ==================
-        // Setup Complete
-        // ==================
-        isSetupComplete() {
-          return this.cache.setupComplete;
-        }
-        getSetupShowCount() {
-          return this.cache.setupShowCount;
-        }
-        async setSetupComplete(complete) {
-          this.cache.setupComplete = complete;
-          await this.storage.set(STORAGE_KEYS.setupComplete, complete);
-        }
-        async incrementSetupShowCount() {
-          this.cache.setupShowCount++;
-          await this.storage.set(STORAGE_KEYS.setupShowCount, this.cache.setupShowCount);
-        }
-      };
-    }
-  });
-
   // src/storage/local-session-storage.ts
   var LocalSessionStorage = class {
     get(key) {
@@ -658,8 +244,86 @@
     return instance2;
   }
 
-  // src/main.ts
-  init_constants();
+  // src/config/constants.ts
+  var CONFIG = {
+    feedUrl: "https://raw.githubusercontent.com/kristofferR/BonusVarsler/main/sitelist.json",
+    fallbackUrl: "https://wlp.tcb-cdn.com/trumf/notifierfeed.json",
+    cacheDuration: 48 * 60 * 60 * 1e3,
+    // 48 hours
+    messageDuration: 10 * 60 * 1e3,
+    // 10 minutes
+    pageVisitsBeforeCooldown: 3,
+    // Start cooldown after this many page visits per site
+    maxRetries: 5,
+    retryDelays: [100, 500, 1e3, 2e3, 4e3],
+    // Exponential backoff
+    adblockTimeout: 3e3
+    // 3 seconds timeout for adblock checks
+  };
+  var STORAGE_KEYS = {
+    feedData: "BonusVarsler_FeedData_v1",
+    feedTime: "BonusVarsler_FeedTime_v1",
+    hostIndex: "BonusVarsler_HostIndex_v1",
+    hiddenSites: "BonusVarsler_HiddenSites",
+    blacklistedSites: "BonusVarsler_BlacklistedSites",
+    theme: "BonusVarsler_Theme",
+    startMinimized: "BonusVarsler_StartMinimized",
+    position: "BonusVarsler_Position",
+    sitePositions: "BonusVarsler_SitePositions",
+    reminderShown: "BonusVarsler_ReminderShown",
+    language: "BonusVarsler_Language",
+    enabledServices: "BonusVarsler_EnabledServices",
+    setupComplete: "BonusVarsler_SetupComplete",
+    setupShowCount: "BonusVarsler_SetupShowCount",
+    version: "BonusVarsler_Version"
+  };
+  var LEGACY_KEYS = {
+    feedData_v3: "BonusVarsler_FeedData_v3",
+    feedTime_v3: "BonusVarsler_FeedTime_v3",
+    hostIndex_v3: "BonusVarsler_HostIndex_v3",
+    feedData_v4: "BonusVarsler_FeedData_v4",
+    feedTime_v4: "BonusVarsler_FeedTime_v4",
+    hostIndex_v4: "BonusVarsler_HostIndex_v4"
+  };
+  var CURRENT_VERSION = "6.1";
+  var MESSAGE_SHOWN_KEY_PREFIX = "BonusVarsler_MessageShown_";
+  var PAGE_VISIT_COUNT_PREFIX = "BonusVarsler_PageVisits_";
+  var DEFAULT_POSITION = "bottom-right";
+  var DEFAULT_THEME = "light";
+  var AD_TEST_URLS = [
+    "https://widgets.outbrain.com/outbrain.js",
+    "https://adligature.com/",
+    "https://secure.quantserve.com/quant.js",
+    "https://srvtrck.com/assets/css/LineIcons.css"
+  ];
+  var AD_BANNER_IDS = [
+    "AdHeader",
+    "AdContainer",
+    "AD_Top",
+    "homead",
+    "ad-lead"
+  ];
+  var CSP_RESTRICTED_SITES = /* @__PURE__ */ new Set([
+    "cdon.com",
+    "elite.se",
+    "elon.no",
+    "extraoptical.no",
+    "fabel.no",
+    "hoie.no",
+    "lux-case.no",
+    "vetzoo.no",
+    "www.bookbeat.no",
+    "www.clickandboat.com",
+    "www.ekstralys.no",
+    "www.elite.se",
+    "www.getyourguide.com",
+    "www.klokkegiganten.no",
+    "www.myprotein.no",
+    "www.skyshowtime.com",
+    "www.sportmann.no",
+    "www.strikkia.no",
+    "www.vivara.no"
+  ]);
 
   // src/config/domain-aliases.ts
   var DOMAIN_ALIASES = {
@@ -687,12 +351,310 @@
     "no.trip.com": "www.trip.com"
   };
 
-  // src/main.ts
-  init_settings();
+  // src/config/services.ts
+  var SERVICES_FALLBACK = {
+    trumf: {
+      id: "trumf",
+      name: "Trumf",
+      clickthroughUrl: "https://trumfnetthandel.no/cashback/{urlName}",
+      reminderDomain: "trumfnetthandel.no",
+      color: "#4D4DFF",
+      defaultEnabled: true
+    },
+    remember: {
+      id: "remember",
+      name: "re:member",
+      clickthroughUrl: "https://www.remember.no/reward/rabatt/{urlName}",
+      reminderDomain: "remember.no",
+      color: "#f28d00",
+      defaultEnabled: false
+    },
+    dnb: {
+      id: "dnb",
+      name: "DNB",
+      clickthroughUrl: "https://www.dnb.no/kundeprogram/fordeler/faste-rabatter",
+      color: "#007272",
+      defaultEnabled: false,
+      type: "code"
+    },
+    obos: {
+      id: "obos",
+      name: "OBOS",
+      color: "#0047ba",
+      comingSoon: true
+    },
+    naf: {
+      id: "naf",
+      name: "NAF",
+      color: "#ffd816",
+      comingSoon: true
+    },
+    lofavor: {
+      id: "lofavor",
+      name: "LOfav\xF8r",
+      color: "#ff0000",
+      comingSoon: true
+    }
+  };
+  var SERVICE_ORDER = ["trumf", "remember", "dnb", "obos", "naf", "lofavor"];
+  function getDefaultEnabledServices(services = SERVICES_FALLBACK) {
+    return Object.values(services).filter((s) => s.defaultEnabled).map((s) => s.id);
+  }
+  function isValidService(service) {
+    return typeof service.name === "string" && service.name.length > 0 && typeof service.color === "string" && service.color.length > 0;
+  }
+  function mergeServices(feedServices, fallback = SERVICES_FALLBACK) {
+    if (!feedServices) {
+      return { ...fallback };
+    }
+    const merged = { ...fallback };
+    for (const [id, service] of Object.entries(feedServices)) {
+      const existing = merged[id] || {};
+      const candidate = { ...existing, ...service, id };
+      if (isValidService(candidate)) {
+        merged[id] = candidate;
+      } else {
+        console.warn(`BonusVarsler: Skipping invalid service "${id}" - missing required fields`);
+      }
+    }
+    return merged;
+  }
+
+  // src/core/settings.ts
+  var MAX_SITE_POSITIONS = 100;
+  function createDefaultSettings() {
+    return {
+      hiddenSites: /* @__PURE__ */ new Set(),
+      blacklistedSites: /* @__PURE__ */ new Set(),
+      theme: DEFAULT_THEME,
+      startMinimized: false,
+      position: DEFAULT_POSITION,
+      sitePositions: {},
+      enabledServices: null,
+      setupComplete: false,
+      setupShowCount: 0
+    };
+  }
+  var Settings = class {
+    cache;
+    storage;
+    currentHost;
+    constructor(storage, currentHost) {
+      this.cache = createDefaultSettings();
+      this.storage = storage;
+      this.currentHost = currentHost;
+    }
+    /**
+     * Run version-based migrations
+     */
+    async runMigrations() {
+      try {
+        const storedVersion = await this.storage.get(STORAGE_KEYS.version, null);
+        if (storedVersion !== CURRENT_VERSION) {
+          const existingEnabledServices = await this.storage.get(
+            STORAGE_KEYS.enabledServices,
+            null
+          );
+          const legacyFeedData = await this.storage.get(LEGACY_KEYS.feedData_v3, null);
+          const legacyFeedTime = await this.storage.get(LEGACY_KEYS.feedTime_v3, null);
+          const legacyFeedDataV4 = await this.storage.get(LEGACY_KEYS.feedData_v4, null);
+          const legacyFeedTimeV4 = await this.storage.get(LEGACY_KEYS.feedTime_v4, null);
+          const isLegacyUser = existingEnabledServices === null && (legacyFeedData !== null || legacyFeedTime !== null || legacyFeedDataV4 !== null || legacyFeedTimeV4 !== null);
+          const isExistingUser = storedVersion !== null || existingEnabledServices !== null || isLegacyUser;
+          const keysToRemove = [
+            STORAGE_KEYS.feedData,
+            STORAGE_KEYS.feedTime,
+            STORAGE_KEYS.hostIndex,
+            LEGACY_KEYS.feedData_v3,
+            LEGACY_KEYS.feedTime_v3,
+            LEGACY_KEYS.hostIndex_v3,
+            LEGACY_KEYS.feedData_v4,
+            LEGACY_KEYS.feedTime_v4,
+            LEGACY_KEYS.hostIndex_v4,
+            STORAGE_KEYS.reminderShown
+          ];
+          await this.storage.remove(keysToRemove);
+          if (isLegacyUser) {
+            await this.storage.set(STORAGE_KEYS.enabledServices, ["trumf"]);
+          }
+          if (isExistingUser) {
+            await this.storage.set(STORAGE_KEYS.setupComplete, true);
+          }
+          await this.storage.set(STORAGE_KEYS.version, CURRENT_VERSION);
+          console.log("[BonusVarsler] Migrated to version", CURRENT_VERSION);
+        }
+      } catch (err) {
+        console.error("[BonusVarsler] Settings migration failed:", err);
+      }
+    }
+    /**
+     * Load all settings from storage
+     */
+    async load() {
+      await this.runMigrations();
+      const hiddenSitesArray = await this.storage.get(STORAGE_KEYS.hiddenSites, []);
+      this.cache.hiddenSites = new Set(hiddenSitesArray);
+      const blacklistedSitesArray = await this.storage.get(STORAGE_KEYS.blacklistedSites, []);
+      this.cache.blacklistedSites = new Set(blacklistedSitesArray);
+      this.cache.theme = await this.storage.get(STORAGE_KEYS.theme, DEFAULT_THEME);
+      this.cache.startMinimized = await this.storage.get(STORAGE_KEYS.startMinimized, false);
+      this.cache.position = await this.storage.get(STORAGE_KEYS.position, DEFAULT_POSITION);
+      this.cache.sitePositions = await this.storage.get(
+        STORAGE_KEYS.sitePositions,
+        {}
+      );
+      const storedServices = await this.storage.get(
+        STORAGE_KEYS.enabledServices,
+        null
+      );
+      this.cache.enabledServices = storedServices;
+      this.cache.setupComplete = await this.storage.get(STORAGE_KEYS.setupComplete, false);
+      this.cache.setupShowCount = await this.storage.get(STORAGE_KEYS.setupShowCount, 0);
+    }
+    // ==================
+    // Hidden Sites
+    // ==================
+    getHiddenSites() {
+      return this.cache.hiddenSites;
+    }
+    isSiteHidden(host) {
+      return this.cache.hiddenSites.has(host);
+    }
+    async hideSite(host) {
+      if (!this.cache.hiddenSites.has(host)) {
+        this.cache.hiddenSites.add(host);
+        await this.storage.set(STORAGE_KEYS.hiddenSites, [...this.cache.hiddenSites]);
+      }
+    }
+    async resetHiddenSites() {
+      this.cache.hiddenSites = /* @__PURE__ */ new Set();
+      await this.storage.set(STORAGE_KEYS.hiddenSites, []);
+    }
+    // ==================
+    // Blacklisted Sites
+    // ==================
+    normalizeHost(host) {
+      let h = host.trim().toLowerCase();
+      if (h.startsWith("www.")) {
+        h = h.slice(4);
+      }
+      h = h.replace(/^\.+|\.+$/g, "");
+      return h;
+    }
+    getBlacklistedSites() {
+      return this.cache.blacklistedSites;
+    }
+    isSiteBlacklisted(host) {
+      return this.cache.blacklistedSites.has(this.normalizeHost(host));
+    }
+    async blacklistSite(host) {
+      const normalized = this.normalizeHost(host);
+      if (!this.cache.blacklistedSites.has(normalized)) {
+        this.cache.blacklistedSites.add(normalized);
+        await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+      }
+    }
+    async unblacklistSite(host) {
+      const normalized = this.normalizeHost(host);
+      if (this.cache.blacklistedSites.has(normalized)) {
+        this.cache.blacklistedSites.delete(normalized);
+        await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
+      }
+    }
+    async resetBlacklistedSites() {
+      this.cache.blacklistedSites = /* @__PURE__ */ new Set();
+      await this.storage.set(STORAGE_KEYS.blacklistedSites, []);
+    }
+    // ==================
+    // Theme
+    // ==================
+    getTheme() {
+      return this.cache.theme;
+    }
+    async setTheme(theme) {
+      this.cache.theme = theme;
+      await this.storage.set(STORAGE_KEYS.theme, theme);
+    }
+    // ==================
+    // Start Minimized
+    // ==================
+    getStartMinimized() {
+      return this.cache.startMinimized;
+    }
+    async setStartMinimized(value) {
+      this.cache.startMinimized = value;
+      await this.storage.set(STORAGE_KEYS.startMinimized, value);
+    }
+    // ==================
+    // Position
+    // ==================
+    getPosition() {
+      return this.cache.sitePositions[this.currentHost] || this.cache.position;
+    }
+    getDefaultPosition() {
+      return this.cache.position;
+    }
+    async setDefaultPosition(position) {
+      this.cache.position = position;
+      await this.storage.set(STORAGE_KEYS.position, position);
+    }
+    async setPositionForSite(position) {
+      this.cache.sitePositions[this.currentHost] = position;
+      const hosts = Object.keys(this.cache.sitePositions);
+      if (hosts.length > MAX_SITE_POSITIONS) {
+        const toRemove = hosts.slice(0, hosts.length - MAX_SITE_POSITIONS);
+        for (const host of toRemove) {
+          delete this.cache.sitePositions[host];
+        }
+      }
+      await this.storage.set(STORAGE_KEYS.sitePositions, this.cache.sitePositions);
+    }
+    // ==================
+    // Enabled Services
+    // ==================
+    getEnabledServices() {
+      return this.cache.enabledServices || getDefaultEnabledServices();
+    }
+    isServiceEnabled(serviceId) {
+      return this.getEnabledServices().includes(serviceId);
+    }
+    async setServiceEnabled(serviceId, enabled) {
+      const current = this.getEnabledServices();
+      let updated;
+      if (enabled && !current.includes(serviceId)) {
+        updated = [...current, serviceId];
+      } else if (!enabled && current.includes(serviceId)) {
+        updated = current.filter((s) => s !== serviceId);
+      } else {
+        return;
+      }
+      this.cache.enabledServices = updated;
+      await this.storage.set(STORAGE_KEYS.enabledServices, updated);
+    }
+    async setEnabledServices(services) {
+      this.cache.enabledServices = services;
+      await this.storage.set(STORAGE_KEYS.enabledServices, services);
+    }
+    // ==================
+    // Setup Complete
+    // ==================
+    isSetupComplete() {
+      return this.cache.setupComplete;
+    }
+    getSetupShowCount() {
+      return this.cache.setupShowCount;
+    }
+    async setSetupComplete(complete) {
+      this.cache.setupComplete = complete;
+      await this.storage.set(STORAGE_KEYS.setupComplete, complete);
+    }
+    async incrementSetupShowCount() {
+      this.cache.setupShowCount++;
+      await this.storage.set(STORAGE_KEYS.setupShowCount, this.cache.setupShowCount);
+    }
+  };
 
   // src/core/feed.ts
-  init_constants();
-  init_services();
   function isValidFeed(feed) {
     return feed !== null && typeof feed === "object" && "merchants" in feed && typeof feed.merchants === "object" && feed.merchants !== null;
   }
@@ -801,7 +763,6 @@
   };
 
   // src/core/merchant-matching.ts
-  init_services();
   function parseCashbackRate(description) {
     if (!description) return { value: 0, type: "percent", isVariable: false };
     const normalized = description.toLowerCase().trim();
@@ -957,26 +918,26 @@
     const settings = new Settings(storage, currentHost);
     await settings.load();
     if (settings.isSiteHidden(currentHost) || settings.isSiteBlacklisted(currentHost)) {
-      return null;
+      return { status: "blocked" };
     }
     const feedManager = new FeedManager(storage, fetcher);
     const isKnown = await feedManager.isKnownMerchantHost(currentHost, DOMAIN_ALIASES);
     if (isKnown === false) {
-      return null;
+      return { status: "no-match", settings };
     }
     const feed = await feedManager.getFeed();
     if (!feed) {
-      return null;
+      return { status: "no-match", settings };
     }
     const enabledServices = settings.getEnabledServices();
     const services = feedManager.getServices();
     const match = findBestOffer(feed, currentHost, enabledServices, services);
     if (!match) {
-      return null;
+      return { status: "no-match", settings };
     }
     const lang = await storage.get(STORAGE_KEYS.language, "no");
     await i18n.loadMessages(lang);
-    return { settings, feedManager, match };
+    return { status: "match", settings, feedManager, match };
   }
   var DEFAULT_CASHBACK_PATHS = ["/cashback/", "/shop/", "/reward/"];
   function isOnCashbackPage(currentHost, pathname, enabledServices, services) {
@@ -992,9 +953,6 @@
     }
     return { isOnPage: false, service: null };
   }
-
-  // src/ui/views/notification.ts
-  init_constants();
 
   // src/ui/styles/base.css
   var base_default = `/**
@@ -1832,9 +1790,6 @@
     shadowRoot.appendChild(styleEl);
   }
 
-  // src/ui/components/icons.ts
-  init_services();
-
   // icons/icon-64.png
   var icon_64_default = "data:image/png;base64,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";
 
@@ -1989,7 +1944,6 @@
   }
 
   // src/core/adblock-detection.ts
-  init_constants();
   function isCspRestrictedSite(currentHost) {
     if (CSP_RESTRICTED_SITES.has(currentHost)) return true;
     return document.querySelector('meta[http-equiv="Content-Security-Policy"]') !== null;
@@ -2710,16 +2664,21 @@
   }
 
   // src/ui/views/service-selector.ts
-  init_services();
+  var STRINGS = {
+    selectServices: "Velg bonusprogrammer",
+    comingSoon: "(kommer snart)",
+    saveServices: "Lagre",
+    saveFailed: "Kunne ikke lagre. Pr\xF8v igjen."
+  };
   function createServiceSelector(options) {
-    const { settings, services, i18n, onSave } = options;
+    const { settings, services, onSave } = options;
     const shadowHost = createShadowHost();
     const shadowRoot = shadowHost.attachShadow({ mode: "open" });
     injectStyles(shadowRoot, getServiceSelectorStyles());
     const container = document.createElement("div");
     container.className = `container animate-in ${settings.getPosition()}`;
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", i18n.getMessage("selectServices"));
+    container.setAttribute("aria-label", STRINGS.selectServices);
     shadowHost.className = "tbvl-light";
     const header = document.createElement("div");
     header.className = "header";
@@ -2740,7 +2699,7 @@
     content.className = "content";
     const title = document.createElement("div");
     title.className = "settings-title";
-    title.textContent = i18n.getMessage("selectServices");
+    title.textContent = STRINGS.selectServices;
     content.appendChild(title);
     const toggleStates = {};
     SERVICE_ORDER.forEach((serviceId) => {
@@ -2764,7 +2723,7 @@
       if (service.comingSoon) {
         const comingSoon = document.createElement("span");
         comingSoon.className = "coming-soon";
-        comingSoon.textContent = i18n.getMessage("comingSoon");
+        comingSoon.textContent = STRINGS.comingSoon;
         info.appendChild(comingSoon);
       }
       const nameId = `service-name-${serviceId}`;
@@ -2807,7 +2766,7 @@
     });
     const saveBtn = document.createElement("button");
     saveBtn.className = "action-btn";
-    saveBtn.textContent = i18n.getMessage("saveServices");
+    saveBtn.textContent = STRINGS.saveServices;
     const errorDisplay = document.createElement("div");
     errorDisplay.className = "error-message";
     errorDisplay.style.cssText = "color: #c50000; font-size: 13px; margin-top: 8px; display: none;";
@@ -2828,7 +2787,7 @@
         }
       } catch (error) {
         console.error("[BonusVarsler] Failed to save service selection:", error);
-        errorDisplay.textContent = i18n.getMessage("saveFailed") || "Kunne ikke lagre. Pr\xF8v igjen.";
+        errorDisplay.textContent = STRINGS.saveFailed;
         errorDisplay.style.display = "block";
       }
     });
@@ -2843,8 +2802,6 @@
   }
 
   // src/platform/userscript.ts
-  init_constants();
-  init_services();
   (async function() {
     "use strict";
     const currentHost = window.location.hostname;
@@ -2860,27 +2817,29 @@
     };
     const result = await initialize(adapters, currentHost);
     const { storage, fetcher, i18n } = adapters;
+    if (result.status === "blocked") {
+      return;
+    }
     const setupComplete = await storage.get(STORAGE_KEYS.setupComplete, false);
     const setupShowCount = await storage.get(STORAGE_KEYS.setupShowCount, 0);
     if (!setupComplete) {
       if (setupShowCount === 0) {
+        const services = result.status === "match" ? result.feedManager.getServices() : SERVICES_FALLBACK;
         await storage.set(STORAGE_KEYS.setupShowCount, 1);
         createServiceSelector({
-          settings: result?.settings ?? await createTempSettings(adapters, currentHost),
-          services: result?.feedManager.getServices() ?? SERVICES_FALLBACK,
-          i18n
+          settings: result.settings,
+          services
         });
         return;
       }
-      if (!result) {
+      if (result.status !== "match") {
         return;
       }
       if (setupShowCount === 1) {
         await storage.set(STORAGE_KEYS.setupShowCount, 2);
         createServiceSelector({
           settings: result.settings,
-          services: result.feedManager.getServices(),
-          i18n
+          services: result.feedManager.getServices()
         });
         return;
       }
@@ -2888,7 +2847,7 @@
       await storage.set(STORAGE_KEYS.enabledServices, allServices);
       await storage.set(STORAGE_KEYS.setupComplete, true);
     }
-    if (result?.settings) {
+    if (result.status === "match") {
       const enabledServices = result.settings.getEnabledServices();
       const services = result.feedManager.getServices();
       const reminderResult = isOnCashbackPage(
@@ -2909,7 +2868,7 @@
         return;
       }
     }
-    if (!result) {
+    if (result.status !== "match") {
       return;
     }
     const { settings, feedManager, match } = result;
@@ -2924,10 +2883,4 @@
       currentHost
     });
   })();
-  async function createTempSettings(adapters, currentHost) {
-    const { Settings: Settings2 } = await Promise.resolve().then(() => (init_settings(), settings_exports));
-    const settings = new Settings2(adapters.storage, currentHost);
-    await settings.load();
-    return settings;
-  }
 })();
