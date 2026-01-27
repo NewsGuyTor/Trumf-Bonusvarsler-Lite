@@ -134,6 +134,15 @@ function translatePage() {
     }
   });
 
+  // Translate placeholders
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    const message = i18n(key);
+    if (message && message !== key) {
+      el.placeholder = message;
+    }
+  });
+
   // Update page title
   document.title = i18n("optionsTitle");
 }
@@ -356,27 +365,42 @@ async function initBlacklistedSites() {
 
   render();
 
+  // Normalize host by stripping www. prefix
+  function normalizeHost(host) {
+    return host.startsWith("www.") ? host.slice(4) : host;
+  }
+
   // Add site to blacklist
   async function addSite() {
-    const site = input.value.trim().toLowerCase();
+    let site = input.value.trim().toLowerCase();
     if (!site) return;
 
+    // Strip protocol if present
+    site = site.replace(/^https?:\/\//, "");
+    // Strip path, query, and fragment
+    site = site.split("/")[0].split("?")[0].split("#")[0];
+    // Strip port if present for validation, but keep for storage
+    const hostWithoutPort = site.split(":")[0];
+
     // Basic validation - must look like a domain
-    if (!site.includes(".") || site.includes("/") || site.includes(" ")) {
+    if (!hostWithoutPort || hostWithoutPort.includes(" ")) {
       showStatus(i18n("invalidDomain"));
       return;
     }
 
-    if (blacklistedSites.includes(site)) {
+    // Normalize to avoid www. duplicates
+    const normalized = normalizeHost(site);
+
+    if (blacklistedSites.includes(normalized)) {
       showStatus(i18n("siteAlreadyBlacklisted"));
       return;
     }
 
-    blacklistedSites.push(site);
+    blacklistedSites.push(normalized);
     await setValue(KEYS.blacklistedSites, blacklistedSites);
     input.value = "";
     render();
-    showStatus(i18n("siteBlacklisted", site));
+    showStatus(i18n("siteBlacklisted", normalized));
   }
 
   addBtn.addEventListener("click", addSite);

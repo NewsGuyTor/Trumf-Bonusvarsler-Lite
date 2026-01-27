@@ -69,6 +69,9 @@
   "addSite": {
     "message": "Añadir"
   },
+  "blacklistPlaceholder": {
+    "message": "ejemplo.no"
+  },
   "noBlacklistedSites": {
     "message": "No hay sitios bloqueados."
   },

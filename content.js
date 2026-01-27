@@ -296,30 +296,26 @@
         // ==================
         // Blacklisted Sites
         // ==================
+        normalizeHost(host) {
+          return host.startsWith("www.") ? host.slice(4) : host;
+        }
         getBlacklistedSites() {
           return this.cache.blacklistedSites;
         }
         isSiteBlacklisted(host) {
-          if (this.cache.blacklistedSites.has(host)) {
-            return true;
-          }
-          if (host.startsWith("www.") && this.cache.blacklistedSites.has(host.slice(4))) {
-            return true;
-          }
-          if (!host.startsWith("www.") && this.cache.blacklistedSites.has("www." + host)) {
-            return true;
-          }
-          return false;
+          return this.cache.blacklistedSites.has(this.normalizeHost(host));
         }
         async blacklistSite(host) {
-          if (!this.cache.blacklistedSites.has(host)) {
-            this.cache.blacklistedSites.add(host);
+          const normalized = this.normalizeHost(host);
+          if (!this.cache.blacklistedSites.has(normalized)) {
+            this.cache.blacklistedSites.add(normalized);
             await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
           }
         }
         async unblacklistSite(host) {
-          if (this.cache.blacklistedSites.has(host)) {
-            this.cache.blacklistedSites.delete(host);
+          const normalized = this.normalizeHost(host);
+          if (this.cache.blacklistedSites.has(normalized)) {
+            this.cache.blacklistedSites.delete(normalized);
             await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
           }
         }
@@ -863,16 +859,13 @@
   }
   async function initialize(adapters, currentHost) {
     const { storage, fetcher, i18n } = adapters;
-    const lang = await storage.get(STORAGE_KEYS.language, "no");
-    await i18n.loadMessages(lang);
     const settings = new Settings(storage, currentHost);
     await settings.load();
-    if (settings.isSiteHidden(currentHost)) {
+    if (settings.isSiteHidden(currentHost) || settings.isSiteBlacklisted(currentHost)) {
       return null;
     }
-    if (settings.isSiteBlacklisted(currentHost)) {
-      return null;
-    }
+    const lang = await storage.get(STORAGE_KEYS.language, "no");
+    await i18n.loadMessages(lang);
     const feedManager = new FeedManager(storage, fetcher);
     const isKnown = await feedManager.isKnownMerchantHost(currentHost, DOMAIN_ALIASES);
     if (isKnown === false) {

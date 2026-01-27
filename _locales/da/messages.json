@@ -69,6 +69,9 @@
   "addSite": {
     "message": "Tilføj"
   },
+  "blacklistPlaceholder": {
+    "message": "eksempel.no"
+  },
   "noBlacklistedSites": {
     "message": "Ingen sider er blokeret."
   },

@@ -179,36 +179,30 @@ export class Settings {
   // Blacklisted Sites
   // ==================
 
+  private normalizeHost(host: string): string {
+    return host.startsWith("www.") ? host.slice(4) : host;
+  }
+
   getBlacklistedSites(): Set<string> {
     return this.cache.blacklistedSites;
   }
 
   isSiteBlacklisted(host: string): boolean {
-    // Check exact match
-    if (this.cache.blacklistedSites.has(host)) {
-      return true;
-    }
-    // Check without www prefix
-    if (host.startsWith("www.") && this.cache.blacklistedSites.has(host.slice(4))) {
-      return true;
-    }
-    // Check with www prefix
-    if (!host.startsWith("www.") && this.cache.blacklistedSites.has("www." + host)) {
-      return true;
-    }
-    return false;
+    return this.cache.blacklistedSites.has(this.normalizeHost(host));
   }
 
   async blacklistSite(host: string): Promise<void> {
-    if (!this.cache.blacklistedSites.has(host)) {
-      this.cache.blacklistedSites.add(host);
+    const normalized = this.normalizeHost(host);
+    if (!this.cache.blacklistedSites.has(normalized)) {
+      this.cache.blacklistedSites.add(normalized);
       await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
     }
   }
 
   async unblacklistSite(host: string): Promise<void> {
-    if (this.cache.blacklistedSites.has(host)) {
-      this.cache.blacklistedSites.delete(host);
+    const normalized = this.normalizeHost(host);
+    if (this.cache.blacklistedSites.has(normalized)) {
+      this.cache.blacklistedSites.delete(normalized);
       await this.storage.set(STORAGE_KEYS.blacklistedSites, [...this.cache.blacklistedSites]);
     }
   }
