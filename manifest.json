@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BonusVarsler (for Trumf, DNB, re:member++)",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "__MSG_extensionDescription__",
   "default_locale": "no",
   "homepage_url": "https://github.com/kristofferR/BonusVarsler",
@@ -22,12 +22,23 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
+      "exclude_matches": [
+        "http://localhost/*",
+        "https://localhost/*",
+        "http://127.0.0.1/*",
+        "https://127.0.0.1/*",
+        "http://[::1]/*",
+        "https://[::1]/*",
+        "http://*.local/*",
+        "https://*.local/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
   "background": {
+    "service_worker": "background.js",
     "scripts": ["background.js"]
   },
   "options_ui": {

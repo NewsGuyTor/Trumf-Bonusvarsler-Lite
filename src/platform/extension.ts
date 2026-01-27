@@ -12,7 +12,7 @@ import {
   initialize,
   isOnCashbackPage,
 } from "../main.js";
-import type { PlatformAdapters } from "../main.js";
+import type { PlatformAdapters, InitializeResult } from "../main.js";
 import { createNotification } from "../ui/views/notification.js";
 import { createReminderNotification } from "../ui/views/reminder.js";
 import { createServiceSelector } from "../ui/views/service-selector.js";
@@ -43,6 +43,11 @@ import { SERVICES_FALLBACK } from "../config/services.js";
   const result = await initialize(adapters, currentHost);
   const { storage, fetcher, i18n } = adapters;
 
+  // Blocked sites get no UI at all
+  if (result.status === "blocked") {
+    return;
+  }
+
   // Check for first-run setup flow
   const setupComplete = await storage.get<boolean>(STORAGE_KEYS.setupComplete, false);
   const setupShowCount = await storage.get<number>(STORAGE_KEYS.setupShowCount, 0);
@@ -52,16 +57,15 @@ import { SERVICES_FALLBACK } from "../config/services.js";
     if (setupShowCount === 0) {
       // Count 0: Show selector on any page
       // Get services - either from result or use fallback
-      const services = result?.feedManager.getServices();
+      const services = result.status === "match" ? result.feedManager.getServices() : null;
       const hasServices = services && Object.keys(services).length > 0;
 
       if (!hasServices) {
         // No services available yet - use fallback to ensure selector has content
         await storage.set(STORAGE_KEYS.setupShowCount, 1);
         createServiceSelector({
-          settings: result?.settings ?? (await createTempSettings(adapters, currentHost)),
+          settings: result.settings,
           services: SERVICES_FALLBACK,
-          i18n,
         });
         return;
       }
@@ -69,15 +73,14 @@ import { SERVICES_FALLBACK } from "../config/services.js";
       // Services available - proceed with selector
       await storage.set(STORAGE_KEYS.setupShowCount, 1);
       createServiceSelector({
-        settings: result?.settings ?? (await createTempSettings(adapters, currentHost)),
+        settings: result.settings,
         services,
-        i18n,
       });
       return;
     }
 
     // Count 1+: Only show on merchant pages
-    if (!result) {
+    if (result.status !== "match") {
       return;
     }
 
@@ -87,7 +90,6 @@ import { SERVICES_FALLBACK } from "../config/services.js";
       createServiceSelector({
         settings: result.settings,
         services: result.feedManager.getServices(),
-        i18n,
       });
       return;
     }
@@ -102,7 +104,7 @@ import { SERVICES_FALLBACK } from "../config/services.js";
   }
 
   // Check if we should show reminder on cashback portal
-  if (result?.settings) {
+  if (result.status === "match") {
     const enabledServices = result.settings.getEnabledServices();
     const services = result.feedManager.getServices();
     const reminderResult = isOnCashbackPage(
@@ -126,7 +128,7 @@ import { SERVICES_FALLBACK } from "../config/services.js";
     }
   }
 
-  if (!result) {
+  if (result.status !== "match") {
     return;
   }
 
@@ -146,13 +148,3 @@ import { SERVICES_FALLBACK } from "../config/services.js";
     currentHost,
   });
 })();
-
-/**
- * Create temporary settings for first-run when no match was found
- */
-async function createTempSettings(adapters: PlatformAdapters, currentHost: string) {
-  const { Settings } = await import("../core/settings.js");
-  const settings = new Settings(adapters.storage, currentHost);
-  await settings.load();
-  return settings;
-}

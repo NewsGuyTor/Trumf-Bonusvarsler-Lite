@@ -60,6 +60,49 @@
   "noHiddenSites": {
     "message": "Aucun site n'est masqué."
   },
+  "blacklistedSites": {
+    "message": "Sites bloqués"
+  },
+  "blacklistDescription": {
+    "message": "Sites où l'extension ne doit jamais s'exécuter."
+  },
+  "addSite": {
+    "message": "Ajouter"
+  },
+  "blacklistPlaceholder": {
+    "message": "exemple.no"
+  },
+  "noBlacklistedSites": {
+    "message": "Aucun site n'est bloqué."
+  },
+  "siteBlacklisted": {
+    "message": "$SITE$ bloqué",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteUnblacklisted": {
+    "message": "$SITE$ retiré de la liste de blocage",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteAlreadyBlacklisted": {
+    "message": "Le site est déjà bloqué"
+  },
+  "invalidDomain": {
+    "message": "Domaine invalide"
+  },
+  "confirmResetBlacklist": {
+    "message": "Êtes-vous sûr de vouloir réinitialiser tous les sites bloqués ?"
+  },
+  "allBlacklistedSitesRemoved": {
+    "message": "Tous les sites bloqués supprimés"
+  },
   "resetAll": {
     "message": "Tout réinitialiser"
   },

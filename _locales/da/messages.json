@@ -60,6 +60,49 @@
   "noHiddenSites": {
     "message": "Ingen sider er skjult."
   },
+  "blacklistedSites": {
+    "message": "Blokerede sider"
+  },
+  "blacklistDescription": {
+    "message": "Sider hvor udvidelsen aldrig skal køre."
+  },
+  "addSite": {
+    "message": "Tilføj"
+  },
+  "blacklistPlaceholder": {
+    "message": "eksempel.no"
+  },
+  "noBlacklistedSites": {
+    "message": "Ingen sider er blokeret."
+  },
+  "siteBlacklisted": {
+    "message": "$SITE$ blokeret",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteUnblacklisted": {
+    "message": "$SITE$ fjernet fra blokeringslisten",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteAlreadyBlacklisted": {
+    "message": "Siden er allerede blokeret"
+  },
+  "invalidDomain": {
+    "message": "Ugyldigt domæne"
+  },
+  "confirmResetBlacklist": {
+    "message": "Er du sikker på, at du vil nulstille alle blokerede sider?"
+  },
+  "allBlacklistedSitesRemoved": {
+    "message": "Alle blokerede sider fjernet"
+  },
   "resetAll": {
     "message": "Nulstil alle"
   },

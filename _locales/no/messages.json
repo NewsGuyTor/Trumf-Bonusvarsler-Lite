@@ -60,6 +60,49 @@
   "noHiddenSites": {
     "message": "Ingen sider er skjult."
   },
+  "blacklistedSites": {
+    "message": "Blokkerte sider"
+  },
+  "blacklistDescription": {
+    "message": "Sider hvor utvidelsen aldri skal kjøre."
+  },
+  "addSite": {
+    "message": "Legg til"
+  },
+  "blacklistPlaceholder": {
+    "message": "eksempel.no"
+  },
+  "noBlacklistedSites": {
+    "message": "Ingen sider er blokkert."
+  },
+  "siteBlacklisted": {
+    "message": "$SITE$ blokkert",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteUnblacklisted": {
+    "message": "$SITE$ fjernet fra blokkeringslisten",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteAlreadyBlacklisted": {
+    "message": "Siden er allerede blokkert"
+  },
+  "invalidDomain": {
+    "message": "Ugyldig domene"
+  },
+  "confirmResetBlacklist": {
+    "message": "Er du sikker på at du vil nullstille alle blokkerte sider?"
+  },
+  "allBlacklistedSitesRemoved": {
+    "message": "Alle blokkerte sider fjernet"
+  },
   "resetAll": {
     "message": "Nullstill alle"
   },

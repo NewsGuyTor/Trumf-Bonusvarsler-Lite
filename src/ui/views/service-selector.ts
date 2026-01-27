@@ -1,9 +1,9 @@
 /**
  * Service selector view
  * First-run selector for choosing which services to enable
+ * Uses plain Norwegian strings (no i18n) since this runs before merchant match
  */
 
-import type { I18nAdapter } from "../../i18n/types.js";
 import type { Settings } from "../../core/settings.js";
 import type { ServiceRegistry } from "../../config/services.js";
 import { SERVICE_ORDER } from "../../config/services.js";
@@ -11,10 +11,17 @@ import { getServiceSelectorStyles } from "../styles/index.js";
 import { createShadowHost, injectStyles } from "../components/shadow-host.js";
 import { LOGO_ICON_URL } from "../components/icons.js";
 
+// Plain Norwegian strings for first-run UI (no i18n dependency)
+const STRINGS = {
+  selectServices: "Velg bonusprogrammer",
+  comingSoon: "(kommer snart)",
+  saveServices: "Lagre",
+  saveFailed: "Kunne ikke lagre. Prøv igjen.",
+};
+
 export interface ServiceSelectorOptions {
   settings: Settings;
   services: ServiceRegistry;
-  i18n: I18nAdapter;
   onSave?: (enabledServices: string[]) => void;
 }
 
@@ -22,7 +29,7 @@ export interface ServiceSelectorOptions {
  * Create and show the service selector
  */
 export function createServiceSelector(options: ServiceSelectorOptions): HTMLElement {
-  const { settings, services, i18n, onSave } = options;
+  const { settings, services, onSave } = options;
 
   // Create shadow host (append to body after content is ready)
   const shadowHost = createShadowHost();
@@ -35,7 +42,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
   const container = document.createElement("div");
   container.className = `container animate-in ${settings.getPosition()}`;
   container.setAttribute("role", "dialog");
-  container.setAttribute("aria-label", i18n.getMessage("selectServices"));
+  container.setAttribute("aria-label", STRINGS.selectServices);
 
   // Force light theme for first-run selector
   shadowHost.className = "tbvl-light";
@@ -68,7 +75,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
 
   const title = document.createElement("div");
   title.className = "settings-title";
-  title.textContent = i18n.getMessage("selectServices");
+  title.textContent = STRINGS.selectServices;
 
   content.appendChild(title);
 
@@ -106,7 +113,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
     if (service.comingSoon) {
       const comingSoon = document.createElement("span");
       comingSoon.className = "coming-soon";
-      comingSoon.textContent = i18n.getMessage("comingSoon");
+      comingSoon.textContent = STRINGS.comingSoon;
       info.appendChild(comingSoon);
     }
 
@@ -161,7 +168,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
   // Save button
   const saveBtn = document.createElement("button");
   saveBtn.className = "action-btn";
-  saveBtn.textContent = i18n.getMessage("saveServices");
+  saveBtn.textContent = STRINGS.saveServices;
 
   // Error display element (initially hidden)
   const errorDisplay = document.createElement("div");
@@ -195,7 +202,7 @@ export function createServiceSelector(options: ServiceSelectorOptions): HTMLElem
     } catch (error) {
       console.error("[BonusVarsler] Failed to save service selection:", error);
       // Show error and keep dialog open - do NOT proceed with callback/reload
-      errorDisplay.textContent = i18n.getMessage("saveFailed") || "Kunne ikke lagre. Prøv igjen.";
+      errorDisplay.textContent = STRINGS.saveFailed;
       errorDisplay.style.display = "block";
     }
   });

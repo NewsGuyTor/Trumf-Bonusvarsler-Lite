@@ -85,6 +85,22 @@
       </section>
 
       <section class="setting-group">
+        <h2 data-i18n="blacklistedSites">Blokkerte sider</h2>
+        <p class="setting-description" data-i18n="blacklistDescription">Sider hvor utvidelsen aldri skal kjøre.</p>
+        <div class="blacklist-add-form" id="blacklist-add-form">
+          <input type="text" id="blacklist-input" placeholder="example.com" data-i18n-placeholder="blacklistPlaceholder" class="blacklist-input">
+          <button class="btn btn-secondary" id="blacklist-add-btn" data-i18n="addSite">Legg til</button>
+        </div>
+        <div id="blacklist-container">
+          <p class="no-blacklisted-sites" data-i18n="noBlacklistedSites">Ingen sider er blokkert.</p>
+        </div>
+        <div id="blacklist-list" class="blacklist-list"></div>
+        <div class="blacklist-actions" id="blacklist-actions" style="display: none;">
+          <button class="btn btn-secondary" id="reset-blacklist" data-i18n="resetAll">Nullstill alle</button>
+        </div>
+      </section>
+
+      <section class="setting-group">
         <h2 data-i18n="cache">Cache</h2>
         <p class="setting-description" data-i18n="cacheDescription">Butikklisten caches i 48 timer for raskere lasting.</p>
         <button class="btn btn-secondary" id="clear-cache" data-i18n="clearCache">Tøm cache</button>
